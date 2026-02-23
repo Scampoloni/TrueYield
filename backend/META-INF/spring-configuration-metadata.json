@@ -1,0 +1,270 @@
+{
+  "groups": [
+    {
+      "name": "spring.mongodb",
+      "type": "org.springframework.boot.mongodb.autoconfigure.MongoProperties",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties"
+    },
+    {
+      "name": "spring.mongodb.representation",
+      "type": "org.springframework.boot.mongodb.autoconfigure.MongoProperties$Representation",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties",
+      "sourceMethod": "getRepresentation()"
+    },
+    {
+      "name": "spring.mongodb.ssl",
+      "type": "org.springframework.boot.mongodb.autoconfigure.MongoProperties$Ssl",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties",
+      "sourceMethod": "getSsl()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "management.metrics.mongodb.command.enabled",
+      "description": "Whether to enable Mongo client command metrics.",
+      "defaultValue": true
+    },
+    {
+      "name": "management.metrics.mongodb.connectionpool.enabled",
+      "description": "Whether to enable Mongo connection pool metrics.",
+      "defaultValue": true
+    },
+    {
+      "name": "spring.mongodb.additional-hosts",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Additional server hosts. Ignored if 'uri' is set or if 'host' is omitted. Additional hosts will use the default mongo port of 27017. If you want to use a different port you can use the \"host:port\" syntax.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties"
+    },
+    {
+      "name": "spring.mongodb.authentication-database",
+      "type": "java.lang.String",
+      "description": "Authentication database name.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties"
+    },
+    {
+      "name": "spring.mongodb.database",
+      "type": "java.lang.String",
+      "description": "Database name. Overrides database in URI.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties"
+    },
+    {
+      "name": "spring.mongodb.host",
+      "type": "java.lang.String",
+      "description": "Mongo server host. Ignored if 'uri' is set.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties"
+    },
+    {
+      "name": "spring.mongodb.password",
+      "type": "java.lang.Character[]",
+      "description": "Login password of the mongo server. Ignored if 'uri' is set.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties"
+    },
+    {
+      "name": "spring.mongodb.port",
+      "type": "java.lang.Integer",
+      "description": "Mongo server port. Ignored if 'uri' is set.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties"
+    },
+    {
+      "name": "spring.mongodb.protocol",
+      "type": "java.lang.String",
+      "description": "Protocol to be used for the MongoDB connection. Ignored if 'uri' is set.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties",
+      "defaultValue": "mongodb"
+    },
+    {
+      "name": "spring.mongodb.replica-set-name",
+      "type": "java.lang.String",
+      "description": "Required replica set name for the cluster. Ignored if 'uri' is set.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties"
+    },
+    {
+      "name": "spring.mongodb.representation.uuid",
+      "type": "org.bson.UuidRepresentation",
+      "description": "Representation to use when converting a UUID to a BSON binary value.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties$Representation",
+      "defaultValue": "unspecified"
+    },
+    {
+      "name": "spring.mongodb.ssl.bundle",
+      "type": "java.lang.String",
+      "description": "SSL bundle name.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties$Ssl"
+    },
+    {
+      "name": "spring.mongodb.ssl.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable SSL support. Enabled automatically if \"bundle\" is provided unless specified otherwise.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties$Ssl"
+    },
+    {
+      "name": "spring.mongodb.uri",
+      "type": "java.lang.String",
+      "description": "Mongo database URI. Overrides host, port, username, and password.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties",
+      "defaultValue": "mongodb:\/\/localhost\/test"
+    },
+    {
+      "name": "spring.mongodb.username",
+      "type": "java.lang.String",
+      "description": "Login user of the mongo server. Ignored if 'uri' is set.",
+      "sourceType": "org.springframework.boot.mongodb.autoconfigure.MongoProperties"
+    },
+    {
+      "name": "management.metrics.mongo.command.enabled",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "management.metrics.mongodb.command.enabled",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "management.metrics.mongo.connectionpool.enabled",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "management.metrics.mongodb.connectionpool.enabled",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.additional-hosts",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.additional-hosts",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.authentication-database",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.authentication-database",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.database",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.database",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.host",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.host",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.password",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.password",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.port",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.port",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.protocol",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.protocol",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.replica-set-name",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.replica-set-name",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.ssl.bundle",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.ssl.bundle",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.ssl.enabled",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.ssl.enabled",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.uri",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.uri",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.username",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.username",
+        "since": "4.0.0"
+      }
+    },
+    {
+      "name": "spring.data.mongodb.uuid-representation",
+      "deprecated": true,
+      "deprecation": {
+        "level": "error",
+        "replacement": "spring.mongodb.representation.uuid",
+        "since": "4.0.0"
+      }
+    }
+  ],
+  "hints": [
+    {
+      "name": "spring.mongodb.protocol",
+      "values": [
+        {
+          "value": "mongodb"
+        },
+        {
+          "value": "mongodb+srv"
+        }
+      ],
+      "providers": [
+        {
+          "name": "any"
+        }
+      ]
+    }
+  ],
+  "ignored": {
+    "properties": []
+  }
+}
