@@ -1,5 +1,6 @@
 package ch.zhaw.trueyield.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -75,4 +76,35 @@ class PortfolioControllerTest {
                 .content(requestBody))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void testGetAllPortfoliosReturnsOkWithList() throws Exception {
+        // Arrange – create a portfolio first
+        String requestBody = """
+                {
+                    "name": "ESG Europe Fund",
+                    "description": "European ESG assets"
+                }
+                """;
+
+        mockMvc.perform(post("/api/portfolio")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isCreated());
+
+        // Act & Assert – GET should return the portfolio
+        mockMvc.perform(get("/api/portfolio"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].name").value("ESG Europe Fund"))
+                .andExpect(jsonPath("$[0].id").exists());
+    }
+
+    @Test
+    void testGetAllPortfoliosReturnsEmptyArrayWhenNoneExist() throws Exception {
+        mockMvc.perform(get("/api/portfolio"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
 }
+
