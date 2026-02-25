@@ -1,5 +1,7 @@
 package ch.zhaw.trueyield.service;
 
+import java.util.List;
+
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
 import ch.zhaw.trueyield.repository.PortfolioRepository;
@@ -19,5 +21,9 @@ public class PortfolioService {
         Portfolio portfolio = new Portfolio(dto.getName(), "anonymous");
         portfolio.setDescription(dto.getDescription());
         return portfolioRepository.save(portfolio);
+    }
+
+    public List<Portfolio> getAllPortfolios() {
+        return portfolioRepository.findAll();
     }
 }

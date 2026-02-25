@@ -1,11 +1,14 @@
 package ch.zhaw.trueyield.controller;
 
+import java.util.List;
+
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
 import ch.zhaw.trueyield.service.PortfolioService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,4 +29,11 @@ public class PortfolioController {
         Portfolio created = portfolioService.createPortfolio(dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
+
+    @GetMapping
+    public ResponseEntity<List<Portfolio>> getAllPortfolios() {
+        List<Portfolio> portfolios = portfolioService.getAllPortfolios();
+        return new ResponseEntity<>(portfolios, HttpStatus.OK);
+    }
 }
+
