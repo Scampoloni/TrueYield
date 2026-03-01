@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
+import ch.zhaw.trueyield.model.dto.PortfolioUpdateDTO;
 import ch.zhaw.trueyield.repository.PortfolioRepository;
 import ch.zhaw.trueyield.service.PortfolioService;
 import jakarta.validation.Valid;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -49,5 +51,20 @@ public class PortfolioController {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Portfolio> updatePortfolio(
+            @PathVariable String id,
+            @RequestBody PortfolioUpdateDTO updateDTO) {
+        Optional<Portfolio> optionalPortfolio = portfolioRepository.findById(id);
+        if (optionalPortfolio.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Portfolio existingPortfolio = optionalPortfolio.get();
+        existingPortfolio.setName(updateDTO.getName());
+        existingPortfolio.setDescription(updateDTO.getDescription());
+        Portfolio updatedPortfolio = portfolioRepository.save(existingPortfolio);
+        return new ResponseEntity<>(updatedPortfolio, HttpStatus.OK);
     }
 }
