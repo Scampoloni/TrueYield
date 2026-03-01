@@ -1,0 +1,1267 @@
+{
+  "info": {
+    "_postman_id": "4b61940e-e806-48d7-be6b-246e0d2088a8",
+    "name": "TrueYield",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Portfolio",
+      "item": [
+        {
+          "name": "Create Portfolio",
+          "id": "3c14400b-47ab-4d83-afee-3815326d25e4",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": " {{FUND_MANAGER_ID}}",
+                "type": "text",
+                "uuid": "a6dc06ee-0251-4023-b2dd-c8229810872a"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text",
+                "uuid": "399db14d-dcb3-4519-b050-4c04eb67aa0d"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Tech Growth Portfolio\",\r\n  \"description\": \"High-growth technology stocks\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "d307e1ec-f9bd-4923-9292-b5854fa1ee2b",
+              "name": "Create Portfolio",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": " {{FUND_MANAGER_ID}}",
+                    "type": "text",
+                    "uuid": "a6dc06ee-0251-4023-b2dd-c8229810872a"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text",
+                    "uuid": "399db14d-dcb3-4519-b050-4c04eb67aa0d"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"name\": \"Tech Growth Portfolio\",\r\n  \"description\": \"High-growth technology stocks\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:24:48 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:25:05.875Z",
+              "body": "{\n    \"name\": \"Tech Growth Portfolio\",\n    \"fundManagerId\": \"temp-user-123\",\n    \"description\": \"High-growth technology stocks\",\n    \"id\": \"69a4a08f026d2fb29908f545\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Portfolio (error)",
+          "id": "1442e919-aaea-47e5-bc05-376e20219082",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": " {{FUND_MANAGER_ID}}",
+                "type": "text",
+                "uuid": "a6dc06ee-0251-4023-b2dd-c8229810872a"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text",
+                "uuid": "399db14d-dcb3-4519-b050-4c04eb67aa0d"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"\",\r\n  \"description\": \"\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "dbc2f993-1d67-4624-b68d-ef34fe4d26a2",
+              "name": "Create Portfolio (error)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": " {{FUND_MANAGER_ID}}",
+                    "type": "text",
+                    "uuid": "a6dc06ee-0251-4023-b2dd-c8229810872a"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text",
+                    "uuid": "399db14d-dcb3-4519-b050-4c04eb67aa0d"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"name\": \"\",\r\n  \"description\": \"\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:25:20 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:25:21.831Z",
+              "body": "{\n    \"timestamp\": \"2026-03-01T20:25:20.020Z\",\n    \"status\": 400,\n    \"error\": \"Bad Request\",\n    \"trace\": \"org.springframework.web.bind.MethodArgumentNotValidException: Validation failed for argument [0] in public org.springframework.http.ResponseEntity<ch.zhaw.trueyield.model.Portfolio> ch.zhaw.trueyield.controller.PortfolioController.createPortfolio(ch.zhaw.trueyield.model.dto.PortfolioCreateDTO,java.lang.String): [Field error in object 'portfolioCreateDTO' on field 'name': rejected value []; codes [NotBlank.portfolioCreateDTO.name,NotBlank.name,NotBlank.java.lang.String,NotBlank]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [portfolioCreateDTO.name,name]; arguments []; default message [name]]; default message [darf nicht leer sein]] \\r\\n\\tat org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.resolveArgument(RequestResponseBodyMethodProcessor.java:159)\\r\\n\\tat org.springframework.web.method.support.HandlerMethodArgumentResolverComposite.resolveArgument(HandlerMethodArgumentResolverComposite.java:122)\\r\\n\\tat org.springframework.web.method.support.InvocableHandlerMethod.getMethodArgumentValues(InvocableHandlerMethod.java:230)\\r\\n\\tat org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:180)\\r\\n\\tat org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117)\\r\\n\\tat org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:934)\\r\\n\\tat org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:853)\\r\\n\\tat org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:86)\\r\\n\\tat org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:963)\\r\\n\\tat org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:866)\\r\\n\\tat org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1003)\\r\\n\\tat org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:903)\\r\\n\\tat jakarta.servlet.http.HttpServlet.service(HttpServlet.java:649)\\r\\n\\tat org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:874)\\r\\n\\tat jakarta.servlet.http.HttpServlet.service(HttpServlet.java:710)\\r\\n\\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:128)\\r\\n\\tat org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)\\r\\n\\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\\r\\n\\tat org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)\\r\\n\\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\\r\\n\\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\\r\\n\\tat org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)\\r\\n\\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\\r\\n\\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\\r\\n\\tat org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:110)\\r\\n\\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\\r\\n\\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\\r\\n\\tat org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:199)\\r\\n\\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\\r\\n\\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\\r\\n\\tat org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)\\r\\n\\tat org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:77)\\r\\n\\tat org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482)\\r\\n\\tat org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)\\r\\n\\tat org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)\\r\\n\\tat org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)\\r\\n\\tat org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:341)\\r\\n\\tat org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397)\\r\\n\\tat org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)\\r\\n\\tat org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)\\r\\n\\tat org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1778)\\r\\n\\tat org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)\\r\\n\\tat org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:946)\\r\\n\\tat org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:480)\\r\\n\\tat org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:57)\\r\\n\\tat java.base/java.lang.Thread.run(Thread.java:1474)\\r\\n\",\n    \"message\": \"Validation failed for object='portfolioCreateDTO'. Error count: 1\",\n    \"errors\": [\n        {\n            \"objectName\": \"portfolioCreateDTO\",\n            \"field\": \"name\",\n            \"rejectedValue\": \"\",\n            \"codes\": [\n                \"NotBlank.portfolioCreateDTO.name\",\n                \"NotBlank.name\",\n                \"NotBlank.java.lang.String\",\n                \"NotBlank\"\n            ],\n            \"arguments\": [\n                {\n                    \"arguments\": null,\n                    \"code\": \"name\",\n                    \"codes\": [\n                        \"portfolioCreateDTO.name\",\n                        \"name\"\n                    ],\n                    \"defaultMessage\": \"name\"\n                }\n            ],\n            \"bindingFailure\": false,\n            \"code\": \"NotBlank\",\n            \"defaultMessage\": \"darf nicht leer sein\"\n        }\n    ],\n    \"path\": \"/api/portfolio\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Portfolios",
+          "id": "4d413c4a-a313-471e-b5ad-d89ab8ae8e63",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": "{{FUND_MANAGER_ID}}",
+                "type": "text",
+                "uuid": "7f256951-8eea-4c0c-8f73-b4b49131076e"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "db62233b-08c9-4a0b-857e-87627fba4e65",
+              "name": "Get All Portfolios",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": "{{FUND_MANAGER_ID}}",
+                    "type": "text",
+                    "uuid": "7f256951-8eea-4c0c-8f73-b4b49131076e"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:25:39 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:25:47.545Z",
+              "body": "[\n    {\n        \"name\": \"Tech Growth Portfolio\",\n        \"fundManagerId\": \"temp-user-123\",\n        \"description\": \"High-growth technology stocks\",\n        \"id\": \"69a492809600dd3d2b59b986\"\n    },\n    {\n        \"name\": \"Tech Growth Portfolio\",\n        \"fundManagerId\": \"temp-user-123\",\n        \"description\": \"High-growth technology stocks\",\n        \"id\": \"69a4a08f026d2fb29908f545\"\n    }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Portfolio by Id",
+          "id": "7d27b50a-dcfd-4f71-996b-538de258adc1",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": "{{FUND_MANAGER_ID}}",
+                "type": "text",
+                "uuid": "7f256951-8eea-4c0c-8f73-b4b49131076e"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio/{{PORTFOLIO_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "{{PORTFOLIO_ID}}"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "05d71137-82e4-4843-af66-5c4bad64c62f",
+              "name": "Get Portfolio by Id",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": "{{FUND_MANAGER_ID}}",
+                    "type": "text",
+                    "uuid": "7f256951-8eea-4c0c-8f73-b4b49131076e"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio/{{PORTFOLIO_ID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio",
+                    "{{PORTFOLIO_ID}}"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:26:56 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:26:57.178Z",
+              "body": "{\n    \"name\": \"Tech Growth Portfolio\",\n    \"fundManagerId\": \"temp-user-123\",\n    \"description\": \"High-growth technology stocks\",\n    \"id\": \"69a4a08f026d2fb29908f545\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Portfolio by Id (correct id found)",
+          "id": "b1d6c76c-852f-4b43-a5fe-3e46dcc61969",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": "{{FUND_MANAGER_ID}}",
+                "type": "text",
+                "uuid": "7f256951-8eea-4c0c-8f73-b4b49131076e"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio/{{PORTFOLIO_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "{{PORTFOLIO_ID}}"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "980aef61-6c0a-4e12-9a1a-861e17807c46",
+              "name": "Get Portfolio by Id (correct id found)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": "{{FUND_MANAGER_ID}}",
+                    "type": "text",
+                    "uuid": "7f256951-8eea-4c0c-8f73-b4b49131076e"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio/69a4a08f026d2fb29908f545",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio",
+                    "69a4a08f026d2fb29908f545"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:27:19 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:27:20.438Z",
+              "body": "{\n    \"name\": \"Tech Growth Portfolio\",\n    \"fundManagerId\": \"temp-user-123\",\n    \"description\": \"High-growth technology stocks\",\n    \"id\": \"69a4a08f026d2fb29908f545\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Portfolio by Id (wrong id)",
+          "id": "225ec112-a659-4257-89d7-67599d79e9b0",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": "{{FUND_MANAGER_ID}}",
+                "type": "text",
+                "uuid": "7f256951-8eea-4c0c-8f73-b4b49131076e"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio/invalid-id-999",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "invalid-id-999"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "7dae4032-602f-4f96-b8ef-3d4bfc4639bf",
+              "name": "Get Portfolio by Id (wrong id)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": "{{FUND_MANAGER_ID}}",
+                    "type": "text",
+                    "uuid": "7f256951-8eea-4c0c-8f73-b4b49131076e"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio/invalid-id-999",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio",
+                    "invalid-id-999"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Length",
+                  "value": "0"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:27:24 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:27:26.157Z",
+              "body": null
+            }
+          ]
+        },
+        {
+          "name": "Get Portfolio by Id (wrong owner)",
+          "id": "e1c11bc3-03e3-474f-b428-f4f37bd27e66",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": "different-user-999",
+                "type": "text",
+                "uuid": "7f256951-8eea-4c0c-8f73-b4b49131076e"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio/{{PORTFOLIO_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "{{PORTFOLIO_ID}}"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "11755aaf-5e91-47a1-a325-e75489eab861",
+              "name": "Get Portfolio by Id (wrong owner)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": "different-user-999",
+                    "type": "text",
+                    "uuid": "7f256951-8eea-4c0c-8f73-b4b49131076e"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio/{{PORTFOLIO_ID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio",
+                    "{{PORTFOLIO_ID}}"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Length",
+                  "value": "0"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:27:36 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:27:38.717Z",
+              "body": null
+            }
+          ]
+        },
+        {
+          "name": "Update Portfolio (wrong id)",
+          "id": "86a34ff6-143b-4860-9fcf-e7a4c4cf9ba9",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": "{{FUND_MANAGER_ID}}",
+                "type": "text",
+                "uuid": "5369a5ae-bc53-4230-8204-695560d108e9"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text",
+                "uuid": "212573fc-b6fe-4b70-8ea2-ba09c4477668"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Updated Portfolio Name\",\r\n  \"description\": \"Updated description\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio/invalid-id-999",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "invalid-id-999"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "f1fef6be-6bd9-45f1-99c5-4cba8038acbc",
+              "name": "Update Portfolio (wrong id)",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": "{{FUND_MANAGER_ID}}",
+                    "type": "text",
+                    "uuid": "5369a5ae-bc53-4230-8204-695560d108e9"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text",
+                    "uuid": "212573fc-b6fe-4b70-8ea2-ba09c4477668"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"name\": \"Updated Portfolio Name\",\r\n  \"description\": \"Updated description\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio/69a4a08f026d2fb29908",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio",
+                    "69a4a08f026d2fb29908"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Length",
+                  "value": "0"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:28:43 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:28:44.333Z",
+              "body": null
+            }
+          ]
+        },
+        {
+          "name": "Update Portfolio",
+          "id": "b65e8b2c-a317-4875-9577-a0aed6b20784",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": "{{FUND_MANAGER_ID}}",
+                "type": "text",
+                "uuid": "5369a5ae-bc53-4230-8204-695560d108e9"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text",
+                "uuid": "212573fc-b6fe-4b70-8ea2-ba09c4477668"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Updated Portfolio Name\",\r\n  \"description\": \"Updated description\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio/{{PORTFOLIO_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "{{PORTFOLIO_ID}}"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "72f05714-8aea-4b25-a175-85272bf1450d",
+              "name": "Update Portfolio",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": "{{FUND_MANAGER_ID}}",
+                    "type": "text",
+                    "uuid": "5369a5ae-bc53-4230-8204-695560d108e9"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text",
+                    "uuid": "212573fc-b6fe-4b70-8ea2-ba09c4477668"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"name\": \"Updated Portfolio Name\",\r\n  \"description\": \"Updated description\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio/{{PORTFOLIO_ID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio",
+                    "{{PORTFOLIO_ID}}"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:28:31 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:28:34.664Z",
+              "body": "{\n    \"name\": \"Updated Portfolio Name\",\n    \"fundManagerId\": \"temp-user-123\",\n    \"description\": \"Updated description\",\n    \"id\": \"69a4a08f026d2fb29908f545\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update forbidden (wrong owner)",
+          "id": "8d30b28d-8852-4823-9564-5ebb43a5c123",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": "wrong-owner-456",
+                "type": "text",
+                "uuid": "5369a5ae-bc53-4230-8204-695560d108e9"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text",
+                "uuid": "212573fc-b6fe-4b70-8ea2-ba09c4477668"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Updated Portfolio Name\",\r\n  \"description\": \"Updated description\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio/{{PORTFOLIO_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "{{PORTFOLIO_ID}}"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "43b86c1c-0bfe-41db-9a13-138fd16523a0",
+              "name": "Update forbidden (wrong owner)",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": "wrong-owner-456",
+                    "type": "text",
+                    "uuid": "5369a5ae-bc53-4230-8204-695560d108e9"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text",
+                    "uuid": "212573fc-b6fe-4b70-8ea2-ba09c4477668"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"name\": \"Updated Portfolio Name\",\r\n  \"description\": \"Updated description\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio/{{PORTFOLIO_ID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio",
+                    "{{PORTFOLIO_ID}}"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Length",
+                  "value": "0"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:29:28 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:29:29.260Z",
+              "body": null
+            }
+          ]
+        },
+        {
+          "name": "Delete Portfolio",
+          "id": "5d557a8e-1b25-4e1c-abb2-2dfdc5337219",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": "{{FUND_MANAGER_ID}}",
+                "type": "text",
+                "uuid": "218103bc-a888-47be-936c-231606479c83"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio/{{PORTFOLIO_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "{{PORTFOLIO_ID}}"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "0a50055f-13be-40ef-ac70-25d3649d4350",
+              "name": "Delete Portfolio",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": "{{FUND_MANAGER_ID}}",
+                    "type": "text",
+                    "uuid": "218103bc-a888-47be-936c-231606479c83"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio/69a4a08f026d2fb29908f545",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio",
+                    "69a4a08f026d2fb29908f545"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:30:59 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:31:00.497Z",
+              "body": null
+            }
+          ]
+        },
+        {
+          "name": "Deleted Portfolio not found",
+          "id": "e60d34ab-15ba-4fb7-a45a-db5d99e310fa",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": "{{FUND_MANAGER_ID}}",
+                "type": "text",
+                "uuid": "218103bc-a888-47be-936c-231606479c83"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio/invalid-id-999",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "invalid-id-999"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "83448e76-0190-41fd-8ede-6f8487796244",
+              "name": "Deleted Portfolio not found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": "{{FUND_MANAGER_ID}}",
+                    "type": "text",
+                    "uuid": "218103bc-a888-47be-936c-231606479c83"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio/invalid-id-999",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio",
+                    "invalid-id-999"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Length",
+                  "value": "0"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:30:35 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:30:37.599Z",
+              "body": null
+            }
+          ]
+        },
+        {
+          "name": "Delete Portfolio (wrong id)",
+          "id": "a8f975d9-2de4-479a-bc6c-b31632d7744d",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": "{{FUND_MANAGER_ID}}",
+                "type": "text",
+                "uuid": "218103bc-a888-47be-936c-231606479c83"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio/wrong-id-abc",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "wrong-id-abc"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "5f54d4ae-5373-48e9-bf2d-211853cb9239",
+              "name": "Delete Portfolio (wrong id)",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": "{{FUND_MANAGER_ID}}",
+                    "type": "text",
+                    "uuid": "218103bc-a888-47be-936c-231606479c83"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio/wrong-id-abc",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio",
+                    "wrong-id-abc"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Length",
+                  "value": "0"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:30:16 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:30:17.927Z",
+              "body": null
+            }
+          ]
+        },
+        {
+          "name": "Delete forbidden (wrong owner)",
+          "id": "0ea3235e-fbd5-47ca-9ab6-1ec24132311f",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Fund-Manager-Id",
+                "value": "{{FUND_MANAGER_ID}}",
+                "type": "text",
+                "uuid": "218103bc-a888-47be-936c-231606479c83"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/portfolio/{{PORTFOLIO_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "{{PORTFOLIO_ID}}"
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "8cbf94b8-e6a6-4708-977d-8b099253e4a9",
+              "name": "Delete forbidden (wrong owner)",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "X-Fund-Manager-Id",
+                    "value": "unauthorized-user",
+                    "type": "text",
+                    "uuid": "218103bc-a888-47be-936c-231606479c83"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/portfolio/{{PORTFOLIO_ID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "portfolio",
+                    "{{PORTFOLIO_ID}}"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Length",
+                  "value": "0"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 01 Mar 2026 20:30:47 GMT"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=60"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "cookie": [],
+              "responseTime": "2026-03-01T20:30:49.215Z",
+              "body": null
+            }
+          ]
+        }
+      ],
+      "id": "4f79b3f6-0093-4132-b98d-837d7eded073"
+    }
+  ]
+}
