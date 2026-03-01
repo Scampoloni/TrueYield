@@ -11,6 +11,7 @@ import ch.zhaw.trueyield.service.PortfolioService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -66,5 +67,15 @@ public class PortfolioController {
         existingPortfolio.setDescription(updateDTO.getDescription());
         Portfolio updatedPortfolio = portfolioRepository.save(existingPortfolio);
         return new ResponseEntity<>(updatedPortfolio, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePortfolio(@PathVariable String id) {
+        Optional<Portfolio> optionalPortfolio = portfolioRepository.findById(id);
+        if (optionalPortfolio.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        portfolioRepository.deleteById(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
