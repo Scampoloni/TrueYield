@@ -1,0 +1,8 @@
+﻿+ copilot-worktree-2026-02-18T11-31-59
+  feature/issue-5-create-portfolio-api
+  feature/issue-6-read-all-portfolios
+* main
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/feature/issue-5-create-portfolio-api
+  remotes/origin/feature/issue-6-read-all-portfolios
+  remotes/origin/main
