@@ -61,4 +61,9 @@ public class PortfolioService {
         Portfolio portfolio = getPortfolioById(id, requestingUserId);
         portfolioRepository.deleteById(id);
     }
+
+    // FK EXISTENCE CHECK
+    public boolean portfolioExists(String id) {
+        return portfolioRepository.existsById(id);
+    }
 }
