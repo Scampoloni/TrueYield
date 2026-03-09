@@ -736,9 +736,9 @@ Die Dokumentation im README.md muss folgende Kapitel enthalten:
 
 ---
 
-## 14. Current Implementation Status (End of Issue #4)
+## 14. Current Implementation Status (End of Issue #11)
 
-Wir haben das gesamte Datenfundament erfolgreich implementiert und verifiziert:
+Issues #1–#11 sind vollständig abgeschlossen:
 
 - **Domain Model:** Alle 5 Kern-Entitäten als MongoDB-DAOs mit Lombok-Annotationen (`@Getter`, `@NoArgsConstructor`, `@RequiredArgsConstructor`, `@NonNull`):
   1. `Portfolio`: Basis für Fondsdaten, enthält `fundManagerId`.
@@ -747,9 +747,17 @@ Wir haben das gesamte Datenfundament erfolgreich implementiert und verifiziert:
   4. `AuditReport`: Zentrales Workflow-Objekt mit `AuditStatus` Enum.
   5. `AuditComment`: Begründungen des Auditors.
 
-- **Repositories:** Für alle Entitäten existieren `MongoRepository`-Interfaces inklusive Derived Queries (z.B. `findByFundManagerId`).
+- **Repositories:** Für alle Entitäten existieren `MongoRepository`-Interfaces inklusive Derived Queries (z.B. `findByFundManagerId`, `findByPortfolioId`).
 
-- **Verification:** Ein Integrationstest (`PortfolioRepositoryTest`) wurde erfolgreich gegen das MongoDB Atlas Cluster ausgeführt.
+- **Portfolio API (vollständig):** Alle CRUD-Endpoints implementiert (POST, GET, GET/{id}, PUT/{id}, DELETE/{id}).
+
+- **Service Layer:** `PortfolioService` mit vollständiger Ownership-Validierung (nur eigene Portfolios zugänglich).
+
+- **Postman:** Portfolio API Collection dokumentiert und verifiziert.
+
+- **Boards:** Explore-, Create- und Evaluate-Boards in README.md integriert (Issue #12).
+
+**Nächste Schritte (Issue #13–#16):** Backend Service-Layer Erweiterungen, State-Transitions für AuditReport, MongoDB Aggregation Dashboard.
 
 ---
 
@@ -768,8 +776,8 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 | #2 | Documentation: Design ER-Model and Use Case Diagram | `design`, `documentation` | ✅ Done |
 | #3 | Backend: Configure MongoDB Atlas Connection | `backend`, `database` | ✅ Done |
 | #4 | Backend: Initial Domain Layer & Repositories | `backend`, `database`, `enhancement` | ✅ Done |
-| #5 | API Endpoint: Create Portfolio (POST) | `api`, `backend`, `enhancement` | 🟡 Ready |
-| #6 | API Endpoint: Read All Portfolios (GET) | `api`, `backend`, `enhancement` | 🟡 Ready |
+| #5 | API Endpoint: Create Portfolio (POST) | `api`, `backend`, `enhancement` | ✅ Done |
+| #6 | API Endpoint: Read All Portfolios (GET) | `api`, `backend`, `enhancement` | ✅ Done |
 
 ---
 
@@ -779,26 +787,25 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #7 | API Endpoint: Get Portfolio by ID (GET) | `api`, `backend` | ⬜ |
-| #8 | API Endpoint: Update Portfolio (PUT) | `api`, `backend` | ⬜ |
-| #9 | API Endpoint: Delete Portfolio (DELETE) | `api`, `backend` | ⬜ |
-| #10 | Service Layer: PortfolioService mit Ownership-Validierung | `backend`, `security` | ⬜ |
-| #11 | Postman: Portfolio API Collection dokumentieren | `documentation`, `api` | ⬜ |
+| #7 | API Endpoint: Get Portfolio by ID (GET) | `api`, `backend` | ✅ Done |
+| #8 | API Endpoint: Update Portfolio (PUT) | `api`, `backend` | ✅ Done |
+| #9 | API Endpoint: Delete Portfolio (DELETE) | `api`, `backend` | ✅ Done |
+| #10 | Service Layer: PortfolioService mit Ownership-Validierung | `backend`, `security` | ✅ Done |
+| #11 | Postman: Portfolio API Collection dokumentieren | `documentation`, `api` | ✅ Done |
 
 ---
 
-### Iteration 3 (KW 40) — Holding API & Boards-Abgabe
+### Iteration 3 (KW 40) — Service Layer, State Machine & Aggregation
 **Vorlesung:** Backend Teil 2
 **⚠️ Deadline:** Abgabe Explore-/Create-/Evaluate-Boards (pass/fail)
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #12 | Erstelle Explore-, Create- und Evaluate-Boards | `documentation`, `milestone` | ⬜ |
-| #13 | API Endpoint: Create Holding (POST) | `api`, `backend` | ⬜ |
-| #14 | API Endpoint: Read Holdings by Portfolio (GET) | `api`, `backend` | ⬜ |
-| #15 | API Endpoint: Delete Holding (DELETE) | `api`, `backend` | ⬜ |
-| #16 | Service Layer: HoldingService mit Portfolio-Ownership Check | `backend`, `security` | ⬜ |
-| #17 | UI Mockups / Wireframes erstellen | `design`, `documentation` | ⬜ |
+| #12 | Documentation: Create Explore-, Create- and Evaluate-Boards | `documentation`, `milestone` | ✅ Done |
+| #13 | Bug: FK-Validierung beim Erstellen einer Holding | `bug`, `backend` | 🟡 Ready |
+| #14 | Feature: AuditReport assign-Endpoint (PENDING_REVIEW → UNDER_REVIEW) | `enhancement`, `backend` | 🟡 Ready |
+| #15 | Feature: AuditReport complete-Endpoint (UNDER_REVIEW → APPROVED) | `enhancement`, `backend` | 🟡 Ready |
+| #16 | Feature: AuditReport Dashboard Aggregation | `enhancement`, `backend`, `api` | 🟡 Ready |
 
 ---
 
@@ -808,10 +815,10 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #18 | Pitch vorbereiten (3 Min, max 5 Wörter/Slide) | `documentation`, `milestone` | ⬜ |
-| #19 | Global Exception Handler: @ControllerAdvice | `backend`, `enhancement` | ⬜ |
-| #20 | DTO Validation: jakarta.validation für alle Inputs | `backend`, `enhancement` | ⬜ |
-| #21 | Postman: Holding API Collection dokumentieren | `documentation`, `api` | ⬜ |
+| #17 | Pitch vorbereiten (3 Min, max 5 Wörter/Slide) | `documentation`, `milestone` | ⬜ |
+| #18 | Global Exception Handler: @ControllerAdvice | `backend`, `enhancement` | ⬜ |
+| #19 | DTO Validation: jakarta.validation für alle Inputs | `backend`, `enhancement` | ⬜ |
+| #20 | Postman: Holding API Collection dokumentieren | `documentation`, `api` | ⬜ |
 
 ---
 
