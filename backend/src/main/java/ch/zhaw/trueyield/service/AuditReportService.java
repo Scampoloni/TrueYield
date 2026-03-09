@@ -27,4 +27,20 @@ public class AuditReportService {
         report.setAuditorId(dto.getAuditorId());
         return auditReportRepository.save(report);
     }
+
+    public AuditReport completeAuditReport(StateChangeDTO dto) {
+        AuditReport report = auditReportRepository.findById(dto.getAuditReportId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "AuditReport not found: " + dto.getAuditReportId()));
+        if (report.getAuditStatus() != AuditStatus.UNDER_REVIEW) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "AuditReport must be in UNDER_REVIEW state");
+        }
+        if (!dto.getAuditorId().equals(report.getAuditorId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "AuditorId does not match assigned auditor");
+        }
+        report.setAuditStatus(AuditStatus.APPROVED);
+        return auditReportRepository.save(report);
+    }
 }

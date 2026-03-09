@@ -29,4 +29,14 @@ public class AuditReportServiceController {
             return new ResponseEntity<>(e.getStatusCode());
         }
     }
+
+    @PutMapping("/complete")
+    public ResponseEntity<AuditReport> completeAuditReport(@Valid @RequestBody StateChangeDTO dto) {
+        try {
+            AuditReport updated = auditReportService.completeAuditReport(dto);
+            return new ResponseEntity<>(updated, HttpStatus.OK);
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(e.getStatusCode());
+        }
+    }
 }
