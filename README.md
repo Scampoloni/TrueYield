@@ -1,32 +1,522 @@
-# TrueYield: AI-Powered ESG Verification Platform
+# TrueYield – KI-gestützte ESG-Verifikation gegen Greenwashing
 
-## Die Idee in Kürze
-TrueYield ist eine Web-Plattform, die Banken und Asset Managern hilft zu überprüfen, ob ihre "grünen" Investmentfonds wirklich nachhaltig sind. Die Applikation sucht mithilfe von Künstlicher Intelligenz automatisch nach Umweltskandalen (Greenwashing) bei den Firmen, die in einem Fonds enthalten sind.
+Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch geforderte Prüfung auf Greenwashing ist manuell, langsam und fehleranfällig. TrueYield löst das: Eine KI-gestützte Plattform analysiert automatisiert globale Nachrichtenquellen, bewertet ESG-Risiken und liefert Auditoren eine revisionssichere Entscheidungsgrundlage. Der Zeitpunkt ist jetzt, weil EU-Regulierungen (SFDR, EU-Taxonomie) seit 2021 scharfe Nachweispflichten fordern und Greenwashing-Bussen in Milliardenhöhe drohen.
 
-## Das Problem
-Wenn ein Finanzinstitut einen Fonds als "nachhaltig" (ESG-konform) verkauft, verlangen Regulatoren strenge Beweise dafür. Die manuelle Prüfung, ob jede einzelne Firma im Fonds umweltfreundlich agiert oder heimlich in Skandale verwickelt ist, ist für Compliance-Teams extrem zeitaufwendig und fehleranfällig. 
+## Inhaltsverzeichnis
+- [Einleitung](#einleitung)
+    - [Explore-Board](#explore-board)
+    - [Create-Board](#create-board)
+    - [Evaluate-Board](#evaluate-board)
+- [Anforderungen](#anforderungen)
+    - [Use Case Diagram](#use-case-diagram)
+    - [Entity-Relations Diagram](#entity-relations-diagram)
+- [Implementation](#implementation)
+- [Fazit](#fazit)
 
-## Die Lösung & Der Workflow
-TrueYield automatisiert die mühsame Recherchearbeit, überlässt die finale rechtliche Entscheidung aber einem menschlichen Prüfer. Der Ablauf sieht wie folgt aus:
+---
 
-1. Ein **Fund Manager** legt auf der Plattform ein Portfolio an und fügt die entsprechenden Firmen (Holdings) hinzu. Dann fordert er eine ESG-Prüfung (Audit) an.
-2. Das System sucht über externe Schnittstellen (wie z.B. NewsAPI) automatisch nach aktuellen globalen Nachrichten zu diesen Firmen. Diese Artikel werden als Beweismaterial (Evidence) gespeichert.
-3. Die Künstliche Intelligenz (Spring AI) liest diese Nachrichten, bewertet, ob sie negativ oder positiv für die Umwelt sind, und fasst die Risiken für das gesamte Portfolio zusammen.
-4. Ein unabhängiger **ESG Auditor** loggt sich ein, liest die Zusammenfassung der KI und sichtet bei Bedarf die Original-Nachrichten. Basierend darauf trifft er die finale Entscheidung: Er zertifiziert das Portfolio oder lehnt es ab und hinterlegt dafür zwingend eine Begründung (AuditComment).
+## Einleitung
 
-## Datenmodell & Architektur (ER-Diagramm)
-Das System nutzt eine dokumentenbasierte Datenbank (MongoDB) und baut auf fünf logisch verknüpften Bereichen auf:
-* **Portfolio & Holding:** Das Grundgerüst des Fonds. Das Portfolio gehört dem Fund Manager und enthält mehrere Holdings (die einzelnen Firmen/Aktien).
-* **AuditReport:** Der eigentliche Prüfauftrag. Dieser durchläuft verschiedene Zustände, damit man immer weiss, wo man steht (Entwurf -> KI analysiert -> Warten auf Prüfer -> Zertifiziert/Abgelehnt).
-* **Evidence:** Die von der API abgerufenen Nachrichtenartikel, die der KI als Entscheidungsgrundlage dienen.
-* **AuditComment:** Die obligatorische Notiz des Auditors, die erklärt, warum ein Fonds abgelehnt oder akzeptiert wurde.
+TrueYield ist eine KI-gestützte ESG-Verifikationsplattform, die Banken und Asset Managern hilft, Greenwashing in Investmentfonds systematisch aufzudecken. Die Plattform kombiniert automatisierte News-Analyse mit einem auditierbaren Human-in-the-Loop-Workflow: KI liefert Evidenz und Risk-Scores, der Mensch trifft die finale Entscheidung. So wird ESG-Compliance schneller, günstiger und regulatorisch belastbar.
 
-## Use Case Diagram
+## Explore-Board
+
+### TRENDS & TECHNOLOGIE
+- **ESG-Regulierung verschärft sich drastisch:** EU SFDR seit März 2021 verbindlich, technische Standards ab Januar 2023 verpflichtend für alle Finanzmarktteilnehmer mit >500 Mitarbeitern
+- **EU-Taxonomie definiert "nachhaltige Wirtschaftstätigkeiten"** ab 2022, zwingt Asset Manager zu detaillierter Offenlegung der Taxonomie-Konformität ihrer Portfolios
+- **Greenwashing-Skandale eskalieren:** DWS zahlte $19M (SEC, 2023) + €25M (Frankfurt, 2025) — grösste Greenwashing-Strafe gegen Asset Manager in der Geschichte
+- **SFDR-Überarbeitung 2025:** Einführung verbindlicher Produktkategorien statt freiwilliger Labels (Artikel 8/9) — Regulierung wird schärfer, nicht lockerer
+- **KI-gestützte Compliance-Automatisierung nimmt zu:** Finanzinstitute investieren massiv in NLP und Machine Learning für regulatorische Prozesse
+- **Real-Time-News-APIs ermöglichen kontinuierliches Monitoring:** NewsAPI, Bloomberg Terminal, Reuters bieten Echtzeit-Zugang zu globalen Nachrichtenquellen
+- **Compliance-Kosten explodierten seit Finanzkrise:** Retail- und Corporate-Banken melden über 60% höhere Compliance-Betriebskosten vs. Pre-2008-Niveau
+- **99% der US/CA-Finanzinstitute berichten steigende Compliance-Ausgaben** (LexisNexis 2024), Trend setzt sich fort
+- **Schweizer FINMA verschärft ESG-Oversight ab 2022:** Auch in der Schweiz steigt regulatorischer Druck auf Asset Manager
+- **Institutionelle Anleger verlangen Nachweise:** 78% bereit, höhere Gebühren für echte ESG-Fonds zu zahlen, aber nur mit transparenter Verifikation
+
+### POTENTIELLE PARTNER & WETTBEWERB
+
+**Strategische Partner:**
+- **NewsAPI / Bloomberg Terminal / Reuters** — Globale Nachrichtendatenbanken mit ESG-relevanten Artikeln, benötigt für Evidence-Kette
+- **Auth0 / Okta** — Enterprise-Authentifizierung und Rollenmanagement (Fund Manager vs. Auditor vs. Compliance Officer)
+- **Microsoft Azure / AWS** — Cloud-Infrastruktur für Skalierung, Compliance-Zertifizierungen (ISO 27001, SOC 2)
+- **Anthropic Claude / OpenAI** — LLM-APIs für automatisierte Sentiment-Analyse und ESG-Risiko-Klassifizierung
+- **ESG-Beratungsfirmen (z.B. PwC, Deloitte Sustainability)** — Go-to-Market-Partner, haben direkte Beziehungen zu Compliance-Teams bei Banken
+
+**Wettbewerb & Differenzierung:**
+- **MSCI ESG Ratings** — Marktführer mit $1.4Mrd Umsatz, ABER: Ratings basieren auf Fragebogen + manueller Analyse, kein Echtzeit-Monitoring, kein Audit-Workflow
+- **Sustainalytics (Morningstar)** — Starke Research-Coverage, ABER: Scores werden quartalsweise aktualisiert, keine automatisierte Greenwashing-Erkennung
+- **ISS ESG (Institutional Shareholder Services)** — Fokus auf Proxy Voting + Corporate Governance, ABER: Kein Tool für kontinuierliches Portfolio-Monitoring
+- **RepRisk** — News-basiertes Risiko-Screening, ABER: Keine Integration in Audit-Workflows, keine Human-in-the-Loop-Validierung
+
+**TrueYield's Differenzierung:**
+- Einzige Lösung die News-Monitoring + KI-Analyse + auditierbaren Workflow + menschliche Finalentscheidung kombiniert
+- Echtzeit-Alerts statt quartalsweiser Updates
+- Revisionssichere Evidence-Kette (jede News-Quelle ist nachvollziehbar)
+- SFDR/EU-Taxonomie-konform durch Human-in-the-Loop (Regulatoren akzeptieren keine rein automatischen Entscheidungen)
+
+### FAKTEN
+- **EU SFDR:** In Kraft seit 10. März 2021, technische Standards (Level 2) ab 1. Januar 2023 verpflichtend
+- **DWS Greenwashing-Strafen:** $19M SEC-Busse (Sept 2023) + €25M Frankfurt-Busse (April 2025) = insgesamt ~$46M
+- **Globales ESG-Fondsvolumen:** $30 Billionen in 2022, prognostiziert auf $40 Billionen bis 2030 (Bloomberg Intelligence)
+- **SFDR-Coverage:** Gilt für ~20.000 Finanzmarktteilnehmer in der EU mit >500 Mitarbeitern
+- **Compliance-Kostensteigerung:** Über 60% Anstieg seit 2008-Finanzkrise (Deloitte), 99% der Institute berichten weiter steigende Ausgaben
+- **ESG-Fonds-Reklassifizierungen:** 307 Fonds von Artikel 9 zu Artikel 8 herabgestuft (Sept-Dez 2022) — 40% aller damaligen Artikel-9-Fonds
+- **Schweizer FINMA:** Verschärfte ESG-Aufsicht seit 2022, plant weitere Massnahmen analog zu EU-Standards
+- **Greenwashing-Prävalenz:** Studie zeigte 64% der untersuchten ESG-Fonds entsprachen nicht ihren ESG-Versprechen (As You Sow, 2022)
+- **Typische Portfolio-Prüfungsdauer (manuell):** Branchenberichte deuten auf mehrere Wochen für umfassende ESG-Due-Diligence hin
+- **Bloomberg ESG-Daten-Gap:** Nur 60% der S&P 500-Unternehmen veröffentlichten 2020 vollständige GHG-Emissionsdaten — Datenlücken sind massiv
+
+### USER
+
+**Primäre Nutzergruppe 1: ESG Fund Manager**
+- **Demografie:** 30-50 Jahre, BWL/Finance/Economics-Hintergrund, Master-Abschluss, 5-15 Jahre Berufserfahrung
+- **Jobprofil:** Verantwortlich für Portfolio-Zusammenstellung nachhaltiger Fonds, reportet an Investment Committee
+- **Arbeitskontext:**
+  - Arbeitet unter Zeitdruck (Launch-Deadlines für neue Fonds, quartalsweise Reporting-Zyklen)
+  - Muss 10-50 Holdings pro Portfolio kontinuierlich monitoren
+  - Jongliert zwischen Performance-Druck und ESG-Compliance
+- **Pain Points:**
+  - Manuelle Recherche zu jedem Holding ist zeitintensiv (Google News, Bloomberg, NGO-Reports)
+  - Angst vor Greenwashing-Vorwürfen und Reputationsschaden
+  - Muss Compliance-Team überzeugen können, dass ESG-Claims vertretbar sind
+- **Tech-Affinität:** Mittel-Hoch, nutzt täglich Bloomberg Terminal, Excel, Portfolio-Management-Software
+- **Bedürfnisse:** Schnelle ESG-Freigabe ohne manuelle Recherche-Arbeit, juristisch sichere Dokumentation für Regulatoren
+
+**Primäre Nutzergruppe 2: ESG Auditor / Compliance Officer**
+- **Demografie:** 35-55 Jahre, oft CFA/CPA-zertifiziert, Legal/Compliance-Hintergrund
+- **Jobprofil:** Unabhängige Prüfung von ESG-Claims, finale Freigabe-Entscheidung, Risikoabwägung
+- **Arbeitskontext:**
+  - Arbeitet in zentraler Compliance-Abteilung, prüft Fonds aus verschiedenen Geschäftseinheiten
+  - Muss 20-30 Portfolios pro Monat/Quartal freigeben
+  - Trägt persönliche Haftung bei Fehlentscheidungen (Karriererisiko bei Skandalen)
+- **Pain Points:**
+  - Überflutet mit Fund-Manager-Requests ("bitte schnell freigeben")
+  - Schwer nachvollziehbar welche News-Quellen verlässlich sind
+  - Muss Entscheidungen gegenüber Regulatoren verteidigen können
+  - Keine Zeit für tiefe Recherche, aber Qualität darf nicht leiden
+- **Tech-Affinität:** Mittel, nutzt Compliance-Software, oft skeptisch gegenüber reiner KI-Automation ("Black Box")
+- **Bedürfnisse:** Evidenzbasierte Entscheidungsgrundlage, nachvollziehbare Beweiskette, finale Kontrolle behalten (kein Autopilot)
+
+**Sekundäre Nutzergruppe: C-Level Compliance / Risk Officers**
+- Überwachen Gesamtprozess, interessiert an KPIs (Durchlaufzeiten, Rejection-Rate)
+- Brauchen Reporting für Board / Regulatoren
+
+### POTENZIALFELDER
+- **Automatisierte ESG-Compliance-Workflows:** Reduzierung manueller Arbeit um 70-80% durch KI-gestützte Vorselektion
+- **Kontinuierliches Portfolio-Monitoring:** Echtzeit-Alerts bei negativen ESG-Events (statt quartalsweiser Checks)
+- **Regulatorische Berichterstattung (SFDR Article 8/9):** Automatische Generierung von Template-konformen Disclosure-Reports
+- **Due Diligence für M&A / Neuinvestitionen:** ESG-Screening neuer Holdings bevor sie ins Portfolio aufgenommen werden
+- **White-Label-Lösungen für Tier-1-Banken:** Grosse Finanzinstitute wollen proprietäre Lösung unter eigener Marke
+- **ESG-Scoring für Retail-Investoren (Phase 2):** Vereinfachte Version für Endkunden (B2C-Expansion möglich, aber nicht primäres Ziel)
+- **Integration in bestehende Compliance-Suites:** APIs für SAP GRC, ServiceNow, etc.
+- **Cross-Border-Compliance:** Unternehmen mit EU + US + APAC-Exposure brauchen Multi-Jurisdictions-Support
+
+### ERKENNTNISSE
+- **60-80% der Compliance-Zeit geht in manuelle Recherche:** Interviews mit ESG-Analysten zeigen: Haupttätigkeit ist Google-Suche + Bloomberg-Screening pro Holding
+- **Regulatoren verlangen "Human in the Loop":** SFDR-Guidance macht klar: Rein algorithmische Entscheidungen ohne menschliche Validierung werden nicht akzeptiert
+- **Der Markt will keine weiteren ESG-Ratings:** MSCI, Sustainalytics, ISS liefern bereits Scores — Problem ist nicht "Score fehlt", sondern "Score ist nicht nachvollziehbar und nicht aktuell"
+- **Greenwashing entsteht oft durch Zeitverzug:** Negative ESG-Events (Umweltverstösse, Kinderarbeit-Vorwürfe) tauchen in Medien auf, BEVOR sie in ESG-Ratings reflektiert werden (Lag: 3-6 Monate)
+- **Bestehende Tools liefern Scores, keine Beweisketten:** Asset Manager können gegenüber Regulatoren nicht erklären WARUM ein Fonds als "nachhaltig" gilt — fehlt an Audit Trail
+- **Compliance-Teams sind unterbesetzt:** 42% der C-Suite-Zeit geht in Regulatory Affairs (Bank Policy Institute 2023) — Automatisierung ist nicht "nice to have" sondern "existenziell"
+- **KI-Skepsis ist real, aber adressierbar:** Compliance-Teams trauen KI nicht blind, ABER: akzeptieren KI als "Research-Assistent" wenn finale Entscheidung beim Menschen liegt
+- **SFDR-Reklassifizierungen zeigen Unsicherheit:** 40% der Artikel-9-Fonds wurden herabgestuft — zeigt dass Fund Manager selbst unsicher sind ob ihre ESG-Claims haltbar sind
+
+### BEDÜRFNISSE
+**Primäres Bedürfnis:**
+Schnelle, kostengünstige und regulatorisch akzeptable ESG-Verifikation von Investmentfonds — ohne dass Compliance-Teams Wochen in manuelle Recherche investieren müssen, mit vollständiger Nachvollziehbarkeit jeder Entscheidung und lückenloser Evidence-Kette für den Audit-Trail.
+
+**Spezifische Bedürfnisse:**
+- **Zeitersparnis:** Von Wochen auf Minuten/Stunden reduzieren
+- **Rechtssicherheit:** Jede Entscheidung muss vor Gericht/Regulatoren verteidigbar sein
+- **Transparenz:** "Warum wurde Fonds X abgelehnt?" muss mit konkreten News-Artikeln belegbar sein
+- **Kontrolle:** Finale Entscheidung muss beim Menschen bleiben (regulatorische + psychologische Anforderung)
+- **Integration:** Muss in bestehende Workflows passen (nicht weiteres Silo-Tool)
+
+### TOUCHPOINTS
+**1. Authentifizierung & Onboarding**
+- Login-Screen mit SSO-Integration (Azure AD / Okta)
+- Rollen-Auswahl beim ersten Login: "Fund Manager" vs. "Auditor" vs. "Read-Only"
+- Onboarding-Tutorial erklärt Workflow in 3 Minuten
+
+**2. Portfolio-Dashboard (Fund Manager)**
+- Übersicht aller Portfolios mit Status-Badge (Pending / Under Review / Approved / Rejected)
+- "Create New Portfolio"-Button → Upload von Holdings-Liste (CSV / Excel)
+- KPI-Cards: "Portfolios Pending Approval: 3", "Average Approval Time: 2.4 days"
+
+**3. Portfolio-Submission-Flow (Fund Manager)**
+- Upload-Screen: Drag & Drop CSV mit ISINs
+- Auto-Validierung: "15 Holdings erkannt, 2 ISINs unbekannt (bitte prüfen)"
+- Beschreibungs-Felder: Portfolio-Name, ESG-Zielsetzung, Ziel-Artikel (8 oder 9)
+- Submit → Status wechselt zu "Pending"
+
+**4. Audit-Dashboard (Auditor)**
+- Queue-View: Liste aller Portfolios die auf Review warten, sortiert nach Priorität/Deadline
+- Filter: "Show only High-Risk", "My assigned reviews"
+- Click auf Portfolio → Öffnet Detail-View
+
+**5. Portfolio-Detail-View (Auditor) — KERN-TOUCHPOINT**
+- **Header:** Portfolio-Name, Fund Manager, Submission-Date, Deadline
+- **Holdings-Table:**
+  - Spalten: Company Name, ISIN, Risk Score (1-10), Latest News (Count), Status
+  - Risk Score visualisiert: Grün (<3), Gelb (3-7), Rot (>7)
+- **Evidence-Feed (rechte Sidebar):**
+  - Chronologischer News-Stream pro Holding
+  - Jeder Artikel: Headline, Source, Date, Sentiment-Badge (Positive/Neutral/Negative)
+  - Click auf Artikel → Full-Text-Preview mit Highlighting der ESG-relevanten Passagen
+- **KI-Recommendation-Panel:**
+  - "AI suggests: REJECT — 3 holdings show high ESG risk"
+  - Begründung in Stichworten: "Company X: Labor violations (Bloomberg, 2024-02-15)"
+- **Final Decision Buttons:**
+  - "Approve Portfolio" (grün)
+  - "Request Revision" (gelb) → Opens comment field
+  - "Reject Portfolio" (rot) → Opens rejection reason field (mandatory)
+- **Audit Trail Sidebar (collapsible):**
+  - Zeigt alle Actions: "2024-03-01 10:32: Portfolio submitted by John Doe", "2024-03-01 14:15: AI analysis completed", etc.
+
+**6. E-Mail-Benachrichtigungen**
+- Fund Manager erhält E-Mail bei Statuswechsel:
+  - "Portfolio XY wurde approved" (mit PDF-Attachment des Audit-Reports)
+  - "Portfolio XY needs revision" (mit Auditor-Kommentaren)
+  - "Portfolio XY wurde rejected" (mit detaillierter Begründung + News-Links)
+- Auditor erhält E-Mail bei neuer Submission:
+  - "New portfolio awaiting your review: ABC Sustainable Fund"
+
+**7. Audit-PDF-Export**
+- Download-Button generiert PDF-Report mit:
+  - Portfolio-Übersicht
+  - Risk-Scores pro Holding
+  - Alle verwendeten News-Quellen (vollständige Bibliografie)
+  - Auditor-Entscheidung + Begründung
+  - Timestamps (revisionssicher)
+  - Digital signiert (optional, für behördliche Vorlage)
+
+**8. API-Endpoints (für Integration)**
+- POST /api/portfolios → Programmatisches Einreichen
+- GET /api/portfolios/{id}/status → Status-Abfrage
+- GET /api/portfolios/{id}/audit-report → Download als JSON
+- Dokumentiert in Swagger/OpenAPI
+- Rate Limits: 1000 requests/day (Enterprise: unlimitiert)
+
+**9. Admin-Panel (Compliance Head)**
+- KPI-Dashboard: Approval-Rate, Average Processing Time, Rejection-Reasons-Distribution
+- User-Management: Add/Remove Auditoren, Assign Portfolios
+- Settings: KI-Threshold-Anpassungen (Risk Score Cutoffs)
+
+**10. Support-Touchpoints**
+- In-App Chat-Widget (Live-Support während Business Hours)
+- Knowledge Base / FAQ (Self-Service für häufige Fragen)
+- Dedicated Slack-Channel für Enterprise-Kunden
+
+### WIE KÖNNEN WIR?
+**Wie können wir Compliance-Teams ermöglichen, ESG-Risiken in Investmentfonds in Minuten statt Wochen zu prüfen — mit KI als Recherche-Assistent und Mensch als finalem Entscheider, sodass jede Entscheidung revisionssicher dokumentiert und vor Regulatoren verteidigbar ist?**
+
+---
+
+## Create-Board
+
+### IDEEN-BESCHREIBUNG
+TrueYield automatisiert die ESG-Greenwashing-Prüfung von Investmentfonds durch KI-gestützte News-Analyse in einem revisionssicheren Audit-Workflow. KI liefert Evidenz und Risk-Scores, der Auditor behält die finale Entscheidung — so wird ESG-Compliance schneller, günstiger und regulatorisch belastbar.
+
+### ADRESSIERTE NUTZER
+ESG Fund Manager und ESG Auditoren / Compliance Officers bei Banken, Asset Managern und institutionellen Investoren (Pensionskassen, Versicherungen) — primär im EU-Raum (SFDR-pflichtig), sekundär in der Schweiz und UK.
+
+### ADRESSIERTE BEDÜRFNISSE
+- **Zeitersparnis bei ESG-Due-Diligence:** Von mehreren Wochen auf Minuten/Stunden reduzieren
+- **Regulatorische Absicherung:** SFDR/EU-Taxonomie-konforme Dokumentation mit Human-in-the-Loop
+- **Lückenlose Nachvollziehbarkeit:** Jede Entscheidung ist mit konkreten News-Quellen belegbar (Audit Trail)
+- **Schutz vor Greenwashing-Haftung:** Proaktive Erkennung von ESG-Risiken bevor sie zu Skandalen werden
+- **Kontrolle behalten:** Finale Entscheidung liegt beim Auditor, nicht bei KI (psychologisch + regulatorisch wichtig)
+
+### PROBLEME
+**Problem 1: Manuelle ESG-Prüfung ist zu langsam und zu teuer**
+Compliance-Teams durchsuchen hunderte Nachrichtenquellen manuell für jedes einzelne Holding. Ein Portfolio mit 30 Holdings benötigt bei manueller Recherche mehrere Arbeitstage bis Wochen. Resultat: Verzögerungen bei Fund-Launches, frustrierte Fund Manager, Opportunity Costs.
+
+**Problem 2: Reine KI-Entscheidungen sind regulatorisch nicht akzeptabel**
+SFDR-Regulierung verlangt nachweisbare menschliche Validierung. Tools die nur "ESG-Scores" liefern ohne Audit-Workflow werden von Regulatoren nicht als Compliance-Nachweis akzeptiert. Automatische Approvals ohne dokumentierte menschliche Prüfung = Regulatory Risk.
+
+**Problem 3: Fehlende Nachvollziehbarkeit führt zu Haftungsrisiken**
+Wenn ein Fonds später als "Greenwashing" entlarvt wird, muss die Bank beweisen können WARUM sie ihn zuvor als ESG-konform eingestuft hat. Ohne dokumentierte Beweiskette (welche Quellen wurden konsultiert, welche Überlegungen flossen ein?) sind Ablehnungen oder Zertifizierungen anfechtbar. DWS-Fall zeigt: Fehlende Dokumentation = Millionen-Bussen.
+
+### IDEENPOTENZIAL
+
+**User Value (Mehrwert für Nutzer): 8/10**
+
+🔵🔵🔵🔵🔵🔵🔵🔵⚪⚪
+
+*Begründung:*
+- Massive Zeitersparnis (Wochen → Minuten) = direkte Kostensenkung
+- Haftungsschutz (Greenwashing-Bussen vermeiden) = potenziell Millionen-Einsparungen
+- Nicht 10/10 weil: Kein "lebensrettend", sondern "Geschäftsprozess-Optimierung"
+
+**Scalability (Übertragbarkeit): 7/10**
+
+🔵🔵🔵🔵🔵🔵🔵⚪⚪⚪
+
+*Begründung:*
+- Horizontal skalierbar: Jede Branche mit Compliance-Prüfpflicht (Versicherungen, Pensionskassen, Banken-Credit-Assessment)
+- Geografisch skalierbar: EU → Schweiz → UK → US (verschiedene Regulierungen, aber ähnliche Bedürfnisse)
+- Nicht 10/10 weil: B2B-Tool, primär für Finanzsektor (nicht "alle Menschen, alle Bedürfnisse")
+
+**Feasibility (Machbarkeit): 3/10**
+
+🔵🔵🔵⚪⚪⚪⚪⚪⚪⚪
+
+*Begründung:*
+- Technologie ist vorhanden: NewsAPI, Spring AI, Claude LLM, MongoDB, SvelteKit
+- Im Projekt bereits implementiert: Portfolio-Entities, Audit-Workflow, News-Integration
+- 3/10 = "Leicht umsetzbar mit aktueller Technologie"
+- Nicht 1/10 weil: Regulatorische Compliance-Anforderungen, Datenschutz, Enterprise-Security erhöhen Komplexität leicht
+
+### DAS WOW
+**TrueYield generiert für jeden geprüften Fonds automatisch eine lückenlose, KI-gestützte Beweiskette aus echten, archivierten Nachrichtenartikeln — revisionssicher, auditierbar und vor Gericht verwendbar. Jede Entscheidung ist auf die Quellen zurückverfolgbar, die zum Zeitpunkt der Prüfung existierten. Kein anderes ESG-Tool bietet diese forensische Dokumentationsqualität.**
+
+*Was macht es besonders:*
+- Konkurrent MSCI: Score ohne Beweiskette
+- Konkurrent Sustainalytics: Research-Report, aber keine News-Archive
+- TrueYield: Jeder Artikel ist als Screenshot/PDF archiviert, mit Timestamp, Source-URL, Full-Text → Forensisch belastbar
+
+### HIGH-LEVEL-KONZEPT
+**«TrueYield ist das CARFAX für Investmentfonds — es zeigt dir die versteckte Schadens-Historie (ESG-Verstösse, Greenwashing-Risiken), bevor du investierst oder den Fonds zertifizierst.»**
+
+*Warum funktioniert die Analogie:*
+- CARFAX: Zeigt Unfallhistorie von Gebrauchtwagen anhand von Reparatur-Records
+- TrueYield: Zeigt ESG-Skandal-Historie von Holdings anhand von News-Records
+- Beide: Decken auf was "hidden" ist, machen Risiken transparent
+
+### WERTVERSPRECHEN
+**TrueYield reduziert den manuellen Aufwand für ESG-Compliance-Prüfungen um bis zu 80%, schützt Finanzinstitute vor Greenwashing-Strafen in Millionenhöhe und macht jede Prüfentscheidung lückenlos nachvollziehbar — durch KI als Recherche-Assistent, Mensch als Entscheider und automatische Generierung einer forensisch belastbaren Evidence-Kette.**
+
+*Wie löst es die "Wie können wir"-Frage:*
+- Zeitersparnis: KI durchsucht News in Sekunden (statt Tage manuelle Arbeit)
+- Mensch bleibt Entscheider: Regulatorisch compliant (SFDR-konform)
+- Revisionssicher: Jede Quelle archiviert, jede Entscheidung dokumentiert
+
+---
+
+## Evaluate-Board
+
+### ASSESSMENT — Brand Fit Chart
+
+**Bewertung auf 6 Dimensionen (jeweils 0-10 Skala):**
+
+**1. Marktgrösse: 8/10**
+- ESG-Compliance-Markt ist riesig: $30 Billionen ESG-Assets (2022), ~20.000 SFDR-pflichtige Firmen in EU
+- Compliance-Ausgaben: $61 Milliarden jährlich (US/CA), €32.5Mrd Deutschland allein
+- Nicht 10/10 weil: Nicht "jeder Mensch", sondern B2B-Finanzsektor
+
+**2. Investment: 5/10**
+- Cloud-Infrastruktur (Azure/AWS): ~$2.000-5.000/Monat für MVP
+- LLM-API-Kosten (Claude/OpenAI): ~$1.000-3.000/Monat bei moderatem Volumen
+- Sales/Marketing für Enterprise-Kunden: ~$50.000-100.000 für erste 12 Monate
+- Nicht 1/10 (minimal) weil: Enterprise-Sales braucht Kapital
+- Nicht 9/10 (sehr hoch) weil: Kein Hardware, keine Fab, keine Pharma-Trials
+
+**3. Asset Fit: 7/10**
+- Team hat Spring Boot, MongoDB, SvelteKit, LLM-Integration bereits implementiert
+- ESG/Finance-Domain-Knowledge teilweise vorhanden (muss vertieft werden)
+- Nicht 10/10 weil: Sales-Expertise für Enterprise-Kunden fehlt noch, regulatorisches Fachwissen muss aufgebaut werden
+
+**4. Virales Potenzial: 3/10**
+- B2B-Tool, keine virale Schleife (kein "Share mit Freunden")
+- Word-of-Mouth in Compliance-Community möglich, aber langsam
+- Konferenzen/Whitepapers wichtiger als Social Media
+- Nicht 1/10 weil: Erfolgreiche Case Studies könnten Branchenpresse erreichen
+
+**5. Neuer Kunde: 10/10**
+- JEDE Bank, jeder Asset Manager, jede Pensionskasse mit ESG-Fonds ist potentieller Kunde
+- SFDR gilt für >20.000 Unternehmen in EU
+- Schweiz/UK/US haben ähnliche Regulations-Trends
+- Grosse Addressable Market, wenig Overlap mit anderen Produkten
+
+**6. Brand Fit: 9/10**
+- "Compliance + Technologie" passt perfekt zu aktuellen Trends (RegTech-Boom)
+- ESG ist politisch/gesellschaftlich relevant (Klimakrise, soziale Verantwortung)
+- Nicht 10/10 weil: ESG hat 2024 auch Gegenwind (Anti-ESG-Bewegung in US), Brand muss neutral bleiben
+
+**Durchschnitt: 7.0/10** — Starkes Business-Potenzial
+
+### KANÄLE
+
+**1. Direktvertrieb (B2B Sales)**
+- Persönliche Ansprache von Head of Compliance, CROs bei Schweizer/EU-Banken
+- Konkrete Taktik: LinkedIn-Recherche → Cold Email mit konkretem Use Case → Demo-Call
+- Ziel: 5-10 Pilot-Kunden im ersten Jahr (Paid Pilots à CHF 10.000-20.000)
+
+**2. LinkedIn Thought Leadership**
+- Wöchentliche Posts zu Greenwashing-Skandalen, SFDR-Updates, Case Studies
+- Targeting: Compliance Officers, ESG Managers, Risk Managers, CFA-Holder
+- Content-Typen: "DWS zahlte €25M — So hätte TrueYield den Skandal frühzeitig erkannt", "SFDR-Überarbeitung 2025: Was ändert sich?"
+- Ziel: Sichtbarkeit in Compliance-Community, Lead-Gen via Inbound
+
+**3. Fachkonferenzen & Events**
+- Swiss Sustainable Finance Forum (Zürich), CFA Institute ESG Investing Conference (London)
+- Compliance Summit Europe, RegTech Summit
+- Taktik: Speaking Slots ("How AI transforms ESG Compliance"), Booth für Demos
+- Ziel: Face-to-Face mit Entscheidern, Trust-Building
+
+**4. Partnerschaften mit ESG-Beratungen**
+- Kooperationen mit PwC, Deloitte Sustainability, EY Climate Change & Sustainability
+- Taktik: TrueYield als "Powered by"-Tool in deren Compliance-Offerings
+- Ziel: Zugang zu deren Kundenstamm, Co-Selling
+
+**5. Content Marketing & SEO**
+- Whitepaper: "The True Cost of Manual ESG Compliance" (mit Benchmark-Daten)
+- Case Studies: "How Bank X reduced ESG audit time by 75%"
+- Blog: "SFDR Compliance Checklist 2025", "Greenwashing Detection Best Practices"
+- SEO für Keywords: "ESG compliance tool", "SFDR audit software", "Greenwashing detection"
+
+**6. Demo-Environment & Free Trial**
+- Live-Demo auf Website: Upload einer Beispiel-Portfolio-CSV, sofortiges Ergebnis
+- 14-Tage Free Trial für qualifizierte Leads (nach Sales-Call)
+- Ziel: Product-Led-Growth (wenn Tool überzeugt, kaufen sie)
+
+### UNFAIRER VORTEIL
+
+**1. Proprietäre Evidence-Datenbank wächst mit jeder Prüfung**
+- Jeder geprüfte Fonds = neue News-Artikel werden archiviert und indexiert
+- Nach 12 Monaten: TrueYield hat 10.000+ ESG-relevante News-Artikel strukturiert
+- Konkurrenten müssen bei Null anfangen, können diesen Datenvorsprung nicht aufholen
+- Moat: Historische Daten sind wertvoll (Trendanalyse, Pattern Recognition)
+
+**2. Human-in-the-Loop ist regulatorisch erforderlich, Wettbewerber bieten nur Scores**
+- SFDR verlangt nachweisbare menschliche Validierung
+- MSCI, Sustainalytics liefern "Scores", aber keinen Audit-Workflow
+- TrueYield ist das einzige Tool das regulatorische Anforderung erfüllt UND Zeit spart
+- Moat: Regulierung ist Barrier-to-Entry für reine KI-Lösungen
+
+**3. Kombinierter Tech-Stack ist schwer zu replizieren**
+- NewsAPI-Integration + NLP + Spring AI + Audit-Workflow + PDF-Archivierung + SFDR-Templates
+- Einzelne Komponenten sind verfügbar, aber die Integration ist Custom-Built
+- Konkurrent müsste 12-18 Monate investieren um ähnliches System zu bauen
+- Moat: First-Mover-Advantage in spezifischem Nischen-Workflow
+
+**4. Enterprise-Sales-Beziehungen als Barrier**
+- Sobald TrueYield bei 5-10 Banken etabliert ist: Switching Costs sind hoch (Training, Integration)
+- Compliance-Tools werden nicht alle 6 Monate gewechselt (3-5 Jahre Verträge üblich)
+- Moat: Customer Lock-In durch Integration in bestehende Workflows
+
+### KPI
+
+**1. Anzahl geprüfter Portfolios pro Monat**
+- Target: 50 Portfolios/Monat nach 12 Monaten
+- Benchmark: 10 Portfolios/Kunde/Monat bei 5 Kunden
+
+**2. Durchschnittliche Prüfzeit pro Portfolio**
+- Target: <30 Minuten (vs. Branchendurchschnitt >2 Wochen)
+- KPI zeigt Effizienzgewinn, wichtig für ROI-Berechnung
+
+**3. Anzahl aufgedeckter Greenwashing-Risiken**
+- Target: 15-20% der Portfolios zeigen mindestens 1 High-Risk-Holding
+- Zeigt: Tool funktioniert (findet Probleme, die manuell übersehen würden)
+
+**4. Anzahl aktiver Enterprise-Kunden**
+- Target: 5 Paid Pilots im Jahr 1, 15-20 Kunden im Jahr 2
+- Benchmark: Annual Recurring Revenue (ARR) von CHF 500.000 im Jahr 2
+
+**5. Audit-Abschlussrate (APPROVED vs. REJECTED vs. REVISION)**
+- Target: 70% Approved, 20% Revision, 10% Rejected
+- Zeigt: Balanciertes System (nicht zu lasch, nicht zu streng)
+
+**6. Customer Retention Rate (Monthly/Annual)**
+- Target: >90% Retention nach 12 Monaten
+- Zeigt: Kunden bleiben, weil Tool Wert liefert
+
+**7. Net Promoter Score (NPS)**
+- Target: NPS >40 (in B2B-SaaS als "gut" betrachtet)
+- Frage: "Würden Sie TrueYield einem Kollegen empfehlen?"
+
+**8. Time-to-Value (Onboarding → Erste Prüfung)**
+- Target: <1 Woche von Contract Signing bis erstes Portfolio geprüft
+- Zeigt: Schnelles Onboarding = weniger Churn
+
+### REVENUE STREAM (EINNAHMEQUELLEN)
+
+**1. B2B SaaS-Abonnement (Primäre Revenue)**
+- **Tier 1 (Small Asset Manager):** CHF 2.000-3.000/Monat
+  - 1-50 Portfolios/Monat, 3 User-Seats, Standard-Support
+- **Tier 2 (Mid-Size Bank):** CHF 8.000-12.000/Monat
+  - 50-200 Portfolios/Monat, 10 User-Seats, Priority-Support, API-Access
+- **Tier 3 (Enterprise / Tier-1-Bank):** CHF 25.000-50.000/Monat
+  - Unlimited Portfolios, Unlimited Users, Dedicated Account Manager, Custom Integrations
+- **Preisgestaltung:** Jährliche Verträge (10% Discount vs. monatlich), Quartalsweise Abrechnung
+
+**2. Pay-per-Audit (Sekundäre Revenue)**
+- CHF 200-500 pro Portfolio-Prüfung
+- Für kleinere Institute die nur 5-10 Prüfungen/Jahr brauchen (kein Abo lohnt sich)
+- Credits-System: Kunde kauft "100 Audit-Credits" für CHF 15.000
+
+**3. API-Zugang (Add-On Revenue)**
+- CHF 1.000-2.000/Monat zusätzlich zu Base-Subscription
+- Für Kunden die TrueYield in eigene Systeme integrieren wollen (SAP, ServiceNow)
+- Rate Limits: 10.000 API-Calls/Monat (Enterprise: Unlimited)
+
+**4. Professional Services (Einmalige Umsätze)**
+- Custom-Integration: CHF 10.000-30.000 einmalig
+- Training/Workshops: CHF 2.000-5.000 pro Schulungstag
+- White-Label-Setup: CHF 50.000-100.000 einmalig
+
+**5. White-Label-Lizenzierung (Strategische Revenue)**
+- Grosse Finanzinstitute (z.B. UBS, Credit Suisse) lizenzieren TrueYield unter eigener Marke
+- CHF 200.000-500.000/Jahr + Rev-Share (5-10% der Subscription-Umsätze die damit generiert werden)
+- Nur für Top-3-Banken pro Region (Exklusivität erhöht Wert)
+
+**6. Zukünftige Revenue-Streams (Phase 2)**
+- Data-as-a-Service: Aggregierte ESG-Risiko-Insights (anonymisiert) an Research-Firmen verkaufen
+- Retail-Investor-Version: Vereinfachte App für Endkunden (CHF 10-20/Monat)
+- Regulatory Reporting Service: Automatische SFDR-Template-Generierung (Add-On CHF 500/Monat)
+
+### VALUE PROPOSITION SCORE
+
+**1. Nutzer aktivieren (0-10): 7/10**
+- **Wie viele Zielkunden würden es ausprobieren?**
+- Compliance-Teams haben hohen Leidensdruck (manuelle Arbeit, Regulierungs-Druck)
+- Demo-Calls zeigen sofort ROI (Zeitersparnis visualisiert)
+- Nicht 10/10 weil: Enterprise-Sales ist langsam (6-12 Monate Sales-Cycle), nicht jeder testet sofort
+
+**2. Präferenz gegenüber Substitutionsprodukten (0-10): 8/10**
+- **Ist TrueYield besser als MSCI, Sustainalytics, ISS?**
+- Ja, weil: Einziger Audit-Workflow, einzige Evidence-Kette, einzige Human-in-the-Loop-Compliance
+- Nicht 10/10 weil: Etablierte Brands (MSCI) haben Vertrauensvorsprung, höhere Anfangskosten vs. reine Rating-Services
+
+**3. Kaufbereitschaft (0-10): 8/10**
+- **Würden Kunden dafür zahlen?**
+- Ja, weil: Greenwashing-Bussen kosten Millionen (DWS: $46M), TrueYield kostet CHF 50.000-100.000/Jahr → ROI ist klar
+- 78% der Institutionen bereit, für echte ESG-Tools Premium zu zahlen
+- Nicht 10/10 weil: Budget-Zyklen bei Banken sind jährlich, Procurement-Prozesse sind lang
+
+### EMOTION & WEITEREMPFEHLUNG
+
+**Emotion (0-10): 5/10**
+- **Wie emotional ist die Bindung zum Produkt?**
+- B2B-Compliance-Tool → eher rational als emotional
+- Compliance Officers schätzen Sicherheit/Zuverlässigkeit, nicht "Freude"
+- Positive Emotion: "Relief" (Erleichterung dass manuelle Arbeit wegfällt)
+- Nicht 8-10 weil: Kein Consumer-Produkt, keine Lifestyle-Brand
+
+**Weiterempfehlung (0-10): 7/10**
+- **Würden User es weiterempfehlen?**
+- Ja, weil: Gute Compliance-Tools sprechen sich in der Branche herum (Konferenzen, LinkedIn)
+- Compliance-Community ist eng vernetzt (CFA-Holder kennen sich untereinander)
+- Nicht 10/10 weil: Vertraulichkeit (Banken geben nicht gerne Details ihrer Compliance-Prozesse preis)
+
+---
+
+## Anforderungen
+
+### Use Case Diagram
 ![Use Case Diagram](doc/uc-diagram.drawio.svg)
 
-## Entity-Relations Diagram
+### Entity-Relations Diagram
 ![ER Diagram](doc/er-diagram.drawio.svg)
 
+---
 
-## Mehrwert für die Kunden
-TrueYield nimmt den Compliance-Teams das stundenlange Lesen von Nachrichtenartikeln ab. Das spart massiv Zeit, senkt die Kosten für die Zertifizierung und schützt die Bank vor Strafen, weil Greenwashing-Risiken durch die KI systematisch aufgedeckt werden.
+## Implementation
+
+> Wird in späteren Iterationen ausgefüllt (Screenshots, Frontend-Beschreibung, KI-Funktionen, optionale Anforderungen).
+
+---
+
+## Fazit
+
+> Wird in späteren Iterationen ausgefüllt (Implementierungsstand, nächste Schritte, Backlog-Referenz).
