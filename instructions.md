@@ -757,7 +757,9 @@ Issues #1–#11 sind vollständig abgeschlossen:
 
 - **Boards:** Explore-, Create- und Evaluate-Boards in README.md integriert (Issue #12).
 
-**Nächste Schritte (Issue #13–#16):** Backend Service-Layer Erweiterungen, State-Transitions für AuditReport, MongoDB Aggregation Dashboard.
+**Abgeschlossen in Sprint 4 (Issues #13–#16):** HoldingService mit FK-Validierung, AuditReport State Machine (PENDING_REVIEW → UNDER_REVIEW → APPROVED), MongoDB Aggregation Dashboard.
+
+**Nächste Schritte (Issues #17–#21):** Pitch-Vorbereitung, Global Exception Handler, DTO Validation, Postman-Dokumentation für Holding + AuditReport Service API.
 
 ---
 
@@ -802,10 +804,10 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
 | #12 | Documentation: Create Explore-, Create- and Evaluate-Boards | `documentation`, `milestone` | ✅ Done |
-| #13 | Bug: FK-Validierung beim Erstellen einer Holding | `bug`, `backend` | 🟡 Ready |
-| #14 | Feature: AuditReport assign-Endpoint (PENDING_REVIEW → UNDER_REVIEW) | `enhancement`, `backend` | 🟡 Ready |
-| #15 | Feature: AuditReport complete-Endpoint (UNDER_REVIEW → APPROVED) | `enhancement`, `backend` | 🟡 Ready |
-| #16 | Feature: AuditReport Dashboard Aggregation | `enhancement`, `backend`, `api` | 🟡 Ready |
+| #13 | Bug: FK-Validierung beim Erstellen einer Holding | `bug`, `backend` | ✅ Done |
+| #14 | Feature: AuditReport assign-Endpoint (PENDING_REVIEW → UNDER_REVIEW) | `enhancement`, `backend` | ✅ Done |
+| #15 | Feature: AuditReport complete-Endpoint (UNDER_REVIEW → APPROVED) | `enhancement`, `backend` | ✅ Done |
+| #16 | Feature: AuditReport Dashboard Aggregation | `enhancement`, `backend`, `api` | ✅ Done |
 
 ---
 
@@ -819,6 +821,7 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 | #18 | Global Exception Handler: @ControllerAdvice | `backend`, `enhancement` | ⬜ |
 | #19 | DTO Validation: jakarta.validation für alle Inputs | `backend`, `enhancement` | ⬜ |
 | #20 | Postman: Holding API Collection dokumentieren | `documentation`, `api` | ⬜ |
+| #21 | Postman: AuditReport Service API Collection dokumentieren | `documentation`, `api` | ⬜ |
 
 ---
 
@@ -863,17 +866,19 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 ---
 
-### Iteration 8 (KW 45) — Backend Tests Teil 2 & State Machine
+### Iteration 8 (KW 45) — Backend Tests Teil 2 & AuditComment
 **Vorlesung:** Backend Tests: Mocking, Service Testing, CI
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #37 | AuditReport: State Machine Implementierung im Service | `backend`, `enhancement` | ⬜ |
-| #38 | AuditReport: API Endpoints (Create, Trigger, Review) | `api`, `backend` | ⬜ |
+| #37 | AuditReport: State Machine Implementierung im Service | `backend`, `enhancement` | ✅ Done |
+| #38 | AuditReport: Service API Endpoints (assign, complete, dashboard) | `api`, `backend` | ✅ Done |
 | #39 | AuditComment: API Endpoints (Create, Read by Report) | `api`, `backend` | ⬜ |
 | #40 | Unit Tests: AuditReportService (State Transitions) | `testing`, `backend` | ⬜ |
 | #41 | Integration Tests: Rollenbasierter Zugriff (Fund Manager vs Auditor) | `testing`, `security` | ⬜ |
 | #42 | GitHub Actions: CI Pipeline (Build + Test auf Push) | `chore`, `deployment` | ⬜ |
+
+> **Hinweis:** #37 und #38 wurden vorgezogen und in Sprint 4 (Issues #13–#16) implementiert. AuditReportService (assignAuditReport, completeAuditReport, getAuditReportDashboard) und AuditReportServiceController (PUT /assign, PUT /complete, GET /dashboard) sind vollständig vorhanden. Fokus dieser Iteration liegt auf AuditComment (#39) und Tests (#40–#42).
 
 ---
 
