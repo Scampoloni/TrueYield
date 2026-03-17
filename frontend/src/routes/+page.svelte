@@ -11,33 +11,32 @@
       const res = await fetch('http://localhost:8080/api/portfolio');
       if (!res.ok) throw new Error('Failed');
       portfolios = await res.json();
-    } catch (e) {
+    } catch {
       error = 'Could not load portfolios.';
     } finally {
       loading = false;
     }
   });
 
-  function getStatusClass(status: string) {
-    if (!status) return 'badge-active';
-    const s = status.toLowerCase().replace('_', '-');
-    if (s.includes('review')) return 'badge-under-review';
-    if (s.includes('pending')) return 'badge-pending';
-    if (s.includes('approved')) return 'badge-approved';
-    if (s.includes('rejected')) return 'badge-rejected';
+  function statusClass(s: string) {
+    if (!s) return 'badge-active';
+    if (s.includes('REVIEW')) return 'badge-under-review';
+    if (s.includes('PENDING')) return 'badge-pending';
+    if (s.includes('APPROVED')) return 'badge-approved';
+    if (s.includes('REJECTED')) return 'badge-rejected';
     return 'badge-active';
   }
 
-  function getStatusLabel(status: string) {
-    if (!status) return 'Active';
-    return status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  function statusLabel(s: string) {
+    if (!s) return 'Active';
+    return s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 </script>
 
 <div class="topbar">
   <div>
     <div class="page-title">Dashboard</div>
-    <div class="page-subtitle">{new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}</div>
+    <div class="page-subtitle">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
   </div>
   <div class="topbar-actions">
     <button class="btn btn-ghost">Export</button>
@@ -73,7 +72,7 @@
       {#if loading}
         <div class="skeleton" style="width:40px;height:30px;margin-bottom:6px;"></div>
       {:else}
-        <div class="stat-value green">{portfolios.reduce((sum, p) => sum + (p.holdings?.length || 0), 0)}</div>
+        <div class="stat-value green">{portfolios.reduce((s, p) => s + (p.holdings?.length || 0), 0)}</div>
       {/if}
       <div class="stat-label">Total Holdings</div>
       <div class="stat-change positive">↑ Across all portfolios</div>
@@ -90,7 +89,9 @@
       {#if loading}
         <div class="skeleton" style="width:40px;height:30px;margin-bottom:6px;"></div>
       {:else}
-        <div class="stat-value amber">{portfolios.filter(p => p.auditReports?.some((r: any) => r.auditStatus === 'PENDING_REVIEW')).length}</div>
+        <div class="stat-value amber">
+          {portfolios.filter(p => p.auditReports?.some((r: any) => r.auditStatus === 'PENDING_REVIEW')).length}
+        </div>
       {/if}
       <div class="stat-label">Pending Audits</div>
       <div class="stat-change warning">Requires attention</div>
@@ -104,10 +105,10 @@
 
   <div class="table-wrap">
     {#if loading}
-      <div style="padding: 24px;">
-        {#each [1,2,3] as _}
-          <div class="skeleton" style="height:20px;margin-bottom:16px;border-radius:6px;"></div>
-        {/each}
+      <div class="skeleton-pad">
+        <div class="skeleton" style="height:20px;"></div>
+        <div class="skeleton" style="height:20px;"></div>
+        <div class="skeleton" style="height:20px;"></div>
       </div>
     {:else if error}
       <div class="empty-state">
@@ -134,19 +135,19 @@
             <th>Portfolio</th>
             <th>Description</th>
             <th>Status</th>
-            <th style="text-align:right">Holdings</th>
+            <th class="text-right">Holdings</th>
           </tr>
         </thead>
         <tbody>
           {#each portfolios.slice(0, 5) as p}
-            <tr onclick={() => goto(`/portfolios/${p.id}`)} style="cursor:pointer">
+            <tr class="tr-clickable" onclick={() => goto(`/portfolios/${p.id}`)}>
               <td>
                 <div class="cell-primary">{p.name}</div>
                 <div class="cell-sub">{p.fundManagerId}</div>
               </td>
               <td>{p.description || '—'}</td>
-              <td><span class="badge {getStatusClass(p.auditStatus)}">{getStatusLabel(p.auditStatus)}</span></td>
-              <td style="text-align:right">
+              <td><span class="badge {statusClass(p.auditStatus)}">{statusLabel(p.auditStatus)}</span></td>
+              <td class="text-right">
                 <a href="/portfolios/{p.id}" class="cell-link">View →</a>
               </td>
             </tr>

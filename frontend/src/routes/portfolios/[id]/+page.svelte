@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import ConfirmModal from '$lib/components/ConfirmModal.svelte';
   import { showToast } from '$lib/toast';
 
-  const id = $page.params.id;
+  const id = page.params.id;
   let portfolio: any = $state(null);
   let holdings: any[] = $state([]);
   let loading = $state(true);
@@ -25,7 +25,13 @@
 
 {#if loading}
   <div class="topbar"><div><div class="skeleton" style="width:200px;height:20px;"></div></div></div>
-  <div class="content">{#each [1,2,3] as _}<div class="skeleton" style="height:16px;margin-bottom:14px;"></div>{/each}</div>
+  <div class="content">
+    <div class="skeleton-pad">
+      <div class="skeleton" style="height:16px;"></div>
+      <div class="skeleton" style="height:16px;"></div>
+      <div class="skeleton" style="height:16px;"></div>
+    </div>
+  </div>
 {:else if portfolio}
   <div class="topbar">
     <div>
@@ -50,7 +56,9 @@
       {#if holdings.length === 0}
         <div class="empty-state">
           <div class="empty-icon">
-            <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            </svg>
           </div>
           <div class="empty-title">No holdings yet</div>
           <div class="empty-desc">Add your first holding to this portfolio to begin ESG analysis.</div>
@@ -73,9 +81,9 @@
                 <td><div class="cell-primary">{h.symbol}</div></td>
                 <td>{h.name || '—'}</td>
                 <td><span class="cell-mono">{h.isin || '—'}</span></td>
-                <td>{h.weightPercent ? h.weightPercent + '%' : '—'}</td>
+                <td>{h.weightPercent != null ? h.weightPercent + '%' : '—'}</td>
                 <td>
-                  <div style="display:flex;gap:8px;justify-content:flex-end;">
+                  <div class="row-actions">
                     <a href="/portfolios/{id}/holdings/{h.id}" class="cell-link">View Evidence →</a>
                     <button class="btn btn-danger btn-sm" onclick={() => deleteHoldingTarget = h}>Delete</button>
                   </div>
@@ -95,7 +103,11 @@
     description="Remove {deleteHoldingTarget.symbol} from this portfolio? This cannot be undone."
     confirmLabel="Delete"
     danger={true}
-    onConfirm={() => { holdings = holdings.filter(h => h.id !== deleteHoldingTarget.id); showToast('Holding removed'); deleteHoldingTarget = null; }}
+    onConfirm={() => {
+      holdings = holdings.filter(h => h.id !== deleteHoldingTarget.id);
+      showToast('Holding removed');
+      deleteHoldingTarget = null;
+    }}
     onCancel={() => deleteHoldingTarget = null}
   />
 {/if}
