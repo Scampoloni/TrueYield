@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
 
-  const portfolioId = $page.params.id;
-  const holdingId = $page.params.hid;
+  const portfolioId = page.params.id;
+  const holdingId = page.params.hid;
 
   const evidence = [
     { headline: 'Company announces breakthrough in sustainable fuel production', source: 'Financial Times', date: 'Mar 15, 2026', risk: 15, sentiment: 'Positive' },

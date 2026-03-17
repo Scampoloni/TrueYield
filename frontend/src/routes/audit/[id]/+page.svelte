@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { onMount } from 'svelte';
   import ConfirmModal from '$lib/components/ConfirmModal.svelte';
   import { showToast } from '$lib/toast';
 
-  const reportId = $page.params.id;
+  const reportId = page.params.id;
   let report: any = $state(null);
   let loading = $state(true);
   let comment = $state('');
@@ -14,8 +14,9 @@
   let openAccordions: Record<string, boolean> = $state({});
 
   const AUDITOR_ID = 'temp-auditor-123';
+  const STATES = ['DRAFT', 'AI_ANALYZING', 'PENDING_REVIEW', 'UNDER_REVIEW', 'APPROVED'];
 
-  onMount(async () => {
+  onMount(() => {
     report = {
       id: reportId,
       reportId: 'AUD-2026-001',
@@ -23,7 +24,7 @@
       status: 'UNDER_REVIEW',
       aiSummary: 'This portfolio demonstrates strong ESG compliance across renewable energy holdings. Neste Oyj shows positive sentiment with sustainable aviation fuel initiatives, though some concerns exist regarding palm oil sourcing. Orsted maintains excellent renewable energy credentials with minimal risk factors. Overall risk assessment: Low to Moderate.',
       holdings: [
-        { symbol: 'NESTE', name: 'Neste Oyj', evidenceCount: 3 },
+        { symbol: 'NESTE',  name: 'Neste Oyj',  evidenceCount: 3 },
         { symbol: 'ORSTED', name: 'Orsted A/S', evidenceCount: 2 },
       ],
       comments: [
@@ -34,15 +35,12 @@
     loading = false;
   });
 
-  const STATES = ['DRAFT', 'AI_ANALYZING', 'PENDING_REVIEW', 'UNDER_REVIEW', 'APPROVED'];
-
   function stateIndex(s: string) { return STATES.indexOf(s); }
 
   function statusClass(s: string) {
-    if (s === 'APPROVED') return 'approved';
-    if (s === 'REJECTED') return 'rejected';
+    if (s === 'APPROVED')     return 'approved';
+    if (s === 'REJECTED')     return 'rejected';
     if (s === 'UNDER_REVIEW') return 'under-review';
-    if (s === 'PENDING_REVIEW') return 'pending';
     return 'pending';
   }
 
@@ -57,7 +55,9 @@
       });
       report = { ...report, status: 'UNDER_REVIEW' };
       showToast('Report assigned to you');
-    } catch { showToast('Failed to assign report', 'error'); }
+    } catch {
+      showToast('Failed to assign report', 'error');
+    }
   }
 
   async function approveReport() {
@@ -67,10 +67,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ auditReportId: reportId, auditorId: AUDITOR_ID })
       });
-      report = { ...report, status: 'APPROVED', approvedAt: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) };
+      report = { ...report, status: 'APPROVED', approvedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) };
       showApproveModal = false;
       showToast('Report approved successfully');
-    } catch { showToast('Failed to approve report', 'error'); }
+    } catch {
+      showToast('Failed to approve report', 'error');
+    }
   }
 
   function rejectReport() {
@@ -83,7 +85,11 @@
     if (!comment.trim()) return;
     submitting = true;
     await new Promise(r => setTimeout(r, 400));
-    report = { ...report, comments: [...report.comments, { author: AUDITOR_ID, date: new Date().toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit' }), text: comment }] };
+    report = { ...report, comments: [...report.comments, {
+      author: AUDITOR_ID,
+      date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      text: comment
+    }]};
     comment = '';
     submitting = false;
     showToast('Comment added');
@@ -92,7 +98,14 @@
 
 {#if loading}
   <div class="topbar"><div><div class="skeleton" style="width:240px;height:22px;"></div></div></div>
-  <div class="content">{#each [1,2,3,4] as _}<div class="skeleton" style="height:16px;margin-bottom:14px;"></div>{/each}</div>
+  <div class="content">
+    <div class="skeleton-pad">
+      <div class="skeleton" style="height:16px;"></div>
+      <div class="skeleton" style="height:16px;"></div>
+      <div class="skeleton" style="height:16px;"></div>
+      <div class="skeleton" style="height:16px;"></div>
+    </div>
+  </div>
 {:else if report}
   <div class="topbar">
     <div>
@@ -104,7 +117,7 @@
         <button class="btn btn-primary" onclick={assignReport}>Assign to me</button>
       {:else if report.status === 'UNDER_REVIEW'}
         <button class="btn btn-success" onclick={() => showApproveModal = true}>Approve</button>
-        <button class="btn btn-danger" onclick={() => showRejectModal = true}>Reject</button>
+        <button class="btn btn-danger"  onclick={() => showRejectModal = true}>Reject</button>
       {/if}
     </div>
   </div>
@@ -112,11 +125,11 @@
   <div class="content">
     <span class="status-large {statusClass(report.status)}">{statusLabel(report.status)}</span>
 
-    <div class="table-wrap" style="padding:24px 28px;margin-bottom:24px;">
+    <div class="table-wrap table-section">
       <div class="timeline">
         {#each STATES as state, i}
-          {@const idx = stateIndex(report.status)}
-          {@const isDone = i < idx}
+          {@const idx       = stateIndex(report.status)}
+          {@const isDone    = i < idx}
           {@const isCurrent = i === idx}
           <div class="timeline-step">
             <div class="timeline-dot" class:done={isDone} class:current={isCurrent}></div>
@@ -144,7 +157,7 @@
       </div>
     </div>
 
-    <div class="section-hd" style="margin-bottom:0">
+    <div class="section-hd">
       <span class="section-title">Holdings & Evidence</span>
     </div>
     <div class="table-wrap" style="margin-bottom:24px;">
@@ -158,12 +171,12 @@
             </div>
             <div class="accordion-meta">
               <span>{h.evidenceCount} evidence item{h.evidenceCount !== 1 ? 's' : ''}</span>
-              <span style="transition:transform 0.2s;display:inline-block;transform:{openAccordions[h.symbol] ? 'rotate(180deg)' : 'rotate(0)'}">&#8595;</span>
+              <span style="display:inline-block;transition:transform 0.2s;transform:{openAccordions[h.symbol] ? 'rotate(180deg)' : 'rotate(0deg)'}">&#8595;</span>
             </div>
           </div>
           {#if openAccordions[h.symbol]}
-            <div class="accordion-body" style="padding:0 0 16px;color:var(--text2);font-size:12px;">
-              Sample evidence: Positive sustainability metrics identified for {h.name}.
+            <div class="accordion-body">
+              Positive sustainability metrics identified for {h.name}.
             </div>
           {/if}
         </div>
@@ -173,7 +186,7 @@
     <div class="section-hd">
       <span class="section-title">Comments</span>
     </div>
-    <div class="table-wrap" style="padding:20px 24px;">
+    <div class="table-wrap table-comments">
       {#each report.comments as c}
         <div class="comment">
           <div class="comment-header">
@@ -185,13 +198,9 @@
       {/each}
 
       {#if report.status === 'APPROVED'}
-        <div style="text-align:center;padding:12px 0;font-size:12px;color:var(--green);font-weight:600;">
-          Approved on {report.approvedAt}
-        </div>
+        <div class="status-msg success">Approved on {report.approvedAt}</div>
       {:else if report.status === 'REJECTED'}
-        <div style="text-align:center;padding:12px 0;font-size:12px;color:var(--red);font-weight:600;">
-          Report rejected
-        </div>
+        <div class="status-msg error">Report rejected</div>
       {:else}
         <div class="comment-form">
           <textarea class="comment-textarea" bind:value={comment} placeholder="Add a comment..."></textarea>

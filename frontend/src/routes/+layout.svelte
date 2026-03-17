@@ -1,6 +1,6 @@
 <script lang="ts">
   import '../app.css';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import Toast from '$lib/components/Toast.svelte';
   import type { Snippet } from 'svelte';
@@ -9,7 +9,7 @@
   let role = $state('fund-manager');
 
   function isActive(path: string) {
-    return $page.url.pathname === path || $page.url.pathname.startsWith(path + '/');
+    return page.url.pathname === path || page.url.pathname.startsWith(path + '/');
   }
 </script>
 
@@ -22,7 +22,7 @@
 
     <div class="sidebar-section">
       <span class="sidebar-label">Overview</span>
-      <a href="/" class="nav-item" class:active={$page.url.pathname === '/'}>
+      <a href="/" class="nav-item" class:active={page.url.pathname === '/'}>
         <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
           <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.5" fill="currentColor" opacity="0.9"/>
           <rect x="9" y="1.5" width="5.5" height="5.5" rx="1.5" fill="currentColor" opacity="0.4"/>

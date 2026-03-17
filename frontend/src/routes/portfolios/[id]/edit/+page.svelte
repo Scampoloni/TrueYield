@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import ConfirmModal from '$lib/components/ConfirmModal.svelte';
   import { showToast } from '$lib/toast';
 
-  const id = $page.params.id;
+  const id = page.params.id;
   let name = $state('');
   let description = $state('');
   let loading = $state(true);
@@ -15,7 +15,8 @@
   onMount(async () => {
     const res = await fetch(`http://localhost:8080/api/portfolio/${id}`);
     const p = await res.json();
-    name = p.name; description = p.description || '';
+    name = p.name;
+    description = p.description || '';
     loading = false;
   });
 
@@ -58,24 +59,30 @@
 
 <div class="content">
   {#if loading}
-    <div class="form-card">{#each [1,2] as _}<div class="skeleton" style="height:40px;margin-bottom:20px;"></div>{/each}</div>
+    <div class="form-card">
+      <div class="skeleton-pad">
+        <div class="skeleton" style="height:40px;"></div>
+        <div class="skeleton" style="height:40px;"></div>
+        <div class="skeleton" style="height:40px;"></div>
+      </div>
+    </div>
   {:else}
     <div class="form-card">
       <div class="form-card-title">Portfolio details</div>
       <div class="form-card-desc">Update the name and description of this portfolio.</div>
       <div class="form-row">
-        <label class="form-label">Portfolio name <span>*</span></label>
-        <input class="form-input" type="text" bind:value={name} />
+        <label class="form-label" for="name">Portfolio name <span>*</span></label>
+        <input id="name" class="form-input" type="text" bind:value={name} />
       </div>
       <div class="form-row">
-        <label class="form-label">Description</label>
-        <textarea class="form-input" bind:value={description}></textarea>
+        <label class="form-label" for="description">Description</label>
+        <textarea id="description" class="form-input" bind:value={description}></textarea>
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;" onclick={save} disabled={saving}>
+      <button class="btn btn-primary btn-block" onclick={save} disabled={saving}>
         {saving ? 'Saving...' : 'Save Changes'}
       </button>
-      <div style="text-align:center;margin-top:16px;">
-        <button onclick={() => showDeleteModal = true} style="background:none;border:none;color:var(--red);font-size:12px;cursor:pointer;font-family:var(--font);">
+      <div class="danger-link-wrap">
+        <button class="danger-link" onclick={() => showDeleteModal = true}>
           Delete this portfolio
         </button>
       </div>

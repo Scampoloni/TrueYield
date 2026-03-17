@@ -471,7 +471,7 @@ textarea.form-input { resize: vertical; min-height: 100px; line-height: 1.6; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 0;
+  padding: 16px 20px;
   cursor: pointer;
   user-select: none;
 }
@@ -479,7 +479,7 @@ textarea.form-input { resize: vertical; min-height: 100px; line-height: 1.6; }
 .accordion-title { font-size: 13px; font-weight: 600; color: var(--text); }
 .accordion-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
 .accordion-meta { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 8px; }
-.accordion-body { padding-bottom: 16px; }
+.accordion-body { padding: 0 20px 16px; color: var(--text2); font-size: 12px; }
 
 /* EVIDENCE CARDS */
 .evidence-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
@@ -618,3 +618,38 @@ textarea.form-input { resize: vertical; min-height: 100px; line-height: 1.6; }
 .status-large.under-review { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(79,142,247,0.2); }
 .status-large.pending { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
 .status-large.rejected { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+
+/* UTILITIES */
+.btn-block { width: 100%; justify-content: center; padding: 11px 16px; }
+.row-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+.text-right { text-align: right; }
+.text-muted { color: var(--text3); }
+.tr-clickable { cursor: pointer; }
+.alert-error {
+  background: var(--red-dim);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 9px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--red);
+  margin-bottom: 20px;
+}
+.skeleton-pad { padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+.danger-link {
+  background: none;
+  border: none;
+  color: var(--red);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.danger-link-wrap { text-align: center; margin-top: 16px; }
+.form-input-symbol { font-family: var(--mono); font-size: 15px; font-weight: 600; letter-spacing: 0.5px; }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.stat-change.info { color: var(--blue); }
+.table-section { padding: 24px; margin-bottom: 24px; }
+.table-comments { padding: 20px 24px; }
+.status-msg { text-align: center; padding: 12px 0; font-size: 12px; font-weight: 600; }
+.status-msg.success { color: var(--green); }
+.status-msg.error { color: var(--red); }
+.accordion-header { padding: 16px 20px; }
