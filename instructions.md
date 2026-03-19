@@ -757,9 +757,9 @@ Issues #1–#11 sind vollständig abgeschlossen:
 
 - **Boards:** Explore-, Create- und Evaluate-Boards in README.md integriert (Issue #12).
 
-**Abgeschlossen in Sprint 4 (Issues #13–#16):** HoldingService mit FK-Validierung, AuditReport State Machine (PENDING_REVIEW → UNDER_REVIEW → APPROVED), MongoDB Aggregation Dashboard.
+**Abgeschlossen in Sprint 4 (Issues #14–#17):** HoldingService mit FK-Validierung, AuditReport State Machine (PENDING_REVIEW → UNDER_REVIEW → APPROVED), MongoDB Aggregation Dashboard.
 
-**Nächste Schritte (Issues #17–#21):** Pitch-Vorbereitung, Global Exception Handler, DTO Validation, Postman-Dokumentation für Holding + AuditReport Service API.
+**Nächste Schritte (Iteration 4 – Issues #18–#23):** Pitch-Vorbereitung (#18), Postman-Dokumentation für Holding + AuditReport Service API (#19, #20), SvelteKit Projekt-Setup + Portfolio-Übersicht + Create-Form (#21–#23). Global Exception Handler (#24) und DTO Validation (#25) folgen in Iteration 5.
 
 ---
 
@@ -803,38 +803,39 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #12 | Documentation: Create Explore-, Create- and Evaluate-Boards | `documentation`, `milestone` | ✅ Done |
-| #13 | Bug: FK-Validierung beim Erstellen einer Holding | `bug`, `backend` | ✅ Done |
-| #14 | Feature: AuditReport assign-Endpoint (PENDING_REVIEW → UNDER_REVIEW) | `enhancement`, `backend` | ✅ Done |
-| #15 | Feature: AuditReport complete-Endpoint (UNDER_REVIEW → APPROVED) | `enhancement`, `backend` | ✅ Done |
-| #16 | Feature: AuditReport Dashboard Aggregation | `enhancement`, `backend`, `api` | ✅ Done |
+| #13 | Documentation: Create Explore-, Create- and Evaluate-Boards | `documentation`, `milestone` | ✅ Done |
+| #14 | Bug: FK-Validierung beim Erstellen einer Holding | `bug`, `backend` | ✅ Done |
+| #15 | Feature: AuditReport assign-Endpoint (PENDING_REVIEW → UNDER_REVIEW) | `enhancement`, `backend` | ✅ Done |
+| #16 | Feature: AuditReport complete-Endpoint (UNDER_REVIEW → APPROVED) | `enhancement`, `backend` | ✅ Done |
+| #17 | Feature: AuditReport Dashboard Aggregation | `enhancement`, `backend`, `api` | ✅ Done |
 
 ---
 
-### Iteration 4 (KW 41) — Pitch-Vorbereitung & Error Handling
-**Vorlesung:** Backend Teil 3
+### Iteration 4 (KW 41) — Pitch, Postman & Frontend-Grundstruktur
+**Vorlesung:** Backend Teil 3 / Frontend Teil 1 (SvelteKit)
 **⚠️ Deadline:** Pitch Probelauf (Präsenzpflicht, pass/fail) + Gegenseitige Board-Beurteilung (pass/fail)
+**📋 Übung 5:** Postman Collection komplett + SvelteKit List & Create View
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #17 | Pitch vorbereiten (3 Min, max 5 Wörter/Slide) | `documentation`, `milestone` | ⬜ |
-| #18 | Global Exception Handler: @ControllerAdvice | `backend`, `enhancement` | ⬜ |
-| #19 | DTO Validation: jakarta.validation für alle Inputs | `backend`, `enhancement` | ⬜ |
-| #20 | Postman: Holding API Collection dokumentieren | `documentation`, `api` | ⬜ |
-| #21 | Postman: AuditReport Service API Collection dokumentieren | `documentation`, `api` | ⬜ |
+| #18 | Pitch vorbereiten (3 Min, max 5 Wörter/Slide) | `documentation`, `milestone` | ⬜ |
+| #19 | Postman: Holding API Collection dokumentieren | `documentation`, `api` | ⬜ |
+| #20 | Postman: AuditReport Service API Collection dokumentieren | `documentation`, `api` | ⬜ |
+| #21 | SvelteKit: Projekt-Setup & Routing-Struktur | `frontend`, `setup` | ⬜ |
+| #22 | SvelteKit: Portfolio-Übersichtsseite (List View) | `frontend`, `enhancement` | ⬜ |
+| #23 | SvelteKit: Portfolio erstellen (Create Form) | `frontend`, `enhancement` | ⬜ |
 
 ---
 
-### Iteration 5 (KW 42) — Frontend Start & Pitch
+### Iteration 5 (KW 42) — Pitch-Abschluss, Error Handling & Frontend-Ausbau
 **Vorlesung:** Frontend Teil 1 (SvelteKit)
 **⚠️ Deadline:** Pitch Semesterprojekt (benotet, 5% Gesamtnote) + Feedback Mitstud. (Präsenzpflicht)
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #22 | SvelteKit: Projekt-Setup & Routing-Struktur | `frontend`, `setup` | ⬜ |
-| #23 | SvelteKit: Portfolio-Übersichtsseite (List View) | `frontend`, `enhancement` | ⬜ |
-| #24 | SvelteKit: Portfolio erstellen (Create Form) | `frontend`, `enhancement` | ⬜ |
-| #25 | SvelteKit: Portfolio-Detailseite mit Holdings | `frontend`, `enhancement` | ⬜ |
+| #24 | Global Exception Handler: @ControllerAdvice | `backend`, `enhancement` | ⬜ |
+| #25 | DTO Validation: jakarta.validation für alle Inputs | `backend`, `enhancement` | ⬜ |
+| #26 | SvelteKit: Portfolio-Detailseite mit Holdings | `frontend`, `enhancement` | ⬜ |
 
 ---
 
@@ -844,12 +845,12 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #26 | Pitch-Deck auf Moodle abgeben | `documentation`, `milestone` | ⬜ |
-| #27 | Auth0: Backend SecurityFilterChain konfigurieren | `backend`, `security` | ⬜ |
-| #28 | Auth0: Frontend Login/Logout Flow | `frontend`, `security` | ⬜ |
-| #29 | Auth0: Rollen-Setup (Fund Manager + ESG Auditor) | `backend`, `security` | ⬜ |
-| #30 | Backend: @PreAuthorize Rollenschutz auf allen Endpoints | `backend`, `security` | ⬜ |
-| #31 | Postman: Auth0 Token-basierte Requests dokumentieren | `documentation`, `api` | ⬜ |
+| #27 | Pitch-Deck auf Moodle abgeben | `documentation`, `milestone` | ⬜ |
+| #28 | Auth0: Backend SecurityFilterChain konfigurieren | `backend`, `security` | ⬜ |
+| #29 | Auth0: Frontend Login/Logout Flow | `frontend`, `security` | ⬜ |
+| #30 | Auth0: Rollen-Setup (Fund Manager + ESG Auditor) | `backend`, `security` | ⬜ |
+| #31 | Backend: @PreAuthorize Rollenschutz auf allen Endpoints | `backend`, `security` | ⬜ |
+| #32 | Postman: Auth0 Token-basierte Requests dokumentieren | `documentation`, `api` | ⬜ |
 
 ---
 
@@ -858,27 +859,25 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #32 | Unit Tests: PortfolioService (Happy Path + Fehler) | `testing`, `backend` | ⬜ |
-| #33 | Unit Tests: HoldingService (Happy Path + Fehler) | `testing`, `backend` | ⬜ |
-| #34 | Integration Tests: Portfolio-Endpoints mit @MockMvc | `testing`, `backend` | ⬜ |
-| #35 | Integration Tests: Holding-Endpoints mit @MockMvc | `testing`, `backend` | ⬜ |
-| #36 | JaCoCo: Maven-Plugin konfigurieren & Badge im README | `testing`, `chore` | ⬜ |
+| #33 | Unit Tests: PortfolioService (Happy Path + Fehler) | `testing`, `backend` | ⬜ |
+| #34 | Unit Tests: HoldingService (Happy Path + Fehler) | `testing`, `backend` | ⬜ |
+| #35 | Integration Tests: Portfolio-Endpoints mit @MockMvc | `testing`, `backend` | ⬜ |
+| #36 | Integration Tests: Holding-Endpoints mit @MockMvc | `testing`, `backend` | ⬜ |
+| #37 | JaCoCo: Maven-Plugin konfigurieren & Badge im README | `testing`, `chore` | ⬜ |
 
 ---
 
 ### Iteration 8 (KW 45) — Backend Tests Teil 2 & AuditComment
 **Vorlesung:** Backend Tests: Mocking, Service Testing, CI
 
+> **Hinweis:** AuditReport State Machine + Service API Endpoints wurden vorgezogen und in Sprint 4 (Issues #14–#17) vollständig implementiert. Fokus dieser Iteration liegt auf AuditComment und Tests.
+
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #37 | AuditReport: State Machine Implementierung im Service | `backend`, `enhancement` | ✅ Done |
-| #38 | AuditReport: Service API Endpoints (assign, complete, dashboard) | `api`, `backend` | ✅ Done |
-| #39 | AuditComment: API Endpoints (Create, Read by Report) | `api`, `backend` | ⬜ |
-| #40 | Unit Tests: AuditReportService (State Transitions) | `testing`, `backend` | ⬜ |
-| #41 | Integration Tests: Rollenbasierter Zugriff (Fund Manager vs Auditor) | `testing`, `security` | ⬜ |
-| #42 | GitHub Actions: CI Pipeline (Build + Test auf Push) | `chore`, `deployment` | ⬜ |
-
-> **Hinweis:** #37 und #38 wurden vorgezogen und in Sprint 4 (Issues #13–#16) implementiert. AuditReportService (assignAuditReport, completeAuditReport, getAuditReportDashboard) und AuditReportServiceController (PUT /assign, PUT /complete, GET /dashboard) sind vollständig vorhanden. Fokus dieser Iteration liegt auf AuditComment (#39) und Tests (#40–#42).
+| #38 | AuditComment: API Endpoints (Create, Read by Report) | `api`, `backend` | ⬜ |
+| #39 | Unit Tests: AuditReportService (State Transitions) | `testing`, `backend` | ⬜ |
+| #40 | Integration Tests: Rollenbasierter Zugriff (Fund Manager vs Auditor) | `testing`, `security` | ⬜ |
+| #41 | GitHub Actions: CI Pipeline (Build + Test auf Push) | `chore`, `deployment` | ⬜ |
 
 ---
 
@@ -887,11 +886,11 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #43 | SvelteKit: Audit-Dashboard für ESG Auditor | `frontend`, `enhancement` | ⬜ |
-| #44 | SvelteKit: AuditReport-Detailansicht mit Evidence | `frontend`, `enhancement` | ⬜ |
-| #45 | SvelteKit: AuditComment-Formular (Auditor-Begründung) | `frontend`, `enhancement` | ⬜ |
-| #46 | SvelteKit: Rollenbasierte Navigation (Fund Manager vs Auditor) | `frontend`, `security` | ⬜ |
-| #47 | Postman: Audit & Comment API Collection dokumentieren | `documentation`, `api` | ⬜ |
+| #42 | SvelteKit: Audit-Dashboard für ESG Auditor | `frontend`, `enhancement` | ⬜ |
+| #43 | SvelteKit: AuditReport-Detailansicht mit Evidence | `frontend`, `enhancement` | ⬜ |
+| #44 | SvelteKit: AuditComment-Formular (Auditor-Begründung) | `frontend`, `enhancement` | ⬜ |
+| #45 | SvelteKit: Rollenbasierte Navigation (Fund Manager vs Auditor) | `frontend`, `security` | ⬜ |
+| #46 | Postman: Audit & Comment API Collection dokumentieren | `documentation`, `api` | ⬜ |
 
 ---
 
@@ -900,11 +899,11 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #48 | Dockerfile erstellen (Multi-Stage Build) | `deployment`, `chore` | ⬜ |
-| #49 | Azure App Service: Deployment konfigurieren | `deployment`, `chore` | ⬜ |
-| #50 | GitHub Actions: CD Pipeline (Build → Push → Deploy) | `deployment`, `chore` | ⬜ |
-| #51 | Coverage-Optimierung: Lücken schliessen (Ziel 90%) | `testing`, `backend` | ⬜ |
-| #52 | SonarQube: Projekt aufsetzen & CI-Integration | `testing`, `quality` | ⬜ |
+| #47 | Dockerfile erstellen (Multi-Stage Build) | `deployment`, `chore` | ⬜ |
+| #48 | Azure App Service: Deployment konfigurieren | `deployment`, `chore` | ⬜ |
+| #49 | GitHub Actions: CD Pipeline (Build → Push → Deploy) | `deployment`, `chore` | ⬜ |
+| #50 | Coverage-Optimierung: Lücken schliessen (Ziel 90%) | `testing`, `backend` | ⬜ |
+| #51 | SonarQube: Projekt aufsetzen & CI-Integration | `testing`, `quality` | ⬜ |
 
 ---
 
@@ -914,12 +913,12 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #53 | Feedback zum Projektstand vorbereiten & durchführen | `documentation`, `milestone` | ⬜ |
-| #54 | Spring AI: Service für News-Analyse konfigurieren | `backend`, `ai` | ⬜ |
-| #55 | Spring AI: Evidence-Generierung aus News-Analyse | `backend`, `ai` | ⬜ |
-| #56 | Spring AI: KI-Zusammenfassung für AuditReport | `backend`, `ai` | ⬜ |
-| #57 | Evidence: API Endpoints (Read by Holding) | `api`, `backend` | ⬜ |
-| #58 | Unit Tests: AI Service + Evidence Service | `testing`, `ai` | ⬜ |
+| #52 | Feedback zum Projektstand vorbereiten & durchführen | `documentation`, `milestone` | ⬜ |
+| #53 | Spring AI: Service für News-Analyse konfigurieren | `backend`, `ai` | ⬜ |
+| #54 | Spring AI: Evidence-Generierung aus News-Analyse | `backend`, `ai` | ⬜ |
+| #55 | Spring AI: KI-Zusammenfassung für AuditReport | `backend`, `ai` | ⬜ |
+| #56 | Evidence: API Endpoints (Read by Holding) | `api`, `backend` | ⬜ |
+| #57 | Unit Tests: AI Service + Evidence Service | `testing`, `ai` | ⬜ |
 
 ---
 
@@ -928,11 +927,11 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #59 | Externe News-API: Integration (z.B. NewsAPI, GNews) | `backend`, `integration` | ⬜ |
-| #60 | SvelteKit: Evidence-Ansicht in Portfolio-Detail | `frontend`, `enhancement` | ⬜ |
-| #61 | SonarQube: Code Smells & Bugs beheben | `quality`, `chore` | ⬜ |
-| #62 | Postman: Evidence & AI Endpoints dokumentieren | `documentation`, `api` | ⬜ |
-| #63 | SvelteKit: Loading States & Error Handling | `frontend`, `enhancement` | ⬜ |
+| #58 | Externe News-API: Integration (z.B. NewsAPI, GNews) | `backend`, `integration` | ⬜ |
+| #59 | SvelteKit: Evidence-Ansicht in Portfolio-Detail | `frontend`, `enhancement` | ⬜ |
+| #60 | SonarQube: Code Smells & Bugs beheben | `quality`, `chore` | ⬜ |
+| #61 | Postman: Evidence & AI Endpoints dokumentieren | `documentation`, `api` | ⬜ |
+| #62 | SvelteKit: Loading States & Error Handling | `frontend`, `enhancement` | ⬜ |
 
 ---
 
@@ -941,12 +940,12 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #64 | Cypress: Setup & Konfiguration | `testing`, `frontend` | ⬜ |
-| #65 | Cypress: E2E Test – Portfolio CRUD Flow (Fund Manager) | `testing`, `frontend` | ⬜ |
-| #66 | Cypress: E2E Test – Audit Workflow (Auditor) | `testing`, `frontend` | ⬜ |
-| #67 | Cypress: E2E Test – Login & Rollenbasierter Zugriff | `testing`, `security` | ⬜ |
-| #68 | Postman: Vollständige API-Dokumentation veröffentlichen | `documentation`, `api` | ⬜ |
-| #69 | README.md: Implementation-Kapitel mit Screenshots | `documentation` | ⬜ |
+| #63 | Cypress: E2E Test – Portfolio CRUD Flow (Fund Manager) | `testing`, `frontend` | ⬜ |
+| #64 | Cypress: E2E Test – Login & Rollenbasierter Zugriff | `testing`, `security` | ⬜ |
+| #65 | Postman: Vollständige API-Dokumentation veröffentlichen | `documentation`, `api` | ⬜ |
+| #66 | README.md: Implementation-Kapitel mit Screenshots | `documentation` | ⬜ |
+| #67 | Cypress: Setup & Konfiguration | `testing`, `frontend` | ⬜ |
+| #68 | Cypress: E2E Test – Audit Workflow (Auditor) | `testing`, `frontend` | ⬜ |
 
 ---
 
@@ -956,12 +955,12 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #70 | README.md: Finalisierung aller Kapitel (Einleitung, Anforderungen, Fazit) | `documentation`, `milestone` | ⬜ |
-| #71 | README.md: JaCoCo Badge + SonarQube Badge einbinden | `documentation`, `chore` | ⬜ |
-| #72 | Dozenten als Collaborators hinzufügen (Repo + Project) | `chore`, `milestone` | ⬜ |
-| #73 | Abgabe-Artefakte erstellen (Zips, URLs, Credentials) | `chore`, `milestone` | ⬜ |
-| #74 | Smoke Test: Deployment auf Azure verifizieren | `testing`, `deployment` | ⬜ |
-| #75 | Abschlusspräsentation vorbereiten (10 Min + Live-Demo) | `documentation`, `milestone` | ⬜ |
+| #69 | README.md: Finalisierung aller Kapitel (Einleitung, Anforderungen, Fazit) | `documentation`, `milestone` | ⬜ |
+| #70 | README.md: JaCoCo Badge + SonarQube Badge einbinden | `documentation`, `chore` | ⬜ |
+| #71 | Dozenten als Collaborators hinzufügen (Repo + Project) | `chore`, `milestone` | ⬜ |
+| #72 | Abgabe-Artefakte erstellen (Zips, URLs, Credentials) | `chore`, `milestone` | ⬜ |
+| #73 | Smoke Test: Deployment auf Azure verifizieren | `testing`, `deployment` | ⬜ |
+| #74 | Abschlusspräsentation vorbereiten (10 Min + Live-Demo) | `documentation`, `milestone` | ⬜ |
 
 ---
 
