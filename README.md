@@ -506,6 +506,122 @@ Wenn ein Fonds später als "Greenwashing" entlarvt wird, muss die Bank beweisen 
 ### Use Case Diagram
 ![Use Case Diagram](doc/uc-diagram.drawio.svg)
 
+### Use-Case Beschreibungen
+
+---
+
+**UC-01: System Login durchführen**
+
+| Attribut | Beschreibung |
+|---|---|
+| **Akteur** | Fund Manager, ESG Auditor |
+| **Vorbedingung** | Benutzer hat ein gültiges Auth0-Konto mit zugewiesener Rolle |
+| **Normalablauf** | 1. Benutzer öffnet die Applikation im Browser. 2. System leitet auf Auth0-Login-Seite weiter. 3. Benutzer gibt E-Mail und Passwort ein. 4. Auth0 authentifiziert den Benutzer und gibt ein JWT-Token zurück. 5. System liest die Rolle aus dem Token (`Fund Manager` oder `ESG Auditor`). 6. Benutzer wird auf die rollenspezifische Startseite weitergeleitet. |
+| **Ausnahmen** | Falsches Passwort → Auth0 zeigt Fehlermeldung. Kein Konto vorhanden → Weiterleitung zur Registrierung. |
+| **Nachbedingung** | Benutzer ist authentifiziert und kann auf die ihm zugewiesenen Funktionen zugreifen. |
+
+---
+
+**UC-02: Portfolio & Holdings verwalten (CRUD)**
+
+| Attribut | Beschreibung |
+|---|---|
+| **Akteur** | Fund Manager |
+| **Vorbedingung** | Fund Manager ist eingeloggt (UC-01). |
+| **Normalablauf** | 1. Fund Manager navigiert zur Portfolio-Übersichtsseite. 2. System zeigt alle Portfolios des eingeloggten Fund Managers. 3. Fund Manager erstellt ein neues Portfolio (Name, Beschreibung, ESG-Zielartikel). 4. System speichert das Portfolio mit der `fundManagerId` des Benutzers. 5. Fund Manager öffnet ein Portfolio und fügt Holdings hinzu (Symbol, ISIN, Name, Gewichtung). 6. Fund Manager kann bestehende Portfolios bearbeiten oder löschen. |
+| **Ausnahmen** | Pflichtfelder fehlen → Validierungsfehler (400). Zugriff auf fremdes Portfolio → 403 Forbidden. Portfolio nicht gefunden → 404 Not Found. |
+| **Nachbedingung** | Portfolio mit Holdings ist in der Datenbank gespeichert und dem Fund Manager zugeordnet. |
+
+---
+
+**UC-03: ESG Audit anfordern**
+
+| Attribut | Beschreibung |
+|---|---|
+| **Akteur** | Fund Manager |
+| **Vorbedingung** | Fund Manager ist eingeloggt (UC-01). Mindestens ein Portfolio mit Holdings existiert. |
+| **Normalablauf** | 1. Fund Manager wählt ein Portfolio aus. 2. Fund Manager löst die ESG-Prüfung aus. 3. System erstellt einen `AuditReport` mit Status `PENDING_REVIEW`. 4. System (KI/API) ruft automatisch Marktdaten und News zu den Holdings ab (UC-07). 5. System generiert Risiko-Score und KI-Zusammenfassung (UC-08). 6. System speichert Evidence-Einträge pro Holding (UC-09). 7. AuditReport ist in der globalen Audit-Queue sichtbar. |
+| **Ausnahmen** | News-API nicht erreichbar → Audit-Report wird ohne Evidence erstellt, Fehlermeldung im Log. |
+| **Nachbedingung** | `AuditReport` hat Status `PENDING_REVIEW` und liegt in der Audit-Queue für ESG Auditoren bereit. |
+
+---
+
+**UC-04: Globale Audit-Queue einsehen**
+
+| Attribut | Beschreibung |
+|---|---|
+| **Akteur** | ESG Auditor |
+| **Vorbedingung** | ESG Auditor ist eingeloggt (UC-01). |
+| **Normalablauf** | 1. ESG Auditor navigiert zum Audit-Dashboard. 2. System zeigt alle AuditReports mit Status `PENDING_REVIEW` und `UNDER_REVIEW`. 3. ESG Auditor kann nach Portfolio, Status oder Datum filtern. 4. ESG Auditor wählt einen Report aus und öffnet die Detailansicht (UC-05). |
+| **Ausnahmen** | Keine offenen AuditReports → leere Liste mit Hinweis. |
+| **Nachbedingung** | ESG Auditor hat einen Überblick über alle offenen ESG-Prüfungen. |
+
+---
+
+**UC-05: Audit-Report im Detail ansehen**
+
+| Attribut | Beschreibung |
+|---|---|
+| **Akteur** | Fund Manager, ESG Auditor |
+| **Vorbedingung** | AuditReport existiert. Benutzer ist eingeloggt (UC-01). |
+| **Normalablauf** | 1. Benutzer öffnet einen AuditReport aus der Übersicht oder Queue. 2. System zeigt Portfolio-Informationen, Holdings-Liste, KI-Zusammenfassung und Risiko-Score. 3. System zeigt alle gespeicherten Evidence-Einträge (News-Artikel mit Quelle, Datum, Sentiment). 4. ESG Auditor sieht zusätzlich die Entscheidungs-Buttons. |
+| **Ausnahmen** | Report nicht gefunden → 404. Kein Zugriff auf fremdes Portfolio → 403. |
+| **Nachbedingung** | Benutzer hat vollständigen Überblick über den ESG-Prüfstand inkl. Evidence-Kette. |
+
+---
+
+**UC-06: KI-Befunde validieren & Audit zertifizieren oder ablehnen**
+
+| Attribut | Beschreibung |
+|---|---|
+| **Akteur** | ESG Auditor |
+| **Vorbedingung** | ESG Auditor ist eingeloggt (UC-01). AuditReport hat Status `PENDING_REVIEW`. |
+| **Normalablauf** | 1. ESG Auditor öffnet einen AuditReport aus der Queue (UC-04). 2. ESG Auditor prüft die KI-Zusammenfassung, Risiko-Scores und Evidence-Einträge. 3. ESG Auditor übernimmt den Report: `PUT /api/service/auditreport/assign` → Status wechselt auf `UNDER_REVIEW`. 4. ESG Auditor erfasst eine Begründung (AuditComment) mit Entscheidung. 5. ESG Auditor schliesst den Report ab: `PUT /api/service/auditreport/complete` → Status wechselt auf `APPROVED` oder `REJECTED`. |
+| **Ausnahmen** | Report nicht mehr im Status `PENDING_REVIEW` → 400 Bad Request. Falscher Auditor versucht abzuschliessen → 400 (auditorId mismatch). |
+| **Nachbedingung** | AuditReport hat finalen Status (`APPROVED` oder `REJECTED`). Begründung ist als AuditComment gespeichert und für den Fund Manager einsehbar. |
+
+---
+
+**UC-07: Marktdaten und News abrufen** *(System)*
+
+| Attribut | Beschreibung |
+|---|---|
+| **Akteur** | System (KI/API) |
+| **Vorbedingung** | ESG Audit wurde angefordert (UC-03). Holdings mit Symbolen/ISINs sind vorhanden. |
+| **Normalablauf** | 1. System liest die Holdings des Portfolios. 2. System ruft pro Holding aktuelle ESG-relevante News über externe News-API (NewsAPI/GNews) ab. 3. System filtert Artikel nach Relevanz (ESG-Keywords: Umwelt, Soziales, Governance). 4. System übergibt die Artikel an die KI (UC-08). |
+| **Ausnahmen** | News-API Rate Limit erreicht → Wartezeit oder Fallback auf gecachte Daten. Keine Artikel gefunden → Evidence-Liste bleibt leer. |
+| **Nachbedingung** | Rohde News-Daten liegen vor und sind zur KI-Analyse bereit. |
+
+---
+
+**UC-08: Risiko-Score & KI-Zusammenfassung generieren** *(System)*
+
+| Attribut | Beschreibung |
+|---|---|
+| **Akteur** | System (KI/API) |
+| **Vorbedingung** | News-Daten wurden abgerufen (UC-07). Spring AI ist konfiguriert. |
+| **Normalablauf** | 1. System übergibt News-Texte an Spring AI (Claude/OpenAI). 2. KI-Modell bewertet die ESG-Risiken (Sentiment, Schweregrad, Kategorie). 3. KI generiert eine strukturierte Zusammenfassung (`aiRiskSummary`) pro AuditReport. 4. System berechnet einen aggregierten Risiko-Score. 5. System speichert Summary und Score im AuditReport. |
+| **Ausnahmen** | KI-API nicht erreichbar → Fehlermeldung, AuditReport bleibt ohne Summary. |
+| **Nachbedingung** | `AuditReport.aiRiskSummary` enthält die KI-generierte Einschätzung. |
+
+---
+
+**UC-09: Evidence speichern** *(System)*
+
+| Attribut | Beschreibung |
+|---|---|
+| **Akteur** | System (KI/API) |
+| **Vorbedingung** | News-Artikel wurden abgerufen und von KI bewertet. |
+| **Normalablauf** | 1. System erstellt pro relevantem News-Artikel einen `Evidence`-Eintrag. 2. Evidence enthält: Headline, Quellenname, URL, Datum, Sentiment-Bewertung, ESG-Kategorie, Holding-Referenz. 3. System speichert alle Evidence-Einträge in der MongoDB-Collection `evidence`. |
+| **Ausnahmen** | Duplikate (gleiche URL) → bestehender Eintrag wird nicht überschrieben. |
+| **Nachbedingung** | Lückenlose, archivierte Evidence-Kette ist für Auditoren und Regulatoren einsehbar. |
+
+---
+
+### UI-Mockup
+
+Interaktiver Klick-Prototyp (Figma): [https://bear-disco-77148489.figma.site/](https://bear-disco-77148489.figma.site/)
+
 ### Entity-Relations Diagram
 ![ER Diagram](doc/er-diagram.drawio.svg)
 
@@ -513,7 +629,37 @@ Wenn ein Fonds später als "Greenwashing" entlarvt wird, muss die Bank beweisen 
 
 ## Implementation
 
-> Wird in späteren Iterationen ausgefüllt (Screenshots, Frontend-Beschreibung, KI-Funktionen, optionale Anforderungen).
+### API-Dokumentation
+
+Vollständige Postman-Dokumentation (veröffentlicht): [https://documenter.getpostman.com/view/52455816/2sBXihpXqi](https://documenter.getpostman.com/view/52455816/2sBXihpXqi)
+
+Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
+
+#### Portfolio (`/api/portfolio`)
+
+| Methode | Endpoint | Beschreibung | Status Codes |
+|---|---|---|---|
+| POST | `/api/portfolio` | Portfolio erstellen | 201 Created, 400 Bad Request |
+| GET | `/api/portfolio` | Alle Portfolios abrufen | 200 OK |
+| GET | `/api/portfolio/{id}` | Portfolio by ID | 200 OK, 403 Forbidden, 404 Not Found |
+| PUT | `/api/portfolio/{id}` | Portfolio aktualisieren | 200 OK, 404 Not Found |
+| DELETE | `/api/portfolio/{id}` | Portfolio löschen | 204 No Content, 403 Forbidden, 404 Not Found |
+
+#### Holding (`/api/holding`)
+
+| Methode | Endpoint | Beschreibung | Status Codes |
+|---|---|---|---|
+| POST | `/api/holding` | Holding hinzufügen | 201 Created, 400 Bad Request |
+
+#### AuditReport Service (`/api/service/auditreport`)
+
+| Methode | Endpoint | Beschreibung | Status Codes |
+|---|---|---|---|
+| PUT | `/api/service/auditreport/assign` | AuditReport zuweisen (PENDING_REVIEW → UNDER_REVIEW) | 200 OK, 400 Bad Request |
+| PUT | `/api/service/auditreport/complete` | AuditReport abschliessen (UNDER_REVIEW → APPROVED) | 200 OK, 400 Bad Request |
+| GET | `/api/service/auditreport/dashboard` | Dashboard-Aggregation per Portfolio | 200 OK |
+
+> Weitere Endpoints (Evidence, AI-Analyse) folgen in späteren Iterationen.
 
 ---
 
