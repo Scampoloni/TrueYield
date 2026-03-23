@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +27,7 @@ public class AuditReportServiceController {
     private AuditReportService auditReportService;
 
     @PutMapping("/assign")
+    @PreAuthorize("hasRole('auditor')")
     public ResponseEntity<AuditReport> assignAuditReport(@Valid @RequestBody StateChangeDTO dto) {
         try {
             AuditReport updated = auditReportService.assignAuditReport(dto);
@@ -36,6 +38,7 @@ public class AuditReportServiceController {
     }
 
     @PutMapping("/complete")
+    @PreAuthorize("hasRole('auditor')")
     public ResponseEntity<AuditReport> completeAuditReport(@Valid @RequestBody StateChangeDTO dto) {
         try {
             AuditReport updated = auditReportService.completeAuditReport(dto);
@@ -46,6 +49,7 @@ public class AuditReportServiceController {
     }
 
     @GetMapping("/dashboard")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<AuditReportAggregationDTO>> getDashboard(
             @RequestParam String portfolioId) {
         try {
