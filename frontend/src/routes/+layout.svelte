@@ -1,12 +1,17 @@
 <script lang="ts">
   import '../app.css';
   import { page } from '$app/state';
-  import { goto } from '$app/navigation';
   import Toast from '$lib/components/Toast.svelte';
   import type { Snippet } from 'svelte';
 
   let { children }: { children: Snippet } = $props();
-  let role = $state('fund-manager');
+
+  const user = $derived(page.data.user);
+  const roles: string[] = $derived(user?.user_roles ?? []);
+  const isFundManager = $derived(roles.includes('fund-manager'));
+  const isAuditor = $derived(roles.includes('auditor'));
+  const displayName = $derived(user?.name || user?.nickname || user?.email || 'User');
+  const displayRole = $derived(isFundManager ? 'Fund Manager' : isAuditor ? 'ESG Auditor' : 'Viewer');
 
   function isActive(path: string) {
     return page.url.pathname === path || page.url.pathname.startsWith(path + '/');
@@ -33,7 +38,7 @@
       </a>
     </div>
 
-    {#if role === 'fund-manager'}
+    {#if isFundManager}
     <div class="sidebar-section">
       <span class="sidebar-label">Fund Management</span>
       <a href="/portfolios" class="nav-item" class:active={isActive('/portfolios')}>
@@ -53,7 +58,7 @@
     </div>
     {/if}
 
-    {#if role === 'auditor'}
+    {#if isAuditor}
     <div class="sidebar-section">
       <span class="sidebar-label">Compliance</span>
       <a href="/audit" class="nav-item" class:active={isActive('/audit')}>
@@ -61,21 +66,23 @@
           <path d="M8 1.5l1.8 3.7 4.1.5-3 2.9.7 4L8 10.5l-3.6 2.1.7-4-3-2.9 4.1-.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
         </svg>
         Audit Reports
-        <span class="nav-badge">8</span>
       </a>
     </div>
     {/if}
 
     <div class="sidebar-footer">
-      <div style="padding: 0 10px 12px; display: flex; gap: 6px;">
-        <button class="btn btn-sm" class:btn-primary={role==='fund-manager'} class:btn-ghost={role!=='fund-manager'} onclick={() => { role='fund-manager'; goto('/'); }}>FM</button>
-        <button class="btn btn-sm" class:btn-primary={role==='auditor'} class:btn-ghost={role!=='auditor'} onclick={() => { role='auditor'; goto('/'); }}>AU</button>
-      </div>
+      <a href="/account" class="nav-item" class:active={isActive('/account')} style="margin:0 8px 8px;">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M2 13.5c0-2.5 2.7-4 6-4s6 1.5 6 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+        Account
+      </a>
       <div class="sidebar-user">
-        <div class="sidebar-avatar">{role === 'fund-manager' ? 'FM' : 'AU'}</div>
+        <div class="sidebar-avatar">{displayName[0].toUpperCase()}</div>
         <div>
-          <div class="sidebar-user-name">{role === 'fund-manager' ? 'Fund Manager' : 'ESG Auditor'}</div>
-          <div class="sidebar-user-role">temp-user-123</div>
+          <div class="sidebar-user-name">{displayName}</div>
+          <div class="sidebar-user-role">{displayRole}</div>
         </div>
       </div>
     </div>
