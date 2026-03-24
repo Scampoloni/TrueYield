@@ -45,7 +45,7 @@ class PortfolioControllerTest {
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.name").value("ESG Global Fund"))
                 .andExpect(jsonPath("$.description").value("A diversified ESG portfolio"))
-                .andExpect(jsonPath("$.fundManagerId").value("anonymous"));
+            .andExpect(jsonPath("$.fundManagerId").value("temp-user-123"));
     }
 
     @Test
