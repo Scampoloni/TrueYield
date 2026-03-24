@@ -1,9 +1,17 @@
 import axios from 'axios';
-import { AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } from '$env/static/private';
+import { getAuthConfig } from './env.js';
 
+const authConfig = getAuthConfig();
+
+/** @typedef {import('@sveltejs/kit').Cookies} Cookies */
+
+/**
+ * @param {string} email
+ * @param {string} password
+ */
 export async function signUp(email, password) {
-    await axios.post(`https://${AUTH0_DOMAIN}/dbconnections/signup`, {
-        client_id: AUTH0_CLIENT_ID,
+    await axios.post(`https://${authConfig.domain}/dbconnections/signup`, {
+        client_id: authConfig.clientId,
         email,
         password,
         connection: 'Username-Password-Authentication'
@@ -11,14 +19,19 @@ export async function signUp(email, password) {
     return signIn(email, password);
 }
 
+/**
+ * @param {string} email
+ * @param {string} password
+ * @param {Cookies=} cookies
+ */
 export async function signIn(email, password, cookies) {
-    const response = await axios.post(`https://${AUTH0_DOMAIN}/oauth/token`, {
+    const response = await axios.post(`https://${authConfig.domain}/oauth/token`, {
         grant_type: 'password',
         username: email,
         password,
-        audience: AUTH0_AUDIENCE,
+        audience: authConfig.audience,
         scope: 'openid profile email',
-        client_id: AUTH0_CLIENT_ID,
+        client_id: authConfig.clientId,
         connection: 'Username-Password-Authentication'
     });
 
@@ -26,6 +39,7 @@ export async function signIn(email, password, cookies) {
     const userInfo = await getUserInfo(access_token);
 
     if (cookies) {
+        /** @type {Parameters<Cookies['set']>[2]} */
         const cookieOpts = {
             path: '/',
             httpOnly: true,
@@ -40,13 +54,19 @@ export async function signIn(email, password, cookies) {
     return { access_token, id_token, userInfo };
 }
 
+/**
+ * @param {string} accessToken
+ */
 export async function getUserInfo(accessToken) {
-    const response = await axios.get(`https://${AUTH0_DOMAIN}/userinfo`, {
+    const response = await axios.get(`https://${authConfig.domain}/userinfo`, {
         headers: { Authorization: `Bearer ${accessToken}` }
     });
     return response.data;
 }
 
+/**
+ * @param {Cookies} cookies
+ */
 export async function signOut(cookies) {
     cookies.delete('jwt_token', { path: '/' });
     cookies.delete('user_info', { path: '/' });

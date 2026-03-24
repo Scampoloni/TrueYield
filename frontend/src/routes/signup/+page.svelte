@@ -1,6 +1,18 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
 
+  function toErrorText(value: unknown, fallback: string) {
+    if (typeof value === 'string' && value.trim()) return value;
+    if (value && typeof value === 'object') {
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return fallback;
+      }
+    }
+    return fallback;
+  }
+
   let name = $state('');
   let email = $state('');
   let password = $state('');
@@ -33,6 +45,7 @@
     <div class="form-row">
       <label class="form-label" for="password">Password</label>
       <input id="password" class="form-input" type="password" bind:value={password} placeholder="••••••••" />
+      <div class="form-hint">At least 8 chars and 3 of 4 types: lowercase, uppercase, number, special char.</div>
     </div>
 
     <button
@@ -48,10 +61,10 @@
             body: JSON.stringify({ name, email, password })
           });
           const data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'Signup failed');
+          if (!res.ok) throw new Error(toErrorText(data?.error, 'Signup failed'));
           goto('/');
         } catch (e: any) {
-          error = e.message;
+          error = toErrorText(e?.message, 'Signup failed');
         } finally {
           loading = false;
         }
