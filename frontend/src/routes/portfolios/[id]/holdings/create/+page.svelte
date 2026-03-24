@@ -19,7 +19,7 @@
       if (isin) body.isin = isin;
       if (name) body.name = name;
       if (weightPercent) body.weightPercent = parseFloat(weightPercent);
-      const res = await fetch('http://localhost:8080/api/holding', {
+      const res = await fetch('/api/holding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)

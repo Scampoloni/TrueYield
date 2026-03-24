@@ -9,7 +9,7 @@
 
   onMount(async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/portfolio');
+      const res = await fetch('/api/portfolio');
       portfolios = await res.json();
     } finally {
       loading = false;
@@ -18,7 +18,7 @@
 
   async function confirmDelete() {
     try {
-      await fetch(`http://localhost:8080/api/portfolio/${deleteTarget.id}`, { method: 'DELETE' });
+      await fetch(`/api/portfolio/${deleteTarget.id}`, { method: 'DELETE' });
       portfolios = portfolios.filter(p => p.id !== deleteTarget.id);
       showToast('Portfolio deleted successfully');
     } catch {

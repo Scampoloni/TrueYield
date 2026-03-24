@@ -4,7 +4,6 @@
 
   let name = $state('');
   let description = $state('');
-  let fundManagerId = $state('temp-user-123');
   let loading = $state(false);
   let error = $state('');
 
@@ -12,10 +11,10 @@
     if (!name.trim()) { error = 'Portfolio name is required.'; return; }
     loading = true; error = '';
     try {
-      const res = await fetch('http://localhost:8080/api/portfolio', {
+      const res = await fetch('/api/portfolio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description, fundManagerId })
+        body: JSON.stringify({ name, description })
       });
       if (!res.ok) throw new Error('Failed');
       showToast('Portfolio created successfully');
@@ -52,12 +51,6 @@
     <div class="form-row">
       <label class="form-label" for="description">Description <span>(optional)</span></label>
       <textarea id="description" class="form-input" bind:value={description} placeholder="Describe the investment strategy and ESG objectives..."></textarea>
-    </div>
-    <div class="form-divider"></div>
-    <div class="form-row">
-      <label class="form-label" for="fundManagerId">Fund Manager ID <span>*</span></label>
-      <input id="fundManagerId" class="form-input" type="text" bind:value={fundManagerId} />
-      <div class="form-hint">This will be automatically set to your Auth0 user ID after authentication is configured.</div>
     </div>
     <button class="btn btn-primary btn-block" onclick={submit} disabled={loading}>
       {loading ? 'Creating...' : 'Create Portfolio'}
