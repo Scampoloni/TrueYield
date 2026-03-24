@@ -1,6 +1,18 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
 
+  function toErrorText(value: unknown, fallback: string) {
+    if (typeof value === 'string' && value.trim()) return value;
+    if (value && typeof value === 'object') {
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return fallback;
+      }
+    }
+    return fallback;
+  }
+
   let email = $state('');
   let password = $state('');
   let loading = $state(false);
@@ -43,10 +55,10 @@
             body: JSON.stringify({ email, password })
           });
           const data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'Login failed');
+          if (!res.ok) throw new Error(toErrorText(data?.error, 'Login failed'));
           goto('/');
         } catch (e: any) {
-          error = e.message;
+          error = toErrorText(e?.message, 'Login failed');
         } finally {
           loading = false;
         }
