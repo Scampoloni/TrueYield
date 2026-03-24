@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -21,6 +22,7 @@ public class HoldingController {
     private HoldingService holdingService;
 
     @PostMapping
+    @PreAuthorize("hasRole('fund-manager')")
     public ResponseEntity<Holding> createHolding(@Valid @RequestBody HoldingCreateDTO dto) {
         try {
             Holding created = holdingService.createHolding(dto);
