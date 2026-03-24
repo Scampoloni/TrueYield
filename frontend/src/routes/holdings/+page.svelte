@@ -7,7 +7,7 @@
 
   onMount(async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/portfolio');
+      const res = await fetch('/api/portfolio');
       if (!res.ok) throw new Error('Failed to fetch portfolios');
       const portfolios: any[] = await res.json();
       const all: typeof holdings = [];

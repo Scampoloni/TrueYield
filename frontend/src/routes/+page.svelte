@@ -8,7 +8,7 @@
 
   onMount(async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/portfolio');
+      const res = await fetch('/api/portfolio');
       if (!res.ok) throw new Error('Failed');
       portfolios = await res.json();
     } catch {

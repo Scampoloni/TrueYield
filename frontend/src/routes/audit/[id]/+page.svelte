@@ -48,7 +48,7 @@
 
   async function assignReport() {
     try {
-      await fetch('http://localhost:8080/api/service/auditreport/assign', {
+      await fetch('/api/service/auditreport/assign', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ auditReportId: reportId, auditorId: AUDITOR_ID })
@@ -62,7 +62,7 @@
 
   async function approveReport() {
     try {
-      await fetch('http://localhost:8080/api/service/auditreport/complete', {
+      await fetch('/api/service/auditreport/complete', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ auditReportId: reportId, auditorId: AUDITOR_ID })

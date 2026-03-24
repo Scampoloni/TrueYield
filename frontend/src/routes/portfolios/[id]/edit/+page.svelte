@@ -13,7 +13,7 @@
   let showDeleteModal = $state(false);
 
   onMount(async () => {
-    const res = await fetch(`http://localhost:8080/api/portfolio/${id}`);
+    const res = await fetch(`/api/portfolio/${id}`);
     const p = await res.json();
     name = p.name;
     description = p.description || '';
@@ -23,7 +23,7 @@
   async function save() {
     saving = true;
     try {
-      const res = await fetch(`http://localhost:8080/api/portfolio/${id}`, {
+      const res = await fetch(`/api/portfolio/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, description })
@@ -40,7 +40,7 @@
 
   async function deletePortfolio() {
     try {
-      await fetch(`http://localhost:8080/api/portfolio/${id}`, { method: 'DELETE' });
+      await fetch(`/api/portfolio/${id}`, { method: 'DELETE' });
       showToast('Portfolio deleted');
       goto('/portfolios');
     } catch {
