@@ -5,18 +5,19 @@ import java.util.List;
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioUpdateDTO;
+import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.PortfolioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,11 +29,14 @@ public class PortfolioController {
     @Autowired
     private PortfolioService portfolioService;
 
+    @Autowired
+    private UserService userService;
+
     @PostMapping
-    public ResponseEntity<Portfolio> createPortfolio(
-            @Valid @RequestBody PortfolioCreateDTO dto,
-            @RequestHeader(value = "X-Fund-Manager-Id", required = false, defaultValue = "temp-user-123") String fundManagerId) {
+    @PreAuthorize("hasRole('fund-manager')")
+    public ResponseEntity<Portfolio> createPortfolio(@Valid @RequestBody PortfolioCreateDTO dto) {
         try {
+            String fundManagerId = userService.getCurrentUserId();
             Portfolio created = portfolioService.createPortfolio(dto, fundManagerId);
             return new ResponseEntity<>(created, HttpStatus.CREATED);
         } catch (Exception e) {
@@ -41,17 +45,18 @@ public class PortfolioController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Portfolio>> getAllPortfolios(
-            @RequestHeader(value = "X-Fund-Manager-Id", required = false, defaultValue = "temp-user-123") String fundManagerId) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<Portfolio>> getAllPortfolios() {
+        String fundManagerId = userService.getCurrentUserId();
         List<Portfolio> portfolios = portfolioService.getAllPortfoliosByFundManager(fundManagerId);
         return new ResponseEntity<>(portfolios, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Portfolio> getPortfolioById(
-            @PathVariable String id,
-            @RequestHeader(value = "X-Fund-Manager-Id", required = false, defaultValue = "temp-user-123") String fundManagerId) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Portfolio> getPortfolioById(@PathVariable String id) {
         try {
+            String fundManagerId = userService.getCurrentUserId();
             Portfolio portfolio = portfolioService.getPortfolioById(id, fundManagerId);
             return new ResponseEntity<>(portfolio, HttpStatus.OK);
         } catch (ResponseStatusException e) {
@@ -60,11 +65,12 @@ public class PortfolioController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('fund-manager')")
     public ResponseEntity<Portfolio> updatePortfolio(
             @PathVariable String id,
-            @RequestBody PortfolioUpdateDTO dto,
-            @RequestHeader(value = "X-Fund-Manager-Id", required = false, defaultValue = "temp-user-123") String fundManagerId) {
+            @RequestBody PortfolioUpdateDTO dto) {
         try {
+            String fundManagerId = userService.getCurrentUserId();
             Portfolio updated = portfolioService.updatePortfolio(id, dto, fundManagerId);
             return new ResponseEntity<>(updated, HttpStatus.OK);
         } catch (ResponseStatusException e) {
@@ -73,10 +79,10 @@ public class PortfolioController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePortfolio(
-            @PathVariable String id,
-            @RequestHeader(value = "X-Fund-Manager-Id", required = false, defaultValue = "temp-user-123") String fundManagerId) {
+    @PreAuthorize("hasRole('fund-manager')")
+    public ResponseEntity<Void> deletePortfolio(@PathVariable String id) {
         try {
+            String fundManagerId = userService.getCurrentUserId();
             portfolioService.deletePortfolio(id, fundManagerId);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (ResponseStatusException e) {
