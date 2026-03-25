@@ -736,30 +736,40 @@ Die Dokumentation im README.md muss folgende Kapitel enthalten:
 
 ---
 
-## 14. Current Implementation Status (End of Issue #11)
+## 14. Current Implementation Status (End of Issue #31)
 
-Issues #1–#11 sind vollständig abgeschlossen:
+Issues #1–#17 (Backend) und #21–#23, #26, #28–#31 (Frontend + Auth) sind vollständig abgeschlossen:
 
-- **Domain Model:** Alle 5 Kern-Entitäten als MongoDB-DAOs mit Lombok-Annotationen (`@Getter`, `@NoArgsConstructor`, `@RequiredArgsConstructor`, `@NonNull`):
-  1. `Portfolio`: Basis für Fondsdaten, enthält `fundManagerId`.
-  2. `Holding`: Aktien/Positionen innerhalb eines Portfolios.
-  3. `Evidence`: KI-Befunde (News, Sentiment) zu Holdings.
-  4. `AuditReport`: Zentrales Workflow-Objekt mit `AuditStatus` Enum.
-  5. `AuditComment`: Begründungen des Auditors.
+### Backend (vollständig)
+- **Domain Model:** Alle 5 Kern-Entitäten als MongoDB-DAOs mit Lombok (`Portfolio`, `Holding`, `Evidence`, `AuditReport`, `AuditComment`).
+- **Repositories:** Für alle Entitäten mit Derived Queries (`findByFundManagerId`, `findByPortfolioId`).
+- **Portfolio API:** Vollständige CRUD-Endpoints mit Ownership-Validierung (nur eigene Portfolios zugänglich).
+- **Holding API:** POST-Endpoint mit FK-Validierung (Portfolio muss existieren).
+- **AuditReport State Machine:** `PENDING_REVIEW → UNDER_REVIEW → APPROVED/REJECTED` mit assign- und complete-Endpoint.
+- **Aggregation Dashboard:** MongoDB-Aggregation pro Portfolio gruppiert nach Status.
+- **Auth0 Security:** `SecurityFilterChain` mit `oauth2ResourceServer`, JWT-Validierung via `issuer-uri`, Test-Mode-Fallback wenn `jwtIssuerUri` nicht gesetzt.
+- **Rollenschutz:** `@PreAuthorize("hasRole('fund-manager')")` auf Portfolio/Holding-Mutationen, `@PreAuthorize("hasRole('auditor')")` auf AuditReport assign/complete, `isAuthenticated()` auf alle GET-Endpoints.
+- **UserService:** `getCurrentUserId()`, `getCurrentUserEmail()`, `userHasRole()` aus JWT-Claims.
+- **JwtAuthenticationConverter:** Mapped `user_roles`-Claim → `ROLE_`-prefixed Spring Authorities.
+- **CORS:** Konfiguriert für `http://localhost:5173`.
 
-- **Repositories:** Für alle Entitäten existieren `MongoRepository`-Interfaces inklusive Derived Queries (z.B. `findByFundManagerId`, `findByPortfolioId`).
+### Frontend (SvelteKit – vollständig)
+- **Routing:** Vollständige Routing-Struktur (`/`, `/portfolios`, `/portfolios/[id]`, `/portfolios/create`, `/holdings`, `/audit`, `/account`, `/login`, `/signup`).
+- **Auth0 Integration:** Login + Signup via Resource Owner Password Flow, `access_token` als `jwt_token` Cookie gespeichert.
+- **Route Protection:** `hooks.server.js` schützt alle App-Routen serverseitig, leitet unauthentifizierte Nutzer nach `/login` um.
+- **Rollenbasierte Navigation:** Fund-Manager sieht Portfolios/Holdings, Auditor sieht Audit-Reports (via `user_roles`-Claim).
+- **API-Proxy-Routes:** SvelteKit Server-Routes unter `/api/...` leiten Requests mit `Authorization: Bearer <jwt>` ans Backend weiter.
+- **Portfolio-Seiten:** List-View, Detail-View, Create/Edit-Form, Delete mit Bestätigung.
+- **Holdings-Seite:** Aggregierte Ansicht aller Holdings aus allen Portfolios.
+- **Audit-Dashboard:** Lädt echte Daten vom Backend (Portfolios → Dashboard-Aggregation pro Portfolio).
+- **Account-Seite:** Zeigt User-Info (Name, Email, Sub, Roles) + Logout-Button.
 
-- **Portfolio API (vollständig):** Alle CRUD-Endpoints implementiert (POST, GET, GET/{id}, PUT/{id}, DELETE/{id}).
-
-- **Service Layer:** `PortfolioService` mit vollständiger Ownership-Validierung (nur eigene Portfolios zugänglich).
-
-- **Postman:** Portfolio API Collection dokumentiert und verifiziert.
-
-- **Boards:** Explore-, Create- und Evaluate-Boards in README.md integriert (Issue #12).
-
-**Abgeschlossen in Sprint 4 (Issues #14–#17):** HoldingService mit FK-Validierung, AuditReport State Machine (PENDING_REVIEW → UNDER_REVIEW → APPROVED), MongoDB Aggregation Dashboard.
-
-**Nächste Schritte (Iteration 4 – Issues #18–#23):** Pitch-Vorbereitung (#18), Postman-Dokumentation für Holding + AuditReport Service API (#19, #20), SvelteKit Projekt-Setup + Portfolio-Übersicht + Create-Form (#21–#23). Global Exception Handler (#24) und DTO Validation (#25) folgen in Iteration 5.
+### Offen (nächste Schritte)
+- **#18–#20:** Pitch + Postman-Dokumentation für Holding & AuditReport APIs.
+- **#24–#25:** Global Exception Handler (`@ControllerAdvice`), DTO Validation.
+- **#27:** Pitch-Deck auf Moodle abgeben.
+- **#32:** Postman Auth0 Token-Dokumentation.
+- **#33+:** Unit Tests, Integration Tests, JaCoCo, CI/CD, Spring AI, Deployment.
 
 ---
 
@@ -821,9 +831,9 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 | #18 | Pitch vorbereiten (3 Min, max 5 Wörter/Slide) | `documentation`, `milestone` | ⬜ |
 | #19 | Postman: Holding API Collection dokumentieren | `documentation`, `api` | ⬜ |
 | #20 | Postman: AuditReport Service API Collection dokumentieren | `documentation`, `api` | ⬜ |
-| #21 | SvelteKit: Projekt-Setup & Routing-Struktur | `frontend`, `setup` | ⬜ |
-| #22 | SvelteKit: Portfolio-Übersichtsseite (List View) | `frontend`, `enhancement` | ⬜ |
-| #23 | SvelteKit: Portfolio erstellen (Create Form) | `frontend`, `enhancement` | ⬜ |
+| #21 | SvelteKit: Projekt-Setup & Routing-Struktur | `frontend`, `setup` | ✅ Done |
+| #22 | SvelteKit: Portfolio-Übersichtsseite (List View) | `frontend`, `enhancement` | ✅ Done |
+| #23 | SvelteKit: Portfolio erstellen (Create Form) | `frontend`, `enhancement` | ✅ Done |
 
 ---
 
@@ -835,7 +845,7 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 |---------|-------|--------|--------|
 | #24 | Global Exception Handler: @ControllerAdvice | `backend`, `enhancement` | ⬜ |
 | #25 | DTO Validation: jakarta.validation für alle Inputs | `backend`, `enhancement` | ⬜ |
-| #26 | SvelteKit: Portfolio-Detailseite mit Holdings | `frontend`, `enhancement` | ⬜ |
+| #26 | SvelteKit: Portfolio-Detailseite mit Holdings | `frontend`, `enhancement` | ✅ Done |
 
 ---
 
@@ -846,10 +856,10 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
 | #27 | Pitch-Deck auf Moodle abgeben | `documentation`, `milestone` | ⬜ |
-| #28 | Auth0: Backend SecurityFilterChain konfigurieren | `backend`, `security` | ⬜ |
-| #29 | Auth0: Frontend Login/Logout Flow | `frontend`, `security` | ⬜ |
-| #30 | Auth0: Rollen-Setup (Fund Manager + ESG Auditor) | `backend`, `security` | ⬜ |
-| #31 | Backend: @PreAuthorize Rollenschutz auf allen Endpoints | `backend`, `security` | ⬜ |
+| #28 | Auth0: Backend SecurityFilterChain konfigurieren | `backend`, `security` | ✅ Done |
+| #29 | Auth0: Frontend Login/Logout Flow | `frontend`, `security` | ✅ Done |
+| #30 | Auth0: Rollen-Setup (Fund Manager + ESG Auditor) | `backend`, `security` | ✅ Done |
+| #31 | Backend: @PreAuthorize Rollenschutz auf allen Endpoints | `backend`, `security` | ✅ Done |
 | #32 | Postman: Auth0 Token-basierte Requests dokumentieren | `documentation`, `api` | ⬜ |
 
 ---
