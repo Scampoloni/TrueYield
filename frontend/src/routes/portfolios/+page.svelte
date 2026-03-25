@@ -45,8 +45,8 @@
 
 <div class="topbar">
   <div>
-    <div class="page-title">Portfolios</div>
-    <div class="page-subtitle">
+    <div class="pg-ttl">Portfolios</div>
+    <div class="pg-sub">
       {loading ? '...' : `${portfolios.length} portfolio${portfolios.length !== 1 ? 's' : ''} total`}
     </div>
   </div>
@@ -54,7 +54,7 @@
 </div>
 
 <div class="content">
-  <div class="table-wrap">
+  <div class="glass-table">
     {#if loading}
       <div class="skeleton-pad">
         <div class="skeleton" style="height:20px;"></div>
@@ -62,15 +62,15 @@
         <div class="skeleton" style="height:20px;"></div>
       </div>
     {:else if portfolios.length === 0}
-      <div class="empty-state">
-        <div class="empty-icon">
-          <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+      <div class="empty">
+        <div class="e-icon">
+          <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
             <rect x="1.5" y="4.5" width="13" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
             <path d="M1.5 7.5h13" stroke="currentColor" stroke-width="1.3"/>
           </svg>
         </div>
-        <div class="empty-title">No portfolios yet</div>
-        <div class="empty-desc">Create your first investment portfolio to get started.</div>
+        <div class="e-ttl">No portfolios yet</div>
+        <div class="e-sub">Create your first investment portfolio to get started.</div>
         <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
       </div>
     {:else}
@@ -87,15 +87,15 @@
         <tbody>
           {#each portfolios as p}
             <tr>
-              <td><div class="cell-primary">{p.name}</div></td>
-              <td>{p.description || '—'}</td>
-              <td><span class="cell-mono">{p.fundManagerId}</span></td>
+              <td><div class="pf-name">{p.name}</div></td>
+              <td class="pf-desc">{p.description || '—'}</td>
+              <td><span class="pf-id">{p.fundManagerId}</span></td>
               <td><span class="badge {statusClass(p.auditStatus)}">{statusLabel(p.auditStatus)}</span></td>
               <td>
-                <div class="row-actions">
-                  <a href="/portfolios/{p.id}" class="cell-link">Holdings →</a>
-                  <a href="/portfolios/{p.id}/edit" class="btn btn-ghost btn-sm">Edit</a>
-                  <button class="btn btn-danger btn-sm" onclick={() => deleteTarget = p}>Delete</button>
+                <div class="tbl-acts">
+                  <a href="/portfolios/{p.id}" class="xb xb-blue">Holdings →</a>
+                  <a href="/portfolios/{p.id}/edit" class="xb xb-ghost">Edit</a>
+                  <button class="xb xb-red" onclick={() => deleteTarget = p}>Delete</button>
                 </div>
               </td>
             </tr>

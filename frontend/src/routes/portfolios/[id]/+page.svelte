@@ -24,7 +24,7 @@
 </script>
 
 {#if loading}
-  <div class="topbar"><div><div class="skeleton" style="width:200px;height:20px;"></div></div></div>
+  <div class="topbar"><div><div class="skeleton" style="width:200px;height:22px;"></div></div></div>
   <div class="content">
     <div class="skeleton-pad">
       <div class="skeleton" style="height:16px;"></div>
@@ -35,33 +35,33 @@
 {:else if portfolio}
   <div class="topbar">
     <div>
-      <div class="page-title">{portfolio.name}</div>
-      <div class="page-subtitle">{portfolio.description || 'No description'}</div>
+      <div class="pg-ttl">{portfolio.name}</div>
+      <div class="pg-sub">{portfolio.description || 'No description'}</div>
     </div>
-    <div class="topbar-actions">
+    <div class="btns">
       <a href="/portfolios/{id}/edit" class="btn btn-ghost">Edit</a>
       <a href="/portfolios/{id}/holdings/create" class="btn btn-primary">+ Add Holding</a>
-      <button class="btn btn-amber" onclick={() => showToast('AI analysis triggered — report will appear in Audit Dashboard', 'success')}>
+      <button class="btn btn-success" onclick={() => showToast('AI analysis triggered — report will appear in Audit Dashboard', 'success')}>
         Analyse starten
       </button>
     </div>
   </div>
 
   <div class="content">
-    <div class="section-hd">
-      <span class="section-title">Holdings</span>
-      <span class="section-meta">{holdings.length} position{holdings.length !== 1 ? 's' : ''}</span>
+    <div class="sec-head">
+      <span class="sec-name">Holdings</span>
+      <span class="text-muted" style="font-size:12px;">{holdings.length} position{holdings.length !== 1 ? 's' : ''}</span>
     </div>
-    <div class="table-wrap">
+    <div class="glass-table">
       {#if holdings.length === 0}
-        <div class="empty-state">
-          <div class="empty-icon">
-            <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+        <div class="empty">
+          <div class="e-icon">
+            <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
               <path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
             </svg>
           </div>
-          <div class="empty-title">No holdings yet</div>
-          <div class="empty-desc">Add your first holding to this portfolio to begin ESG analysis.</div>
+          <div class="e-ttl">No holdings yet</div>
+          <div class="e-sub">Add your first holding to this portfolio to begin ESG analysis.</div>
           <a href="/portfolios/{id}/holdings/create" class="btn btn-primary">+ Add Holding</a>
         </div>
       {:else}
@@ -78,14 +78,14 @@
           <tbody>
             {#each holdings as h}
               <tr>
-                <td><div class="cell-primary">{h.symbol}</div></td>
+                <td><div class="pf-name">{h.symbol}</div></td>
                 <td>{h.name || '—'}</td>
-                <td><span class="cell-mono">{h.isin || '—'}</span></td>
+                <td><span class="pf-id">{h.isin || '—'}</span></td>
                 <td>{h.weightPercent != null ? h.weightPercent + '%' : '—'}</td>
                 <td>
-                  <div class="row-actions">
-                    <a href="/portfolios/{id}/holdings/{h.id}" class="cell-link">View Evidence →</a>
-                    <button class="btn btn-danger btn-sm" onclick={() => deleteHoldingTarget = h}>Delete</button>
+                  <div class="tbl-acts">
+                    <a href="/portfolios/{id}/holdings/{h.id}" class="xb xb-blue">View Evidence →</a>
+                    <button class="xb xb-red" onclick={() => deleteHoldingTarget = h}>Delete</button>
                   </div>
                 </td>
               </tr>

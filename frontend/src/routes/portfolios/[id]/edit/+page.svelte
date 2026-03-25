@@ -51,40 +51,44 @@
 
 <div class="topbar">
   <div>
-    <div class="page-title">Edit Portfolio</div>
-    <div class="page-subtitle">Update portfolio details</div>
+    <div class="pg-ttl">Edit Portfolio</div>
+    <div class="pg-sub">Update portfolio details</div>
   </div>
   <a href="/portfolios/{id}" class="btn btn-ghost">← Cancel</a>
 </div>
 
 <div class="content">
   {#if loading}
-    <div class="form-card">
-      <div class="skeleton-pad">
-        <div class="skeleton" style="height:40px;"></div>
-        <div class="skeleton" style="height:40px;"></div>
-        <div class="skeleton" style="height:40px;"></div>
+    <div class="form-wrap">
+      <div class="form-glass">
+        <div class="skeleton-pad">
+          <div class="skeleton" style="height:40px;"></div>
+          <div class="skeleton" style="height:40px;"></div>
+          <div class="skeleton" style="height:40px;"></div>
+        </div>
       </div>
     </div>
   {:else}
-    <div class="form-card">
-      <div class="form-card-title">Portfolio details</div>
-      <div class="form-card-desc">Update the name and description of this portfolio.</div>
-      <div class="form-row">
-        <label class="form-label" for="name">Portfolio name <span>*</span></label>
-        <input id="name" class="form-input" type="text" bind:value={name} />
-      </div>
-      <div class="form-row">
-        <label class="form-label" for="description">Description</label>
-        <textarea id="description" class="form-input" bind:value={description}></textarea>
-      </div>
-      <button class="btn btn-primary btn-block" onclick={save} disabled={saving}>
-        {saving ? 'Saving...' : 'Save Changes'}
-      </button>
-      <div class="danger-link-wrap">
-        <button class="danger-link" onclick={() => showDeleteModal = true}>
-          Delete this portfolio
+    <div class="form-wrap">
+      <div class="form-glass">
+        <div class="ft">Portfolio details</div>
+        <div class="fs">Update the name and description of this portfolio.</div>
+        <div class="field">
+          <label for="name">Portfolio name <span>*</span></label>
+          <input id="name" class="inp" type="text" bind:value={name} />
+        </div>
+        <div class="field">
+          <label for="description">Description</label>
+          <textarea id="description" class="inp" bind:value={description}></textarea>
+        </div>
+        <button class="submit-btn" onclick={save} disabled={saving}>
+          {saving ? 'Saving...' : 'Save Changes'}
         </button>
+        <div class="danger-link-wrap">
+          <button class="danger-link" onclick={() => showDeleteModal = true}>
+            Delete this portfolio
+          </button>
+        </div>
       </div>
     </div>
   {/if}

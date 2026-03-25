@@ -35,75 +35,75 @@
 
 <div class="topbar">
   <div>
-    <div class="page-title">Dashboard</div>
-    <div class="page-subtitle">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+    <div class="pg-ttl">Dashboard</div>
+    <div class="pg-sub">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
   </div>
-  <div class="topbar-actions">
+  <div class="btns">
     <button class="btn btn-ghost">Export</button>
     <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
   </div>
 </div>
 
 <div class="content">
-  <div class="stats-grid">
-    <div class="stat-card blue">
-      <div class="stat-icon blue">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <rect x="1.5" y="4.5" width="13" height="9" rx="1.5" stroke="#4f8ef7" stroke-width="1.3"/>
-          <path d="M5 4.5V3.5a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5v1" stroke="#4f8ef7" stroke-width="1.3"/>
-          <path d="M1.5 7.5h13" stroke="#4f8ef7" stroke-width="1.3"/>
+  <div class="metrics">
+    <div class="m-card blue">
+      <div class="m-icon-wrap iw-blue">
+        <svg viewBox="0 0 16 16" fill="none">
+          <rect x="1.5" y="4.5" width="13" height="9" rx="1.5" stroke="#93c5fd" stroke-width="1.3"/>
+          <path d="M5 4.5V3.5a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5v1" stroke="#93c5fd" stroke-width="1.3"/>
+          <path d="M1.5 7.5h13" stroke="#93c5fd" stroke-width="1.3"/>
         </svg>
       </div>
       {#if loading}
-        <div class="skeleton" style="width:40px;height:30px;margin-bottom:6px;"></div>
+        <div class="skeleton" style="width:60px;height:40px;margin-bottom:6px;"></div>
       {:else}
-        <div class="stat-value blue">{portfolios.length}</div>
+        <div class="m-val blue">{portfolios.length}</div>
       {/if}
-      <div class="stat-label">Active Portfolios</div>
-      <div class="stat-change positive">↑ All managed by you</div>
+      <div class="m-lbl">Active Portfolios</div>
+      <div class="m-trend tr-green">↑ All managed by you</div>
     </div>
 
-    <div class="stat-card green">
-      <div class="stat-icon green">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M2 4h12M2 8h8M2 12h10" stroke="#34d399" stroke-width="1.3" stroke-linecap="round"/>
+    <div class="m-card green">
+      <div class="m-icon-wrap iw-green">
+        <svg viewBox="0 0 16 16" fill="none">
+          <path d="M2 4h12M2 8h8M2 12h10" stroke="#6ee7b7" stroke-width="1.3" stroke-linecap="round"/>
         </svg>
       </div>
       {#if loading}
-        <div class="skeleton" style="width:40px;height:30px;margin-bottom:6px;"></div>
+        <div class="skeleton" style="width:60px;height:40px;margin-bottom:6px;"></div>
       {:else}
-        <div class="stat-value green">{portfolios.reduce((s, p) => s + (p.holdings?.length || 0), 0)}</div>
+        <div class="m-val green">{portfolios.reduce((s, p) => s + (p.holdings?.length || 0), 0)}</div>
       {/if}
-      <div class="stat-label">Total Holdings</div>
-      <div class="stat-change positive">↑ Across all portfolios</div>
+      <div class="m-lbl">Total Holdings</div>
+      <div class="m-trend tr-green">↑ Across all portfolios</div>
     </div>
 
-    <div class="stat-card amber">
-      <div class="stat-icon amber">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 2L14 13H2L8 2Z" stroke="#fbbf24" stroke-width="1.3" stroke-linejoin="round"/>
-          <path d="M8 6v3" stroke="#fbbf24" stroke-width="1.3" stroke-linecap="round"/>
-          <circle cx="8" cy="11" r="0.5" fill="#fbbf24" stroke="#fbbf24"/>
+    <div class="m-card amber">
+      <div class="m-icon-wrap iw-amber">
+        <svg viewBox="0 0 16 16" fill="none">
+          <path d="M8 2L14 13H2L8 2Z" stroke="#fcd34d" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M8 6v3" stroke="#fcd34d" stroke-width="1.3" stroke-linecap="round"/>
+          <circle cx="8" cy="11" r="0.5" fill="#fcd34d" stroke="#fcd34d"/>
         </svg>
       </div>
       {#if loading}
-        <div class="skeleton" style="width:40px;height:30px;margin-bottom:6px;"></div>
+        <div class="skeleton" style="width:60px;height:40px;margin-bottom:6px;"></div>
       {:else}
-        <div class="stat-value amber">
+        <div class="m-val amber">
           {portfolios.filter(p => p.auditReports?.some((r: any) => r.auditStatus === 'PENDING_REVIEW')).length}
         </div>
       {/if}
-      <div class="stat-label">Pending Audits</div>
-      <div class="stat-change warning">Requires attention</div>
+      <div class="m-lbl">Pending Audits</div>
+      <div class="m-trend tr-amber">Requires attention</div>
     </div>
   </div>
 
-  <div class="section-hd">
-    <span class="section-title">Recent Portfolios</span>
-    <a href="/portfolios" class="btn btn-ghost btn-sm">View all →</a>
+  <div class="sec-head">
+    <span class="sec-name">Recent Portfolios</span>
+    <a href="/portfolios" class="sec-more">View all →</a>
   </div>
 
-  <div class="table-wrap">
+  <div class="glass-table">
     {#if loading}
       <div class="skeleton-pad">
         <div class="skeleton" style="height:20px;"></div>
@@ -111,21 +111,21 @@
         <div class="skeleton" style="height:20px;"></div>
       </div>
     {:else if error}
-      <div class="empty-state">
-        <div class="empty-icon">⚠</div>
-        <div class="empty-title">Connection Error</div>
-        <div class="empty-desc">{error} Make sure the backend is running on port 8080.</div>
+      <div class="empty">
+        <div class="e-icon">⚠</div>
+        <div class="e-ttl">Connection Error</div>
+        <div class="e-sub">{error} Make sure the backend is running on port 8080.</div>
       </div>
     {:else if portfolios.length === 0}
-      <div class="empty-state">
-        <div class="empty-icon">
-          <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+      <div class="empty">
+        <div class="e-icon">
+          <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
             <rect x="1.5" y="4.5" width="13" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
             <path d="M1.5 7.5h13" stroke="currentColor" stroke-width="1.3"/>
           </svg>
         </div>
-        <div class="empty-title">No portfolios yet</div>
-        <div class="empty-desc">Create your first investment portfolio to get started.</div>
+        <div class="e-ttl">No portfolios yet</div>
+        <div class="e-sub">Create your first investment portfolio to get started.</div>
         <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
       </div>
     {:else}
@@ -142,13 +142,13 @@
           {#each portfolios.slice(0, 5) as p}
             <tr class="tr-clickable" onclick={() => goto(`/portfolios/${p.id}`)}>
               <td>
-                <div class="cell-primary">{p.name}</div>
-                <div class="cell-sub">{p.fundManagerId}</div>
+                <div class="pf-name">{p.name}</div>
+                <div class="pf-id">{p.fundManagerId}</div>
               </td>
-              <td>{p.description || '—'}</td>
+              <td class="pf-desc">{p.description || '—'}</td>
               <td><span class="badge {statusClass(p.auditStatus)}">{statusLabel(p.auditStatus)}</span></td>
               <td class="text-right">
-                <a href="/portfolios/{p.id}" class="cell-link">View →</a>
+                <a href="/portfolios/{p.id}" class="xb xb-blue">View →</a>
               </td>
             </tr>
           {/each}
