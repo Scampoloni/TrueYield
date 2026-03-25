@@ -6,15 +6,33 @@
   let activeFilter = $state('all');
   let search = $state('');
 
-  onMount(() => {
-    reports = [
-      { id: '699f21438249d50b69b27d5e', reportId: 'AUD-2026-001', portfolio: 'Green Energy Portfolio',   auditor: 'temp-user-123', status: 'UNDER_REVIEW',   score: 87, date: 'Mar 15, 2026' },
-      { id: '2',                       reportId: 'AUD-2026-002', portfolio: 'Tech Growth Portfolio',      auditor: 'temp-user-123', status: 'APPROVED',       score: 94, date: 'Mar 14, 2026' },
-      { id: '3',                       reportId: 'AUD-2026-003', portfolio: 'ESG Blue Energy Fund',       auditor: 'temp-user-456', status: 'PENDING_REVIEW', score: null, date: 'Mar 13, 2026' },
-      { id: '4',                       reportId: 'AUD-2026-004', portfolio: 'Sustainable Infrastructure', auditor: 'temp-user-789', status: 'APPROVED',       score: 91, date: 'Mar 12, 2026' },
-      { id: '5',                       reportId: 'AUD-2026-005', portfolio: 'Clean Water Initiative',     auditor: 'temp-user-123', status: 'REJECTED',       score: 62, date: 'Mar 11, 2026' },
-    ];
-    loading = false;
+  onMount(async () => {
+    try {
+      const portfolioRes = await fetch('/api/portfolio');
+      const portfolios: any[] = portfolioRes.ok ? await portfolioRes.json() : [];
+      const rows: any[] = [];
+      for (const p of portfolios) {
+        const dashRes = await fetch(`/api/service/auditreport/dashboard?portfolioId=${p.id}`);
+        if (!dashRes.ok) continue;
+        const agg: any[] = await dashRes.json();
+        for (const a of agg) {
+          for (const itemId of (a.itemIds || [])) {
+            rows.push({
+              id: itemId,
+              reportId: itemId.slice(-8).toUpperCase(),
+              portfolio: p.name,
+              auditor: '—',
+              status: a.id,
+              score: null,
+              date: '—'
+            });
+          }
+        }
+      }
+      reports = rows;
+    } finally {
+      loading = false;
+    }
   });
 
   let filtered = $derived(reports.filter(r => {
