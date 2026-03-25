@@ -29,31 +29,33 @@
 
 <div class="topbar">
   <div>
-    <div class="page-title">New Portfolio</div>
-    <div class="page-subtitle">Add a new investment fund to your workspace</div>
+    <div class="pg-ttl">New Portfolio</div>
+    <div class="pg-sub">Add a new investment fund to your workspace</div>
   </div>
   <a href="/portfolios" class="btn btn-ghost">← Cancel</a>
 </div>
 
 <div class="content">
-  <div class="form-card">
-    <div class="form-card-title">Portfolio details</div>
-    <div class="form-card-desc">Create a new investment portfolio. You can add holdings and start an ESG audit after creation.</div>
+  <div class="form-wrap">
+    <div class="form-glass">
+      <div class="ft">Portfolio details</div>
+      <div class="fs">Create a new investment portfolio. You can add holdings and start an ESG audit after creation.</div>
 
-    {#if error}
-      <div class="alert-error">{error}</div>
-    {/if}
+      {#if error}
+        <div class="alert-error">{error}</div>
+      {/if}
 
-    <div class="form-row">
-      <label class="form-label" for="name">Portfolio name <span>*</span></label>
-      <input id="name" class="form-input" type="text" bind:value={name} placeholder="e.g. Clean Energy Europe 2026" />
+      <div class="field">
+        <label for="name">Portfolio name <span>*</span></label>
+        <input id="name" class="inp" type="text" bind:value={name} placeholder="e.g. Clean Energy Europe 2026" />
+      </div>
+      <div class="field">
+        <label for="description">Description <span>(optional)</span></label>
+        <textarea id="description" class="inp" bind:value={description} placeholder="Describe the investment strategy and ESG objectives..."></textarea>
+      </div>
+      <button class="submit-btn" onclick={submit} disabled={loading}>
+        {loading ? 'Creating...' : 'Create Portfolio'}
+      </button>
     </div>
-    <div class="form-row">
-      <label class="form-label" for="description">Description <span>(optional)</span></label>
-      <textarea id="description" class="form-input" bind:value={description} placeholder="Describe the investment strategy and ESG objectives..."></textarea>
-    </div>
-    <button class="btn btn-primary btn-block" onclick={submit} disabled={loading}>
-      {loading ? 'Creating...' : 'Create Portfolio'}
-    </button>
   </div>
 </div>

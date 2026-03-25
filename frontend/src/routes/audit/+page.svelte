@@ -71,44 +71,44 @@
 
 <div class="topbar">
   <div>
-    <div class="page-title">Audit Dashboard</div>
-    <div class="page-subtitle">Manage ESG compliance audits</div>
+    <div class="pg-ttl">Audit Dashboard</div>
+    <div class="pg-sub">Manage ESG compliance audits</div>
   </div>
 </div>
 
 <div class="content">
-  <div class="stats-grid">
-    <div class="stat-card amber">
-      <div class="stat-icon amber">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 2L14 13H2L8 2Z" stroke="#fbbf24" stroke-width="1.3" stroke-linejoin="round"/>
-          <path d="M8 6v3" stroke="#fbbf24" stroke-width="1.3" stroke-linecap="round"/>
+  <div class="metrics">
+    <div class="m-card amber">
+      <div class="m-icon-wrap iw-amber">
+        <svg viewBox="0 0 16 16" fill="none">
+          <path d="M8 2L14 13H2L8 2Z" stroke="#fcd34d" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M8 6v3" stroke="#fcd34d" stroke-width="1.3" stroke-linecap="round"/>
         </svg>
       </div>
-      <div class="stat-value amber">{count('PENDING_REVIEW')}</div>
-      <div class="stat-label">Pending Review</div>
-      <div class="stat-change warning">Awaiting assignment</div>
+      <div class="m-val amber">{count('PENDING_REVIEW')}</div>
+      <div class="m-lbl">Pending Review</div>
+      <div class="m-trend tr-amber">Awaiting assignment</div>
     </div>
-    <div class="stat-card blue">
-      <div class="stat-icon blue">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="8" r="5.5" stroke="#4f8ef7" stroke-width="1.3"/>
-          <path d="M8 5v3l2 2" stroke="#4f8ef7" stroke-width="1.3" stroke-linecap="round"/>
+    <div class="m-card blue">
+      <div class="m-icon-wrap iw-blue">
+        <svg viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="5.5" stroke="#93c5fd" stroke-width="1.3"/>
+          <path d="M8 5v3l2 2" stroke="#93c5fd" stroke-width="1.3" stroke-linecap="round"/>
         </svg>
       </div>
-      <div class="stat-value blue">{count('UNDER_REVIEW')}</div>
-      <div class="stat-label">Under Review</div>
-      <div class="stat-change info">In progress</div>
+      <div class="m-val blue">{count('UNDER_REVIEW')}</div>
+      <div class="m-lbl">Under Review</div>
+      <div class="m-trend" style="color:#93c5fd;">In progress</div>
     </div>
-    <div class="stat-card green">
-      <div class="stat-icon green">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M3 8l3.5 3.5L13 5" stroke="#34d399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <div class="m-card green">
+      <div class="m-icon-wrap iw-green">
+        <svg viewBox="0 0 16 16" fill="none">
+          <path d="M3 8l3.5 3.5L13 5" stroke="#6ee7b7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <div class="stat-value green">{count('APPROVED')}</div>
-      <div class="stat-label">Approved</div>
-      <div class="stat-change positive">Compliance confirmed</div>
+      <div class="m-val green">{count('APPROVED')}</div>
+      <div class="m-lbl">Approved</div>
+      <div class="m-trend tr-green">Compliance confirmed</div>
     </div>
   </div>
 
@@ -128,7 +128,7 @@
     {/each}
   </div>
 
-  <div class="table-wrap">
+  <div class="glass-table">
     {#if loading}
       <div class="skeleton-pad">
         <div class="skeleton" style="height:20px;"></div>
@@ -136,14 +136,14 @@
         <div class="skeleton" style="height:20px;"></div>
       </div>
     {:else if filtered.length === 0}
-      <div class="empty-state">
-        <div class="empty-icon">
-          <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+      <div class="empty">
+        <div class="e-icon">
+          <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
             <path d="M3 8l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <div class="empty-title">No reports found</div>
-        <div class="empty-desc">No audit reports match your current filter.</div>
+        <div class="e-ttl">No reports found</div>
+        <div class="e-sub">No audit reports match your current filter.</div>
       </div>
     {:else}
       <table>
@@ -161,9 +161,9 @@
         <tbody>
           {#each filtered as r}
             <tr>
-              <td><span class="cell-mono">{r.reportId}</span></td>
-              <td><div class="cell-primary">{r.portfolio}</div></td>
-              <td><span class="cell-mono">{r.auditor}</span></td>
+              <td><span class="pf-id">{r.reportId}</span></td>
+              <td><div class="pf-name">{r.portfolio}</div></td>
+              <td><span class="pf-id">{r.auditor}</span></td>
               <td><span class="badge {badgeClass(r.status)}">{badgeLabel(r.status)}</span></td>
               <td>
                 {#if r.score}
@@ -173,7 +173,7 @@
                 {/if}
               </td>
               <td class="text-muted">{r.date}</td>
-              <td><a href="/audit/{r.id}" class="cell-link">Review →</a></td>
+              <td><a href="/audit/{r.id}" class="xb xb-blue">Review →</a></td>
             </tr>
           {/each}
         </tbody>
