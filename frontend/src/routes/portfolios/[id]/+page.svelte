@@ -13,10 +13,11 @@
 
   onMount(async () => {
     try {
-      const res = await fetch(`/api/portfolio/${id}`);
+      const res = await fetch(`/api/portfolio/${id}`, { cache: 'no-store' });
       if (!res.ok) { goto('/portfolios'); return; }
       portfolio = await res.json();
-      holdings = portfolio.holdings || [];
+      const hRes = await fetch(`/api/holding?portfolioId=${id}`);
+      holdings = hRes.ok ? await hRes.json() : [];
     } finally {
       loading = false;
     }
