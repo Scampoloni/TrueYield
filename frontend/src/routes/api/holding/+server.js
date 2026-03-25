@@ -3,6 +3,15 @@ import { getApiBaseUrl } from '$lib/server/env.js';
 
 const API_BASE_URL = getApiBaseUrl();
 
+export async function GET({ locals, url }) {
+    const portfolioId = url.searchParams.get('portfolioId');
+    const res = await fetch(`${API_BASE_URL}/api/holding?portfolioId=${portfolioId}`, {
+        headers: { 'Authorization': `Bearer ${locals.jwt_token}` }
+    });
+    const data = await res.json();
+    return json(data, { status: res.status });
+}
+
 export async function POST({ locals, request }) {
     const body = await request.json();
     const res = await fetch(`${API_BASE_URL}/api/holding`, {

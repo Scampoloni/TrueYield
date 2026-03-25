@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
 public class HoldingService {
 
@@ -16,6 +18,10 @@ public class HoldingService {
 
     @Autowired
     private PortfolioService portfolioService;
+
+    public List<Holding> getHoldingsByPortfolioId(String portfolioId) {
+        return holdingRepository.findByPortfolioId(portfolioId);
+    }
 
     public Holding createHolding(HoldingCreateDTO dto) {
         if (!portfolioService.portfolioExists(dto.getPortfolioId())) {

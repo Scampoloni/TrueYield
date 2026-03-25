@@ -7,23 +7,24 @@
 
   onMount(async () => {
     try {
-      const res = await fetch('/api/portfolio');
+      const res = await fetch('/api/portfolio', { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to fetch portfolios');
       const portfolios: any[] = await res.json();
       const all: typeof holdings = [];
       for (const p of portfolios) {
-        if (p.holdings && Array.isArray(p.holdings)) {
-          for (const h of p.holdings) {
-            all.push({
-              symbol: h.symbol,
-              name: h.name || '',
-              isin: h.isin || '',
-              weightPercent: h.weightPercent ?? null,
-              portfolioId: p.id,
-              portfolioName: p.name,
-              id: h.id
-            });
-          }
+        const hRes = await fetch(`/api/holding?portfolioId=${p.id}`);
+        if (!hRes.ok) continue;
+        const hs: any[] = await hRes.json();
+        for (const h of hs) {
+          all.push({
+            symbol: h.symbol,
+            name: h.name || '',
+            isin: h.isin || '',
+            weightPercent: h.weightPercent ?? null,
+            portfolioId: p.id,
+            portfolioName: p.name,
+            id: h.id
+          });
         }
       }
       holdings = all;
