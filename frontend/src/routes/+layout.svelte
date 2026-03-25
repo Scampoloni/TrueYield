@@ -1,5 +1,5 @@
 <script lang="ts">
-  import '../app.css';
+  import '$lib/styles/design-system.css';
   import { page } from '$app/state';
   import Toast from '$lib/components/Toast.svelte';
   import type { Snippet } from 'svelte';
