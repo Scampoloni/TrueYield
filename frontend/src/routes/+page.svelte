@@ -3,14 +3,36 @@
   import { goto } from '$app/navigation';
 
   let portfolios: any[] = $state([]);
+  let totalHoldings = $state(0);
+  let pendingAudits = $state(0);
   let loading = $state(true);
   let error = $state('');
 
   onMount(async () => {
     try {
-      const res = await fetch('/api/portfolio');
+      const res = await fetch('/api/portfolio', { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed');
       portfolios = await res.json();
+
+      let holdingsCount = 0;
+      let pendingCount = 0;
+      for (const p of portfolios) {
+        const [hRes, aRes] = await Promise.all([
+          fetch(`/api/holding?portfolioId=${p.id}`),
+          fetch(`/api/service/auditreport/dashboard?portfolioId=${p.id}`)
+        ]);
+        if (hRes.ok) {
+          const hs = await hRes.json();
+          holdingsCount += hs.length;
+        }
+        if (aRes.ok) {
+          const agg: any[] = await aRes.json();
+          const pending = agg.find((a: any) => a.id === 'PENDING_REVIEW');
+          if (pending) pendingCount += parseInt(pending.count || '0');
+        }
+      }
+      totalHoldings = holdingsCount;
+      pendingAudits = pendingCount;
     } catch {
       error = 'Could not load portfolios.';
     } finally {
@@ -72,7 +94,7 @@
       {#if loading}
         <div class="skeleton" style="width:60px;height:40px;margin-bottom:6px;"></div>
       {:else}
-        <div class="m-val green">{portfolios.reduce((s, p) => s + (p.holdings?.length || 0), 0)}</div>
+        <div class="m-val green">{totalHoldings}</div>
       {/if}
       <div class="m-lbl">Total Holdings</div>
       <div class="m-trend tr-green">↑ Across all portfolios</div>
@@ -90,7 +112,7 @@
         <div class="skeleton" style="width:60px;height:40px;margin-bottom:6px;"></div>
       {:else}
         <div class="m-val amber">
-          {portfolios.filter(p => p.auditReports?.some((r: any) => r.auditStatus === 'PENDING_REVIEW')).length}
+          {pendingAudits}
         </div>
       {/if}
       <div class="m-lbl">Pending Audits</div>
