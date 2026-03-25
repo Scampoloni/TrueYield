@@ -23,6 +23,13 @@ public class HoldingService {
         return holdingRepository.findByPortfolioId(portfolioId);
     }
 
+    public void deleteHolding(String id) {
+        if (!holdingRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Holding not found: " + id);
+        }
+        holdingRepository.deleteById(id);
+    }
+
     public Holding createHolding(HoldingCreateDTO dto) {
         if (!portfolioService.portfolioExists(dto.getPortfolioId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
