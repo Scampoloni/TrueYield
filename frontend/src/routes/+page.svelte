@@ -61,7 +61,6 @@
     <div class="pg-sub">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
   </div>
   <div class="btns">
-    <button class="btn btn-ghost">Export</button>
     <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
   </div>
 </div>

@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +26,28 @@ public class AuditReportServiceController {
 
     @Autowired
     private AuditReportService auditReportService;
+
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<AuditReport> getAuditReportById(@PathVariable String id) {
+        try {
+            AuditReport report = auditReportService.getAuditReportById(id);
+            return new ResponseEntity<>(report, HttpStatus.OK);
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(e.getStatusCode());
+        }
+    }
+
+    @PutMapping("/reject")
+    @PreAuthorize("hasRole('auditor')")
+    public ResponseEntity<AuditReport> rejectAuditReport(@Valid @RequestBody StateChangeDTO dto) {
+        try {
+            AuditReport updated = auditReportService.rejectAuditReport(dto);
+            return new ResponseEntity<>(updated, HttpStatus.OK);
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(e.getStatusCode());
+        }
+    }
 
     @PutMapping("/assign")
     @PreAuthorize("hasRole('auditor')")

@@ -104,9 +104,14 @@
     description="Remove {deleteHoldingTarget.symbol} from this portfolio? This cannot be undone."
     confirmLabel="Delete"
     danger={true}
-    onConfirm={() => {
-      holdings = holdings.filter(h => h.id !== deleteHoldingTarget.id);
-      showToast('Holding removed');
+    onConfirm={async () => {
+      const res = await fetch(`/api/holding/${deleteHoldingTarget.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        holdings = holdings.filter(h => h.id !== deleteHoldingTarget.id);
+        showToast('Holding removed');
+      } else {
+        showToast('Failed to delete holding', 'error');
+      }
       deleteHoldingTarget = null;
     }}
     onCancel={() => deleteHoldingTarget = null}
