@@ -6,33 +6,30 @@
 
   const reportId = page.params.id;
   let report: any = $state(null);
+  let portfolioName = $state('');
+  let holdings: any[] = $state([]);
   let loading = $state(true);
-  let comment = $state('');
-  let submitting = $state(false);
   let showApproveModal = $state(false);
   let showRejectModal = $state(false);
   let openAccordions: Record<string, boolean> = $state({});
 
-  const AUDITOR_ID = 'temp-auditor-123';
   const STATES = ['DRAFT', 'AI_ANALYZING', 'PENDING_REVIEW', 'UNDER_REVIEW', 'APPROVED'];
 
-  onMount(() => {
-    report = {
-      id: reportId,
-      reportId: 'AUD-2026-001',
-      portfolio: 'Green Energy Portfolio',
-      status: 'UNDER_REVIEW',
-      aiSummary: 'This portfolio demonstrates strong ESG compliance across renewable energy holdings. Neste Oyj shows positive sentiment with sustainable aviation fuel initiatives, though some concerns exist regarding palm oil sourcing. Orsted maintains excellent renewable energy credentials with minimal risk factors. Overall risk assessment: Low to Moderate.',
-      holdings: [
-        { symbol: 'NESTE',  name: 'Neste Oyj',  evidenceCount: 3 },
-        { symbol: 'ORSTED', name: 'Orsted A/S', evidenceCount: 2 },
-      ],
-      comments: [
-        { author: 'temp-user-123', date: 'Mar 15, 2026 10:30', text: 'Initial review completed. Risk assessment looks reasonable.' }
-      ],
-      approvedAt: null
-    };
-    loading = false;
+  onMount(async () => {
+    try {
+      const rRes = await fetch(`/api/service/auditreport/${reportId}`);
+      if (!rRes.ok) { loading = false; return; }
+      report = await rRes.json();
+
+      const [pRes, hRes] = await Promise.all([
+        fetch(`/api/portfolio/${report.portfolioId}`),
+        fetch(`/api/holding?portfolioId=${report.portfolioId}`)
+      ]);
+      if (pRes.ok) { const p = await pRes.json(); portfolioName = p.name; }
+      if (hRes.ok) holdings = await hRes.json();
+    } finally {
+      loading = false;
+    }
   });
 
   function stateIndex(s: string) { return STATES.indexOf(s); }
@@ -46,14 +43,17 @@
 
   function statusLabel(s: string) { return s.replace(/_/g, ' '); }
 
+  const auditorId = () => page.data.user?.sub ?? '';
+
   async function assignReport() {
     try {
-      await fetch('/api/service/auditreport/assign', {
+      const res = await fetch('/api/service/auditreport/assign', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ auditReportId: reportId, auditorId: AUDITOR_ID })
+        body: JSON.stringify({ auditReportId: reportId, auditorId: auditorId() })
       });
-      report = { ...report, status: 'UNDER_REVIEW' };
+      if (!res.ok) throw new Error();
+      report = { ...report, auditStatus: 'UNDER_REVIEW', auditorId: auditorId() };
       showToast('Report assigned to you');
     } catch {
       showToast('Failed to assign report', 'error');
@@ -62,12 +62,13 @@
 
   async function approveReport() {
     try {
-      await fetch('/api/service/auditreport/complete', {
+      const res = await fetch('/api/service/auditreport/complete', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ auditReportId: reportId, auditorId: AUDITOR_ID })
+        body: JSON.stringify({ auditReportId: reportId, auditorId: auditorId() })
       });
-      report = { ...report, status: 'APPROVED', approvedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) };
+      if (!res.ok) throw new Error();
+      report = { ...report, auditStatus: 'APPROVED' };
       showApproveModal = false;
       showToast('Report approved successfully');
     } catch {
@@ -75,24 +76,20 @@
     }
   }
 
-  function rejectReport() {
-    report = { ...report, status: 'REJECTED' };
-    showRejectModal = false;
-    showToast('Report rejected');
-  }
-
-  async function submitComment() {
-    if (!comment.trim()) return;
-    submitting = true;
-    await new Promise(r => setTimeout(r, 400));
-    report = { ...report, comments: [...report.comments, {
-      author: AUDITOR_ID,
-      date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-      text: comment
-    }]};
-    comment = '';
-    submitting = false;
-    showToast('Comment added');
+  async function rejectReport() {
+    try {
+      const res = await fetch('/api/service/auditreport/reject', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auditReportId: reportId, auditorId: auditorId() })
+      });
+      if (!res.ok) throw new Error();
+      report = { ...report, auditStatus: 'REJECTED' };
+      showRejectModal = false;
+      showToast('Report rejected');
+    } catch {
+      showToast('Failed to reject report', 'error');
+    }
   }
 </script>
 
@@ -109,13 +106,13 @@
 {:else if report}
   <div class="topbar">
     <div>
-      <div class="page-title">Audit Report {report.reportId}</div>
-      <div class="page-subtitle">{report.portfolio}</div>
+      <div class="page-title">Audit Report</div>
+      <div class="page-subtitle">{portfolioName || report.portfolioId}</div>
     </div>
     <div class="topbar-actions">
-      {#if report.status === 'PENDING_REVIEW'}
+      {#if report.auditStatus === 'PENDING_REVIEW'}
         <button class="btn btn-primary" onclick={assignReport}>Assign to me</button>
-      {:else if report.status === 'UNDER_REVIEW'}
+      {:else if report.auditStatus === 'UNDER_REVIEW'}
         <button class="btn btn-success" onclick={() => showApproveModal = true}>Approve</button>
         <button class="btn btn-danger"  onclick={() => showRejectModal = true}>Reject</button>
       {/if}
@@ -123,12 +120,12 @@
   </div>
 
   <div class="content">
-    <span class="status-large {statusClass(report.status)}">{statusLabel(report.status)}</span>
+    <span class="status-large {statusClass(report.auditStatus)}">{statusLabel(report.auditStatus)}</span>
 
     <div class="table-wrap table-section">
       <div class="timeline">
         {#each STATES as state, i}
-          {@const idx       = stateIndex(report.status)}
+          {@const idx       = stateIndex(report.auditStatus)}
           {@const isDone    = i < idx}
           {@const isCurrent = i === idx}
           <div class="timeline-step">
@@ -144,71 +141,62 @@
       </div>
     </div>
 
-    <div class="ai-summary">
-      <div class="ai-icon">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="8" r="5.5" stroke="#4f8ef7" stroke-width="1.3"/>
-          <path d="M6 8h4M8 6v4" stroke="#4f8ef7" stroke-width="1.3" stroke-linecap="round"/>
-        </svg>
+    {#if report.aiRiskSummary}
+      <div class="ai-summary">
+        <div class="ai-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="5.5" stroke="#4f8ef7" stroke-width="1.3"/>
+            <path d="M6 8h4M8 6v4" stroke="#4f8ef7" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="ai-summary-title">AI Analysis Summary</div>
+          <div class="ai-summary-text">{report.aiRiskSummary}</div>
+        </div>
       </div>
-      <div>
-        <div class="ai-summary-title">AI Analysis Summary</div>
-        <div class="ai-summary-text">{report.aiSummary}</div>
-      </div>
-    </div>
+    {/if}
 
     <div class="section-hd">
       <span class="section-title">Holdings & Evidence</span>
     </div>
     <div class="table-wrap" style="margin-bottom:24px;">
-      {#each report.holdings as h}
-        <div class="accordion-item">
-          <!-- svelte-ignore a11y_no_static_element_interactions -->
-          <div class="accordion-header" onclick={() => openAccordions[h.symbol] = !openAccordions[h.symbol]}>
-            <div>
-              <div class="accordion-title">{h.symbol}</div>
-              <div class="accordion-sub">{h.name}</div>
-            </div>
-            <div class="accordion-meta">
-              <span>{h.evidenceCount} evidence item{h.evidenceCount !== 1 ? 's' : ''}</span>
-              <span style="display:inline-block;transition:transform 0.2s;transform:{openAccordions[h.symbol] ? 'rotate(180deg)' : 'rotate(0deg)'}">&#8595;</span>
-            </div>
-          </div>
-          {#if openAccordions[h.symbol]}
-            <div class="accordion-body">
-              Positive sustainability metrics identified for {h.name}.
-            </div>
-          {/if}
+      {#if holdings.length === 0}
+        <div class="empty" style="padding:24px;">
+          <div class="e-ttl">No holdings</div>
+          <div class="e-sub">No holdings found for this portfolio.</div>
         </div>
-      {/each}
+      {:else}
+        {#each holdings as h}
+          <div class="accordion-item">
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div class="accordion-header" onclick={() => openAccordions[h.symbol] = !openAccordions[h.symbol]}>
+              <div>
+                <div class="accordion-title">{h.symbol}</div>
+                <div class="accordion-sub">{h.name || '—'}</div>
+              </div>
+              <div class="accordion-meta">
+                <a href="/portfolios/{report.portfolioId}/holdings/{h.id}" class="xb xb-blue" onclick={(e) => e.stopPropagation()}>View Evidence →</a>
+                <span style="display:inline-block;transition:transform 0.2s;transform:{openAccordions[h.symbol] ? 'rotate(180deg)' : 'rotate(0deg)'}">&#8595;</span>
+              </div>
+            </div>
+            {#if openAccordions[h.symbol]}
+              <div class="accordion-body">
+                ISIN: {h.isin || '—'} · Weight: {h.weightPercent != null ? h.weightPercent + '%' : '—'}
+              </div>
+            {/if}
+          </div>
+        {/each}
+      {/if}
     </div>
 
     <div class="section-hd">
       <span class="section-title">Comments</span>
     </div>
     <div class="table-wrap table-comments">
-      {#each report.comments as c}
-        <div class="comment">
-          <div class="comment-header">
-            <span class="comment-author">{c.author}</span>
-            <span class="comment-date">{c.date}</span>
-          </div>
-          <div class="comment-text">{c.text}</div>
-        </div>
-      {/each}
-
-      {#if report.status === 'APPROVED'}
-        <div class="status-msg success">Approved on {report.approvedAt}</div>
-      {:else if report.status === 'REJECTED'}
-        <div class="status-msg error">Report rejected</div>
-      {:else}
-        <div class="comment-form">
-          <textarea class="comment-textarea" bind:value={comment} placeholder="Add a comment..."></textarea>
-          <button class="btn btn-primary btn-sm" style="margin-top:10px;" onclick={submitComment} disabled={submitting || !comment.trim()}>
-            {submitting ? 'Submitting...' : 'Submit Comment'}
-          </button>
-        </div>
-      {/if}
+      <div class="empty" style="padding:24px;">
+        <div class="e-ttl">Comments coming soon</div>
+        <div class="e-sub">Comment functionality is planned for a future release.</div>
+      </div>
     </div>
   </div>
 {/if}

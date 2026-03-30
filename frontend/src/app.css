@@ -1,2 +1,1 @@
-/* Global styles — see lib/styles/design-system.css for the full design system */
-@import './lib/styles/design-system.css';
+/* Styles are loaded via $lib/styles/design-system.css in +layout.svelte */

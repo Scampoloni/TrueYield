@@ -14,9 +14,9 @@
   --surface-hover: rgba(255,255,255,0.05);
   --border: rgba(255,255,255,0.07);
   --border-strong: rgba(255,255,255,0.12);
-  --text-1: #f0f4ff;
-  --text-2: #94a3b8;
-  --text-3: rgba(148,163,184,0.45);
+  --text-1: #ffffff;
+  --text-2: #b4c6de;
+  --text-3: #7a90aa;
   --blue: #3b82f6;
   --blue-light: #93c5fd;
   --cyan: #06b6d4;
@@ -27,9 +27,9 @@
   --red: #ef4444;
 
   /* Compatibility aliases (for components not yet migrated) */
-  --text: #f0f4ff;
-  --text2: #94a3b8;
-  --text3: rgba(148,163,184,0.45);
+  --text: #ffffff;
+  --text2: #b4c6de;
+  --text3: #7a90aa;
   --surface2: rgba(255,255,255,0.04);
   --surface3: rgba(255,255,255,0.06);
   --border2: rgba(255,255,255,0.12);
@@ -204,12 +204,12 @@ body {
   flex-shrink: 0;
   position: sticky; top: 0; z-index: 50;
 }
-.pg-ttl { font-size: 22px; font-weight: 700; color: var(--text-1); letter-spacing: -0.7px; }
-.pg-sub { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+.pg-ttl { font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.7px; }
+.pg-sub { font-size: 11.5px; color: rgba(180,198,222,0.65); margin-top: 2px; }
 
 /* Compat aliases for topbar */
-.page-title { font-size: 22px; font-weight: 700; color: var(--text-1); letter-spacing: -0.7px; }
-.page-subtitle { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+.page-title { font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.7px; }
+.page-subtitle { font-size: 11.5px; color: rgba(180,198,222,0.65); margin-top: 2px; }
 .topbar-actions { display: flex; gap: 9px; }
 .topbar-left {}
 
@@ -398,10 +398,10 @@ body {
 .table-wrap tbody tr:hover td { background: rgba(255,255,255,0.02); }
 
 /* Table cell helpers */
-.pf-name { font-size: 14px; font-weight: 600; color: var(--text-1); letter-spacing: -0.2px; margin-bottom: 3px; }
-.pf-id { font-size: 10px; color: rgba(148,163,184,0.25); font-family: 'JetBrains Mono', monospace; }
-.pf-desc { font-size: 12.5px; color: rgba(148,163,184,0.45); line-height: 1.55; max-width: 420px; }
-.cell-primary { color: var(--text-1); font-weight: 500; font-size: 13px; }
+.pf-name { font-size: 14px; font-weight: 600; color: #ffffff; letter-spacing: -0.2px; margin-bottom: 3px; }
+.pf-id { font-size: 10px; color: rgba(180,198,222,0.35); font-family: 'JetBrains Mono', monospace; }
+.pf-desc { font-size: 12.5px; color: rgba(180,198,222,0.6); line-height: 1.55; max-width: 420px; }
+.cell-primary { color: #ffffff; font-weight: 500; font-size: 13px; }
 .cell-sub { font-size: 11px; color: var(--text-3); font-family: var(--mono); margin-top: 2px; }
 .cell-mono { font-family: var(--mono); font-size: 11px; color: var(--text-3); }
 .cell-link { color: var(--blue-light); cursor: pointer; background: none; border: none; font-size: 12px; font-family: var(--font); padding: 0; text-decoration: none; }
@@ -464,7 +464,7 @@ body {
 .empty-desc { font-size: 12px; color: rgba(100,116,139,0.38); max-width: 260px; line-height: 1.6; margin-bottom: 20px; }
 
 /* ── GLASS FORM ─────────────────────────────────────────────── */
-.form-wrap { max-width: 520px; }
+.form-wrap { max-width: 520px; margin: 0 auto; }
 .form-glass {
   background: rgba(255,255,255,0.025);
   backdrop-filter: blur(32px);
@@ -484,8 +484,8 @@ body {
   bottom: -150px; right: -100px;
   background: rgba(37,99,235,0.07); filter: blur(60px); pointer-events: none;
 }
-.ft { font-size: 19px; font-weight: 700; color: var(--text-1); letter-spacing: -0.5px; margin-bottom: 4px; }
-.fs { font-size: 12.5px; color: var(--text-3); margin-bottom: 28px; line-height: 1.6; }
+.ft { font-size: 19px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px; margin-bottom: 4px; }
+.fs { font-size: 12.5px; color: rgba(180,198,222,0.65); margin-bottom: 28px; line-height: 1.6; }
 .field { margin-bottom: 18px; position: relative; z-index: 1; }
 .field label {
   display: block; font-size: 10.5px; font-weight: 700;
@@ -570,6 +570,7 @@ textarea.form-input { resize: vertical; min-height: 100px; line-height: 1.6; }
 /* ── ACCOUNT CARD ───────────────────────────────────────────── */
 .acct-glass {
   max-width: 440px;
+  margin: 0 auto;
   background: rgba(255,255,255,0.025);
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
@@ -588,8 +589,8 @@ textarea.form-input { resize: vertical; min-height: 100px; line-height: 1.6; }
   font-size: 20px; font-weight: 700; color: #fff;
   box-shadow: 0 0 0 1px rgba(14,165,233,0.3), 0 0 32px rgba(14,165,233,0.3);
 }
-.a-nm { font-size: 17px; font-weight: 700; color: var(--text-1); letter-spacing: -0.3px; }
-.a-em { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.a-nm { font-size: 17px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px; }
+.a-em { font-size: 12px; color: rgba(180,198,222,0.65); margin-top: 2px; }
 .a-div { height: 1px; background: rgba(255,255,255,0.055); margin: 22px 0; }
 .a-row {
   display: flex; justify-content: space-between; align-items: center;

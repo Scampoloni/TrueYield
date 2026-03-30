@@ -869,11 +869,11 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #33 | Unit Tests: PortfolioService (Happy Path + Fehler) | `testing`, `backend` | ⬜ |
-| #34 | Unit Tests: HoldingService (Happy Path + Fehler) | `testing`, `backend` | ⬜ |
-| #35 | Integration Tests: Portfolio-Endpoints mit @MockMvc | `testing`, `backend` | ⬜ |
-| #36 | Integration Tests: Holding-Endpoints mit @MockMvc | `testing`, `backend` | ⬜ |
-| #37 | JaCoCo: Maven-Plugin konfigurieren & Badge im README | `testing`, `chore` | ⬜ |
+| #33 | Unit Tests: PortfolioService (Happy Path + Fehler) | `testing`, `backend` | ✅ Done |
+| #34 | Unit Tests: HoldingService (Happy Path + Fehler) | `testing`, `backend` | ✅ Done |
+| #35 | Integration Tests: Portfolio-Endpoints mit @MockMvc | `testing`, `backend` | ✅ Done |
+| #36 | Integration Tests: Holding-Endpoints mit @MockMvc | `testing`, `backend` | ✅ Done |
+| #37 | JaCoCo: Maven-Plugin konfigurieren & Badge im README | `testing`, `chore` | ✅ Done |
 
 ---
 

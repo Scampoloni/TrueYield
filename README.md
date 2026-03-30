@@ -1,6 +1,16 @@
 # TrueYield – KI-gestützte ESG-Verifikation gegen Greenwashing
 
+![Backend CI](https://github.com/Scampoloni/trueyield/actions/workflows/ci.yml/badge.svg)
+![Coverage Policy](https://img.shields.io/badge/coverage%20policy-70%25%20min%20%7C%2080%25%20target-blue)
+
 Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch geforderte Prüfung auf Greenwashing ist manuell, langsam und fehleranfällig. TrueYield löst das: Eine KI-gestützte Plattform analysiert automatisiert globale Nachrichtenquellen, bewertet ESG-Risiken und liefert Auditoren eine revisionssichere Entscheidungsgrundlage. Der Zeitpunkt ist jetzt, weil EU-Regulierungen (SFDR, EU-Taxonomie) seit 2021 scharfe Nachweispflichten fordern und Greenwashing-Bussen in Milliardenhöhe drohen.
+
+## Testing & Coverage
+
+- Backend CI führt `mvn verify` aus (inkl. Unit/Integration-Tests).
+- JaCoCo HTML-Report wird unter `backend/target/site/jacoco/index.html` erzeugt.
+- Coverage-Gate: Build failt unter 70% Instruction Coverage für die aktuell test-abgedeckten Core Services (`PortfolioService`, `HoldingService`).
+- Coverage-Ziel: 80% (bei Unterschreitung wird in CI eine Warnung ausgegeben).
 
 ## Inhaltsverzeichnis
 - [Einleitung](#einleitung)
