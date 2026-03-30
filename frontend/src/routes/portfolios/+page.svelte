@@ -9,7 +9,7 @@
 
   onMount(async () => {
     try {
-      const res = await fetch('/api/portfolio');
+      const res = await fetch('/api/portfolio', { cache: 'no-store' });
       portfolios = await res.json();
     } finally {
       loading = false;

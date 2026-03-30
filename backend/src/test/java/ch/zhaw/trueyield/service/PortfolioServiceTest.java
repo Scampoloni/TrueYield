@@ -1,0 +1,223 @@
+package ch.zhaw.trueyield.service;
+
+import ch.zhaw.trueyield.model.Portfolio;
+import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
+import ch.zhaw.trueyield.model.dto.PortfolioUpdateDTO;
+import ch.zhaw.trueyield.repository.PortfolioRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class PortfolioServiceTest {
+
+    @Mock
+    private PortfolioRepository portfolioRepository;
+
+    @InjectMocks
+    private PortfolioService portfolioService;
+
+    private Portfolio portfolio;
+    private PortfolioCreateDTO createDTO;
+    private PortfolioUpdateDTO updateDTO;
+
+    @BeforeEach
+    void setUp() {
+        portfolio = new Portfolio("ESG Global Fund", "manager-001");
+        portfolio.setDescription("A diversified ESG portfolio");
+
+        // DTOs haben keine Setter (Lombok @Getter only) → via Mockito simulieren
+        // lenient: nicht jeder Test braucht beide DTOs
+        createDTO = mock(PortfolioCreateDTO.class);
+        lenient().when(createDTO.getName()).thenReturn("ESG Global Fund");
+        lenient().when(createDTO.getDescription()).thenReturn("A diversified ESG portfolio");
+
+        updateDTO = mock(PortfolioUpdateDTO.class);
+        lenient().when(updateDTO.getName()).thenReturn("Updated Fund");
+        lenient().when(updateDTO.getDescription()).thenReturn("Updated description");
+    }
+
+    // ── createPortfolio ──────────────────────────────────────────────────────
+
+    @Test
+    void createPortfolio_savesPortfolioWithCorrectOwner() {
+        when(portfolioRepository.save(any(Portfolio.class))).thenReturn(portfolio);
+
+        Portfolio result = portfolioService.createPortfolio(createDTO, "manager-001");
+
+        assertNotNull(result);
+        assertEquals("ESG Global Fund", result.getName());
+        assertEquals("manager-001", result.getFundManagerId());
+        assertEquals("A diversified ESG portfolio", result.getDescription());
+        verify(portfolioRepository, times(1)).save(any(Portfolio.class));
+    }
+
+    // ── getAllPortfoliosByFundManager ─────────────────────────────────────────
+
+    @Test
+    void getAllPortfoliosByFundManager_returnsOwnedPortfolios() {
+        when(portfolioRepository.findByFundManagerId("manager-001"))
+                .thenReturn(List.of(portfolio));
+
+        List<Portfolio> result = portfolioService.getAllPortfoliosByFundManager("manager-001");
+
+        assertEquals(1, result.size());
+        assertEquals("ESG Global Fund", result.get(0).getName());
+    }
+
+    @Test
+    void getAllPortfoliosByFundManager_returnsEmptyList_whenNoneExist() {
+        when(portfolioRepository.findByFundManagerId("unknown")).thenReturn(List.of());
+
+        List<Portfolio> result = portfolioService.getAllPortfoliosByFundManager("unknown");
+
+        assertTrue(result.isEmpty());
+    }
+
+    // Parametrisiert: jeder Manager bekommt nur eigene Portfolios
+    @ParameterizedTest
+    @ValueSource(strings = {"manager-001", "manager-002", "manager-003"})
+    void getAllPortfoliosByFundManager_isolatesPerManager(String managerId) {
+        Portfolio ownPortfolio = new Portfolio("Fund", managerId);
+        when(portfolioRepository.findByFundManagerId(managerId))
+                .thenReturn(List.of(ownPortfolio));
+
+        List<Portfolio> result = portfolioService.getAllPortfoliosByFundManager(managerId);
+
+        assertEquals(1, result.size());
+        assertEquals(managerId, result.get(0).getFundManagerId());
+    }
+
+    // ── getPortfolioById ─────────────────────────────────────────────────────
+
+    @Test
+    void getPortfolioById_returnsPortfolio_whenOwnerMatches() {
+        when(portfolioRepository.findById("portfolio-1"))
+                .thenReturn(Optional.of(portfolio));
+
+        Portfolio result = portfolioService.getPortfolioById("portfolio-1", "manager-001");
+
+        assertNotNull(result);
+        assertEquals("ESG Global Fund", result.getName());
+    }
+
+    // Parametrisiert mit CsvSource: NOT_FOUND und FORBIDDEN in einem Test
+    @ParameterizedTest
+    @CsvSource({
+        "nonexistent, manager-001, NOT_FOUND",
+        "portfolio-1, wrong-user,  FORBIDDEN"
+    })
+    void getPortfolioById_throwsCorrectException(
+            String portfolioId, String requestingUser, String expectedStatus) {
+        lenient().when(portfolioRepository.findById("nonexistent")).thenReturn(Optional.empty());
+        lenient().when(portfolioRepository.findById("portfolio-1")).thenReturn(Optional.of(portfolio));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> portfolioService.getPortfolioById(portfolioId, requestingUser));
+
+        assertEquals(HttpStatus.valueOf(expectedStatus.trim()), ex.getStatusCode());
+    }
+
+    // ── updatePortfolio ──────────────────────────────────────────────────────
+
+    @Test
+    void updatePortfolio_updatesAndSavesPortfolio_whenOwnerMatches() {
+        when(portfolioRepository.findById("portfolio-1"))
+                .thenReturn(Optional.of(portfolio));
+        when(portfolioRepository.save(any(Portfolio.class))).thenReturn(portfolio);
+
+        Portfolio result = portfolioService.updatePortfolio("portfolio-1", updateDTO, "manager-001");
+
+        assertNotNull(result);
+        verify(portfolioRepository, times(1)).save(portfolio);
+    }
+
+    @Test
+    void updatePortfolio_throwsNotFound_whenIdDoesNotExist() {
+        when(portfolioRepository.findById("nonexistent")).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> portfolioService.updatePortfolio("nonexistent", updateDTO, "manager-001"));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verify(portfolioRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePortfolio_throwsForbidden_whenRequesterIsNotOwner() {
+        when(portfolioRepository.findById("portfolio-1"))
+                .thenReturn(Optional.of(portfolio));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> portfolioService.updatePortfolio("portfolio-1", updateDTO, "other-manager"));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(portfolioRepository, never()).save(any());
+    }
+
+    // ── deletePortfolio ──────────────────────────────────────────────────────
+
+    @Test
+    void deletePortfolio_deletesSuccessfully_whenOwnerMatches() {
+        when(portfolioRepository.findById("portfolio-1"))
+                .thenReturn(Optional.of(portfolio));
+
+        assertDoesNotThrow(() -> portfolioService.deletePortfolio("portfolio-1", "manager-001"));
+
+        verify(portfolioRepository, times(1)).deleteById("portfolio-1");
+    }
+
+    @Test
+    void deletePortfolio_throwsNotFound_neverCallsDelete() {
+        when(portfolioRepository.findById("nonexistent")).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> portfolioService.deletePortfolio("nonexistent", "manager-001"));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verify(portfolioRepository, never()).deleteById(anyString());
+    }
+
+    @Test
+    void deletePortfolio_throwsForbidden_neverCallsDelete() {
+        when(portfolioRepository.findById("portfolio-1"))
+                .thenReturn(Optional.of(portfolio));
+
+        assertThrows(ResponseStatusException.class,
+                () -> portfolioService.deletePortfolio("portfolio-1", "other-manager"));
+
+        verify(portfolioRepository, never()).deleteById(anyString());
+    }
+
+    // ── portfolioExists ──────────────────────────────────────────────────────
+
+    @Test
+    void portfolioExists_returnsTrue_whenPortfolioExists() {
+        when(portfolioRepository.existsById("portfolio-1")).thenReturn(true);
+
+        assertTrue(portfolioService.portfolioExists("portfolio-1"));
+    }
+
+    @Test
+    void portfolioExists_returnsFalse_whenPortfolioDoesNotExist() {
+        when(portfolioRepository.existsById("nonexistent")).thenReturn(false);
+
+        assertFalse(portfolioService.portfolioExists("nonexistent"));
+    }
+}
