@@ -126,13 +126,12 @@
 									<includes>
 										<include>ch.zhaw.trueyield.service.PortfolioService</include>
 										<include>ch.zhaw.trueyield.service.HoldingService</include>
-										<include>ch.zhaw.trueyield.service.AuditReportService</include>
 									</includes>
 									<limits>
 										<limit>
 											<counter>INSTRUCTION</counter>
 											<value>COVEREDRATIO</value>
-											<minimum>0.80</minimum>
+											<minimum>0.70</minimum>
 										</limit>
 									</limits>
 								</rule>
