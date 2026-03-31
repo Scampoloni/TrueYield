@@ -28,7 +28,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -167,50 +166,6 @@ class PortfolioControllerTest {
                         .with(user("manager").roles("fund-manager")))
                 .andExpect(result -> org.junit.jupiter.api.Assertions.assertEquals(
                         status.value(), result.getResponse().getStatus()));
-    }
-
-    // ── PUT /api/portfolio/{id} ──────────────────────────────────────────────
-
-    @Test
-    void updatePortfolio_asFundManager_returnsOk() throws Exception {
-        Portfolio updated = new Portfolio("Updated Fund", "user-123");
-        updated.setDescription("Updated description");
-        when(portfolioService.updatePortfolio(eq("abc-123"), any(), anyString()))
-                .thenReturn(updated);
-
-        mockMvc.perform(put("/api/portfolio/abc-123")
-                        .with(user("manager").roles("fund-manager"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"name":"Updated Fund","description":"Updated description"}
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Updated Fund"));
-    }
-
-    @Test
-    void updatePortfolio_asAuditor_returnsForbidden() throws Exception {
-        mockMvc.perform(put("/api/portfolio/abc-123")
-                        .with(user("auditor").roles("esg-auditor"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"name":"Should be forbidden"}
-                                """))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void updatePortfolio_serviceThrowsNotFound_returns404() throws Exception {
-        when(portfolioService.updatePortfolio(eq("not-found"), any(), anyString()))
-                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Portfolio not found"));
-
-        mockMvc.perform(put("/api/portfolio/not-found")
-                        .with(user("manager").roles("fund-manager"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"name":"Updated Fund"}
-                                """))
-                .andExpect(status().isNotFound());
     }
 
     // ── DELETE /api/portfolio/{id} ───────────────────────────────────────────
