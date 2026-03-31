@@ -714,17 +714,17 @@ Die Dokumentation im README.md muss folgende Kapitel enthalten:
 
 | Termin | Leistungsnachweis | Status |
 |--------|-------------------|--------|
-| Woche 1–13 | Wöchentliche Übungsabgabe (Dienstag 10:00) | 🔄 Laufend |
+| Woche 1–13 | Wöchentliche Übungsabgabe (Dienstag 10:00) | 🔄 Laufend (SW8 erledigt) |
 | Woche 2/3 | Besprechung Projektidee mit Dozent (UC + ER mitbringen) | ✅ Done |
-| Woche 3 | Abgabe Explore-, Create- und Evaluate-Boards | ⬜ Offen |
-| Woche 4 | Gegenseitige Beurteilung der Boards | ⬜ Offen |
-| Woche 4 | Pitch Probelauf in der KK (Präsenzpflicht) | ⬜ Offen |
-| Woche 5/6 | Pitch Semesterprojekt (benotet, 5% Gesamtnote) | ⬜ Offen |
-| Woche 5/6 | Feedback zu Pitches der Mitstudierenden (Präsenzpflicht) | ⬜ Offen |
-| Woche 6 | Abgabe Pitch-Deck | ⬜ Offen |
-| Woche 11 | Gegenseitiges Feedback zum Projektstand | ⬜ Offen |
+| Woche 3 | Abgabe Explore-, Create- und Evaluate-Boards | ✅ Done |
+| Woche 4 | Gegenseitige Beurteilung der Boards | ✅ Done |
+| Woche 4 | Pitch Probelauf in der KK (Präsenzpflicht) | ✅ Done |
+| Woche 5/6 | Pitch Semesterprojekt (benotet, 5% Gesamtnote) | ✅ Done |
+| Woche 5/6 | Feedback zu Pitches der Mitstudierenden (Präsenzpflicht) | ✅ Done |
+| Woche 6 | Abgabe Pitch-Deck | ✅ Done |
+| Woche 11 | Gegenseitiges Feedback zum Projektstand | ⬜ Offen (~30.04.2026) |
 | Ende Woche 14 | Abgabe schriftliche Arbeit + Implementation (24.05.2026) | ⬜ Offen |
-| KW 23 | Präsentation des Projekts (10 Min + 10 Min Befragung) | ⬜ Offen |
+| KW 23 | Präsentation des Projekts (10 Min + 10 Min Befragung) | ⬜ Offen (01.–05.06.2026) |
 
 ---
 
@@ -736,9 +736,9 @@ Die Dokumentation im README.md muss folgende Kapitel enthalten:
 
 ---
 
-## 14. Current Implementation Status (End of Issue #31)
+## 14. Current Implementation Status (End of Issue #50 / SW8)
 
-Issues #1–#17 (Backend) und #21–#23, #26, #28–#31 (Frontend + Auth) sind vollständig abgeschlossen:
+Issues #1–#37, #39–#41, #50 (Backend + Tests + CI) sowie #18–#27 (Pitch + Postman + Docs) und #21–#31, #65, #75–#76 sind vollständig abgeschlossen:
 
 ### Backend (vollständig)
 - **Domain Model:** Alle 5 Kern-Entitäten als MongoDB-DAOs mit Lombok (`Portfolio`, `Holding`, `Evidence`, `AuditReport`, `AuditComment`).
@@ -764,12 +764,21 @@ Issues #1–#17 (Backend) und #21–#23, #26, #28–#31 (Frontend + Auth) sind v
 - **Audit-Dashboard:** Lädt echte Daten vom Backend (Portfolios → Dashboard-Aggregation pro Portfolio).
 - **Account-Seite:** Zeigt User-Info (Name, Email, Sub, Roles) + Logout-Button.
 
+### Testing (vollständig, SW7–8)
+- **PortfolioService + HoldingService:** Unit Tests mit `@ExtendWith(MockitoExtension.class)`, `@Mock`, `@InjectMocks`, Happy Path + Fehlerfall.
+- **AuditReportService:** Unit Tests mit `@ParameterizedTest`, `@CsvSource` + `ArgumentsAccessor`, `@ValueSource`, Exception Testing für alle State-Transitions.
+- **PortfolioController + HoldingController + AuditReportServiceController:** MockMvc Integration Tests mit `@SpringBootTest`, `@MockitoBean`, rollenbasierter Zugriff, JSON-Prüfung.
+- **JaCoCo:** Maven-Plugin konfiguriert, 80%-Threshold auf 3 Service-Klassen, Coverage-Badge im README, HTML-Report als CI-Artefakt.
+- **CI:** GitHub Actions Pipeline läuft auf jedem Push/PR auf `main`.
+- **Aktuelle Coverage:** ~79.2% gesamt (Ziel: 90% bis Abgabe).
+
 ### Offen (nächste Schritte)
-- **#18–#20:** Pitch + Postman-Dokumentation für Holding & AuditReport APIs.
-- **#24–#25:** Global Exception Handler (`@ControllerAdvice`), DTO Validation.
-- **#27:** Pitch-Deck auf Moodle abgeben.
+- **#38:** AuditComment API Endpoints.
 - **#32:** Postman Auth0 Token-Dokumentation.
-- **#33+:** Unit Tests, Integration Tests, JaCoCo, CI/CD, Spring AI, Deployment.
+- **#42–#45:** Frontend Auditor-Views (Audit-Dashboard, Detail, Comment-Formular, Rollennavigation).
+- **#47–#49:** Dockerfile, Azure Deployment, CD Pipeline — **kritischer Pfad**.
+- **#53–#55:** Spring AI Integration — **Pflichtanforderung**.
+- **#56–#57:** Evidence API + Tests.
 
 ---
 
@@ -828,9 +837,11 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #18 | Pitch vorbereiten (3 Min, max 5 Wörter/Slide) | `documentation`, `milestone` | ⬜ |
-| #19 | Postman: Holding API Collection dokumentieren | `documentation`, `api` | ⬜ |
-| #20 | Postman: AuditReport Service API Collection dokumentieren | `documentation`, `api` | ⬜ |
+| #18 | Pitch vorbereiten (3 Min, max 5 Wörter/Slide) | `documentation`, `milestone` | ✅ Done |
+| #19 | Postman: Holding API Collection dokumentieren | `documentation`, `api` | ✅ Done |
+| #20 | Postman: AuditReport Service API Collection dokumentieren | `documentation`, `api` | ✅ Done |
+| #75 | Documentation: UI-Mockup / Skizze der Hauptscreens | `documentation` | ✅ Done |
+| #76 | Documentation: Use-Case Beschreibung (RE-Format) | `documentation` | ✅ Done |
 | #21 | SvelteKit: Projekt-Setup & Routing-Struktur | `frontend`, `setup` | ✅ Done |
 | #22 | SvelteKit: Portfolio-Übersichtsseite (List View) | `frontend`, `enhancement` | ✅ Done |
 | #23 | SvelteKit: Portfolio erstellen (Create Form) | `frontend`, `enhancement` | ✅ Done |
@@ -843,8 +854,8 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #24 | Global Exception Handler: @ControllerAdvice | `backend`, `enhancement` | ⬜ |
-| #25 | DTO Validation: jakarta.validation für alle Inputs | `backend`, `enhancement` | ⬜ |
+| #24 | Global Exception Handler: @ControllerAdvice | `backend`, `enhancement` | ✅ Done |
+| #25 | DTO Validation: jakarta.validation für alle Inputs | `backend`, `enhancement` | ✅ Done |
 | #26 | SvelteKit: Portfolio-Detailseite mit Holdings | `frontend`, `enhancement` | ✅ Done |
 
 ---
@@ -855,7 +866,7 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #27 | Pitch-Deck auf Moodle abgeben | `documentation`, `milestone` | ⬜ |
+| #27 | Pitch-Deck auf Moodle abgeben | `documentation`, `milestone` | ✅ Done |
 | #28 | Auth0: Backend SecurityFilterChain konfigurieren | `backend`, `security` | ✅ Done |
 | #29 | Auth0: Frontend Login/Logout Flow | `frontend`, `security` | ✅ Done |
 | #30 | Auth0: Rollen-Setup (Fund Manager + ESG Auditor) | `backend`, `security` | ✅ Done |
@@ -885,9 +896,9 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
 | #38 | AuditComment: API Endpoints (Create, Read by Report) | `api`, `backend` | ⬜ |
-| #39 | Unit Tests: AuditReportService (State Transitions) | `testing`, `backend` | ⬜ |
-| #40 | Integration Tests: Rollenbasierter Zugriff (Fund Manager vs Auditor) | `testing`, `security` | ⬜ |
-| #41 | GitHub Actions: CI Pipeline (Build + Test auf Push) | `chore`, `deployment` | ⬜ |
+| #39 | Unit Tests: AuditReportService (State Transitions) | `testing`, `backend` | ✅ Done |
+| #40 | Integration Tests: Rollenbasierter Zugriff (Fund Manager vs Auditor) | `testing`, `security` | ✅ Done |
+| #41 | GitHub Actions: CI Pipeline (Build + Test auf Push) | `chore`, `deployment` | ✅ Done |
 
 ---
 
@@ -912,7 +923,7 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 | #47 | Dockerfile erstellen (Multi-Stage Build) | `deployment`, `chore` | ⬜ |
 | #48 | Azure App Service: Deployment konfigurieren | `deployment`, `chore` | ⬜ |
 | #49 | GitHub Actions: CD Pipeline (Build → Push → Deploy) | `deployment`, `chore` | ⬜ |
-| #50 | Coverage-Optimierung: Lücken schliessen (Ziel 90%) | `testing`, `backend` | ⬜ |
+| #50 | Coverage-Optimierung: Lücken schliessen (Ziel 90%) | `testing`, `backend` | ✅ Done |
 | #51 | SonarQube: Projekt aufsetzen & CI-Integration | `testing`, `quality` | ⬜ |
 
 ---
@@ -952,7 +963,7 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 |---------|-------|--------|--------|
 | #63 | Cypress: E2E Test – Portfolio CRUD Flow (Fund Manager) | `testing`, `frontend` | ⬜ |
 | #64 | Cypress: E2E Test – Login & Rollenbasierter Zugriff | `testing`, `security` | ⬜ |
-| #65 | Postman: Vollständige API-Dokumentation veröffentlichen | `documentation`, `api` | ⬜ |
+| #65 | Postman: Vollständige API-Dokumentation veröffentlichen | `documentation`, `api` | ✅ Done |
 | #66 | README.md: Implementation-Kapitel mit Screenshots | `documentation` | ⬜ |
 | #67 | Cypress: Setup & Konfiguration | `testing`, `frontend` | ⬜ |
 | #68 | Cypress: E2E Test – Audit Workflow (Auditor) | `testing`, `frontend` | ⬜ |
