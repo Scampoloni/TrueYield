@@ -12,6 +12,11 @@
   let showApproveModal = $state(false);
   let showRejectModal = $state(false);
   let openAccordions: Record<string, boolean> = $state({});
+  let comments: any[] = $state([]);
+  let newComment = $state('');
+  let submittingComment = $state(false);
+
+  const isAuditor = $derived((page.data.user?.user_roles ?? []).includes('auditor'));
 
   const STATES = ['DRAFT', 'AI_ANALYZING', 'PENDING_REVIEW', 'UNDER_REVIEW', 'APPROVED'];
 
@@ -27,6 +32,9 @@
       ]);
       if (pRes.ok) { const p = await pRes.json(); portfolioName = p.name; }
       if (hRes.ok) holdings = await hRes.json();
+
+      const cRes = await fetch(`/api/service/auditcomment?auditReportId=${reportId}`);
+      if (cRes.ok) comments = await cRes.json();
     } finally {
       loading = false;
     }
@@ -90,6 +98,31 @@
     } catch {
       showToast('Failed to reject report', 'error');
     }
+  }
+
+  async function submitComment() {
+    submittingComment = true;
+    try {
+      const res = await fetch('/api/service/auditcomment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auditReportId: reportId, comment: newComment.trim() })
+      });
+      if (!res.ok) throw new Error();
+      const created = await res.json();
+      comments = [...comments, created];
+      newComment = '';
+      showToast('Comment added');
+    } catch {
+      showToast('Failed to add comment', 'error');
+    } finally {
+      submittingComment = false;
+    }
+  }
+
+  function formatDate(dt: string) {
+    if (!dt) return '—';
+    return new Date(dt).toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' });
   }
 </script>
 
@@ -192,11 +225,43 @@
     <div class="section-hd">
       <span class="section-title">Comments</span>
     </div>
-    <div class="table-wrap table-comments">
-      <div class="empty" style="padding:24px;">
-        <div class="e-ttl">Comments coming soon</div>
-        <div class="e-sub">Comment functionality is planned for a future release.</div>
-      </div>
+    <div class="table-wrap table-comments" style="margin-bottom:24px;">
+      {#if comments.length === 0}
+        <div class="empty" style="padding:24px;">
+          <div class="e-ttl">No comments yet</div>
+          <div class="e-sub">Comments added by the auditor will appear here.</div>
+        </div>
+      {:else}
+        <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+          {#each comments as c}
+            <div class="comment-card">
+              <div class="comment-meta">
+                <span class="comment-author">{c.auditorId}</span>
+                <span class="comment-date">{formatDate(c.createdAt)}</span>
+              </div>
+              <div class="comment-text">{c.comment}</div>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      {#if isAuditor && report.auditStatus === 'UNDER_REVIEW'}
+        <div class="comment-form">
+          <textarea
+            class="comment-input"
+            bind:value={newComment}
+            placeholder="Add your audit comment..."
+            rows="3"
+          ></textarea>
+          <button
+            class="btn btn-primary"
+            onclick={submitComment}
+            disabled={!newComment.trim() || submittingComment}
+          >
+            {submittingComment ? 'Adding...' : 'Add Comment'}
+          </button>
+        </div>
+      {/if}
     </div>
   </div>
 {/if}
@@ -221,3 +286,57 @@
     onCancel={() => showRejectModal = false}
   />
 {/if}
+
+<style>
+  .comment-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .comment-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .comment-author {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--blue-light, #93c5fd);
+  }
+  .comment-date {
+    font-size: 11px;
+    color: var(--text-3, #7a90aa);
+  }
+  .comment-text {
+    font-size: 13px;
+    color: var(--text-2, #b4c6de);
+    line-height: 1.5;
+  }
+  .comment-form {
+    padding: 16px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .comment-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text-1, #fff);
+    font-size: 13px;
+    resize: vertical;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+  .comment-input:focus {
+    outline: none;
+    border-color: var(--blue, #3b82f6);
+  }
+  .comment-input::placeholder {
+    color: var(--text-3, #7a90aa);
+  }
+</style>
