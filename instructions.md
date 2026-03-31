@@ -736,25 +736,26 @@ Die Dokumentation im README.md muss folgende Kapitel enthalten:
 
 ---
 
-## 14. Current Implementation Status (End of Issue #50 / SW8)
+## 14. Current Implementation Status (End of Issue #47 / SW10)
 
-Issues #1–#37, #39–#41, #50 (Backend + Tests + CI) sowie #18–#27 (Pitch + Postman + Docs) und #21–#31, #65, #75–#76 sind vollständig abgeschlossen:
+Issues #1–#50 (Backend + Tests + CI + Frontend + Dockerfile) und Docs-Issues sind weitgehend abgeschlossen. Offene Ausnahme: #32 (Postman Auth0), #46 (Postman Audit), #47 PR noch offen.
 
 ### Backend (vollständig)
 - **Domain Model:** Alle 5 Kern-Entitäten als MongoDB-DAOs mit Lombok (`Portfolio`, `Holding`, `Evidence`, `AuditReport`, `AuditComment`).
 - **Repositories:** Für alle Entitäten mit Derived Queries (`findByFundManagerId`, `findByPortfolioId`).
 - **Portfolio API:** Vollständige CRUD-Endpoints mit Ownership-Validierung (nur eigene Portfolios zugänglich).
 - **Holding API:** POST-Endpoint mit FK-Validierung (Portfolio muss existieren).
-- **AuditReport State Machine:** `PENDING_REVIEW → UNDER_REVIEW → APPROVED/REJECTED` mit assign- und complete-Endpoint.
+- **AuditReport State Machine:** `PENDING_REVIEW → UNDER_REVIEW → APPROVED/REJECTED` mit assign-, complete- und reject-Endpoint.
+- **AuditComment API:** `GET /api/service/auditcomment?auditReportId=...` (authenticated) + `POST /api/service/auditcomment` (auditor-only), inkl. Service + Controller + DTO.
 - **Aggregation Dashboard:** MongoDB-Aggregation pro Portfolio gruppiert nach Status.
 - **Auth0 Security:** `SecurityFilterChain` mit `oauth2ResourceServer`, JWT-Validierung via `issuer-uri`, Test-Mode-Fallback wenn `jwtIssuerUri` nicht gesetzt.
-- **Rollenschutz:** `@PreAuthorize("hasRole('fund-manager')")` auf Portfolio/Holding-Mutationen, `@PreAuthorize("hasRole('auditor')")` auf AuditReport assign/complete, `isAuthenticated()` auf alle GET-Endpoints.
+- **Rollenschutz:** `@PreAuthorize("hasRole('fund-manager')")` auf Portfolio/Holding-Mutationen, `@PreAuthorize("hasRole('auditor')")` auf AuditReport assign/complete/reject + AuditComment POST, `isAuthenticated()` auf alle GET-Endpoints.
 - **UserService:** `getCurrentUserId()`, `getCurrentUserEmail()`, `userHasRole()` aus JWT-Claims.
 - **JwtAuthenticationConverter:** Mapped `user_roles`-Claim → `ROLE_`-prefixed Spring Authorities.
 - **CORS:** Konfiguriert für `http://localhost:5173`.
 
 ### Frontend (SvelteKit – vollständig)
-- **Routing:** Vollständige Routing-Struktur (`/`, `/portfolios`, `/portfolios/[id]`, `/portfolios/create`, `/holdings`, `/audit`, `/account`, `/login`, `/signup`).
+- **Routing:** Vollständige Routing-Struktur (`/`, `/portfolios`, `/portfolios/[id]`, `/portfolios/create`, `/holdings`, `/audit`, `/audit/[id]`, `/account`, `/login`, `/signup`).
 - **Auth0 Integration:** Login + Signup via Resource Owner Password Flow, `access_token` als `jwt_token` Cookie gespeichert.
 - **Route Protection:** `hooks.server.js` schützt alle App-Routen serverseitig, leitet unauthentifizierte Nutzer nach `/login` um.
 - **Rollenbasierte Navigation:** Fund-Manager sieht Portfolios/Holdings, Auditor sieht Audit-Reports (via `user_roles`-Claim).
@@ -762,22 +763,28 @@ Issues #1–#37, #39–#41, #50 (Backend + Tests + CI) sowie #18–#27 (Pitch + 
 - **Portfolio-Seiten:** List-View, Detail-View, Create/Edit-Form, Delete mit Bestätigung.
 - **Holdings-Seite:** Aggregierte Ansicht aller Holdings aus allen Portfolios.
 - **Audit-Dashboard:** Lädt echte Daten vom Backend (Portfolios → Dashboard-Aggregation pro Portfolio).
+- **Audit-Detail (`/audit/[id]`):** AuditReport mit Timeline, Status, AI-Summary, Holdings-Accordion, Approve/Reject Actions + Comment-Sektion mit Formular.
 - **Account-Seite:** Zeigt User-Info (Name, Email, Sub, Roles) + Logout-Button.
+- **Adapter:** `adapter-node` für containerisiertes Deployment auf Azure.
 
 ### Testing (vollständig, SW7–8)
 - **PortfolioService + HoldingService:** Unit Tests mit `@ExtendWith(MockitoExtension.class)`, `@Mock`, `@InjectMocks`, Happy Path + Fehlerfall.
-- **AuditReportService:** Unit Tests mit `@ParameterizedTest`, `@CsvSource` + `ArgumentsAccessor`, `@ValueSource`, Exception Testing für alle State-Transitions.
-- **PortfolioController + HoldingController + AuditReportServiceController:** MockMvc Integration Tests mit `@SpringBootTest`, `@MockitoBean`, rollenbasierter Zugriff, JSON-Prüfung.
+- **AuditReportService + AuditCommentService:** Unit Tests inkl. State-Transition-Tests und `@ParameterizedTest`.
+- **PortfolioController + HoldingController + AuditReportController + AuditCommentController:** MockMvc Integration Tests mit `@SpringBootTest`, `@MockitoBean`, rollenbasierter Zugriff, JSON-Prüfung, Blank-Field-Validierung.
 - **JaCoCo:** Maven-Plugin konfiguriert, 80%-Threshold auf 3 Service-Klassen, Coverage-Badge im README, HTML-Report als CI-Artefakt.
 - **CI:** GitHub Actions Pipeline läuft auf jedem Push/PR auf `main`.
-- **Aktuelle Coverage:** ~79.2% gesamt (Ziel: 90% bis Abgabe).
+
+### Deployment
+- **Backend Dockerfile** (`/Dockerfile`): Multi-Stage Build, eclipse-temurin:25-jdk → jre, Port 8080.
+- **Frontend Dockerfile** (`/frontend/Dockerfile`): Multi-Stage Build, node:22-alpine, Port 3000.
+- **PR #83** (`feature/issue-47-dockerfile`): offen, wartet auf CI.
 
 ### Offen (nächste Schritte)
-- **#38:** AuditComment API Endpoints.
+- **#47:** Dockerfile-PR #83 mergen.
+- **#48–#49:** Azure App Service + CD Pipeline — **kritischer Pfad**.
 - **#32:** Postman Auth0 Token-Dokumentation.
-- **#42–#45:** Frontend Auditor-Views (Audit-Dashboard, Detail, Comment-Formular, Rollennavigation).
-- **#47–#49:** Dockerfile, Azure Deployment, CD Pipeline — **kritischer Pfad**.
-- **#53–#55:** Spring AI Integration — **Pflichtanforderung**.
+- **#46:** Postman Audit & Comment API dokumentieren.
+- **#53–#55:** Spring AI Integration — **Pflichtanforderung** (ab SW11).
 - **#56–#57:** Evidence API + Tests.
 
 ---
@@ -895,7 +902,7 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #38 | AuditComment: API Endpoints (Create, Read by Report) | `api`, `backend` | ⬜ |
+| #38 | AuditComment: API Endpoints (Create, Read by Report) | `api`, `backend` | ✅ Done |
 | #39 | Unit Tests: AuditReportService (State Transitions) | `testing`, `backend` | ✅ Done |
 | #40 | Integration Tests: Rollenbasierter Zugriff (Fund Manager vs Auditor) | `testing`, `security` | ✅ Done |
 | #41 | GitHub Actions: CI Pipeline (Build + Test auf Push) | `chore`, `deployment` | ✅ Done |
@@ -907,10 +914,10 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #42 | SvelteKit: Audit-Dashboard für ESG Auditor | `frontend`, `enhancement` | ⬜ |
-| #43 | SvelteKit: AuditReport-Detailansicht mit Evidence | `frontend`, `enhancement` | ⬜ |
-| #44 | SvelteKit: AuditComment-Formular (Auditor-Begründung) | `frontend`, `enhancement` | ⬜ |
-| #45 | SvelteKit: Rollenbasierte Navigation (Fund Manager vs Auditor) | `frontend`, `security` | ⬜ |
+| #42 | SvelteKit: Audit-Dashboard für ESG Auditor | `frontend`, `enhancement` | ✅ Done |
+| #43 | SvelteKit: AuditReport-Detailansicht mit Evidence | `frontend`, `enhancement` | ✅ Done |
+| #44 | SvelteKit: AuditComment-Formular (Auditor-Begründung) | `frontend`, `enhancement` | ✅ Done |
+| #45 | SvelteKit: Rollenbasierte Navigation (Fund Manager vs Auditor) | `frontend`, `security` | ✅ Done |
 | #46 | Postman: Audit & Comment API Collection dokumentieren | `documentation`, `api` | ⬜ |
 
 ---
@@ -920,7 +927,7 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #47 | Dockerfile erstellen (Multi-Stage Build) | `deployment`, `chore` | ⬜ |
+| #47 | Dockerfile erstellen (Multi-Stage Build) | `deployment`, `chore` | 🔄 PR #83 open |
 | #48 | Azure App Service: Deployment konfigurieren | `deployment`, `chore` | ⬜ |
 | #49 | GitHub Actions: CD Pipeline (Build → Push → Deploy) | `deployment`, `chore` | ⬜ |
 | #50 | Coverage-Optimierung: Lücken schliessen (Ziel 90%) | `testing`, `backend` | ✅ Done |
