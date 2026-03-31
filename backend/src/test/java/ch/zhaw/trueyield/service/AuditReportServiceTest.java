@@ -212,6 +212,7 @@ class AuditReportServiceTest {
     @Test
     void getAuditReportDashboard_throwsBadRequest_whenPortfolioNotFound() {
         when(portfolioService.portfolioExists("unknown-portfolio")).thenReturn(false);
+        when(dto.getAuditReportId()).thenReturn("unused");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.getAuditReportDashboard("unknown-portfolio"));
