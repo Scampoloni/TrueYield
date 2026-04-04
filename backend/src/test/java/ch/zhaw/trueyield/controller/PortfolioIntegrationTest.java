@@ -45,7 +45,7 @@ class PortfolioIntegrationTest {
 
     @DynamicPropertySource
     static void mongoProps(DynamicPropertyRegistry registry) {
-        registry.add("spring.data.mongodb.uri", mongo::getConnectionString);
+        registry.add("spring.mongodb.uri", mongo::getConnectionString);
     }
 
     @Autowired

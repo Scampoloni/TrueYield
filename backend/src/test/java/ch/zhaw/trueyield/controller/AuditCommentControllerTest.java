@@ -1,5 +1,6 @@
 package ch.zhaw.trueyield.controller;
 
+import ch.zhaw.trueyield.config.MongoTestContainerConfig;
 import ch.zhaw.trueyield.model.AuditComment;
 import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.AuditCommentService;
@@ -10,6 +11,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -29,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(MongoTestContainerConfig.class)
 class AuditCommentControllerTest {
 
     @Autowired
