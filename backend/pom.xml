@@ -80,6 +80,18 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>mongodb</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -128,12 +140,14 @@
 										<include>ch.zhaw.trueyield.service.PortfolioService</include>
 										<include>ch.zhaw.trueyield.service.HoldingService</include>
 										<include>ch.zhaw.trueyield.service.AuditReportService</include>
+										<include>ch.zhaw.trueyield.service.AuditCommentService</include>
+										<include>ch.zhaw.trueyield.security.UserService</include>
 									</includes>
 									<limits>
 										<limit>
 											<counter>INSTRUCTION</counter>
 											<value>COVEREDRATIO</value>
-											<minimum>0.80</minimum>
+											<minimum>0.90</minimum>
 										</limit>
 									</limits>
 								</rule>
