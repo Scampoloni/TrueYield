@@ -25,6 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -73,6 +74,7 @@ class PortfolioIntegrationTest {
                 """.formatted(PORTFOLIO_NAME, PORTFOLIO_DESC);
 
         MvcResult result = mockMvc.perform(post("/api/portfolio")
+                        .with(user("integration-user").roles("fund-manager"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isCreated())
@@ -94,7 +96,8 @@ class PortfolioIntegrationTest {
     void getPortfolioById_returnsOk_andCorrectFields() throws Exception {
         when(userService.getCurrentUserId()).thenReturn(FUND_MANAGER_ID);
 
-        mockMvc.perform(get("/api/portfolio/" + createdId))
+        mockMvc.perform(get("/api/portfolio/" + createdId)
+                        .with(user("integration-user").roles("fund-manager")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(PORTFOLIO_NAME))
                 .andExpect(jsonPath("$.description").value(PORTFOLIO_DESC))
@@ -108,7 +111,8 @@ class PortfolioIntegrationTest {
     void deletePortfolio_returnsNoContent() throws Exception {
         when(userService.getCurrentUserId()).thenReturn(FUND_MANAGER_ID);
 
-        mockMvc.perform(delete("/api/portfolio/" + createdId))
+        mockMvc.perform(delete("/api/portfolio/" + createdId)
+                        .with(user("integration-user").roles("fund-manager")))
                 .andExpect(status().isNoContent());
     }
 
@@ -119,7 +123,8 @@ class PortfolioIntegrationTest {
     void getPortfolioById_afterDelete_returnsNotFound() throws Exception {
         when(userService.getCurrentUserId()).thenReturn(FUND_MANAGER_ID);
 
-        mockMvc.perform(get("/api/portfolio/" + createdId))
+        mockMvc.perform(get("/api/portfolio/" + createdId)
+                        .with(user("integration-user").roles("fund-manager")))
                 .andExpect(status().isNotFound());
     }
 }
