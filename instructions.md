@@ -714,7 +714,7 @@ Die Dokumentation im README.md muss folgende Kapitel enthalten:
 
 | Termin | Leistungsnachweis | Status |
 |--------|-------------------|--------|
-| Woche 1–13 | Wöchentliche Übungsabgabe (Dienstag 10:00) | 🔄 Laufend (SW8 erledigt) |
+| Woche 1–13 | Wöchentliche Übungsabgabe (Dienstag 10:00) | 🔄 Laufend (SW9 erledigt) |
 | Woche 2/3 | Besprechung Projektidee mit Dozent (UC + ER mitbringen) | ✅ Done |
 | Woche 3 | Abgabe Explore-, Create- und Evaluate-Boards | ✅ Done |
 | Woche 4 | Gegenseitige Beurteilung der Boards | ✅ Done |
