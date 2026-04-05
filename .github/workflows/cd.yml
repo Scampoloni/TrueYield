@@ -57,6 +57,8 @@ jobs:
           file: frontend/Dockerfile
           push: true
           tags: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-frontend:latest
+          build-args: |
+            API_BASE_URL=https://trueyield-backend.azurewebsites.net
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
