@@ -50,7 +50,9 @@ class PortfolioIntegrationTest {
 
     @DynamicPropertySource
     static void mongoProps(DynamicPropertyRegistry registry) {
-        registry.add("spring.mongodb.uri", mongo::getConnectionString);
+        // getConnectionString() returns "mongodb://localhost:PORT" without a database name.
+        // Spring's mongoDatabaseFactory requires one → append it explicitly.
+        registry.add("spring.mongodb.uri", () -> mongo.getConnectionString() + "/trueyield-test");
     }
 
     @Autowired
