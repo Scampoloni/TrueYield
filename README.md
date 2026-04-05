@@ -1,22 +1,23 @@
-# TrueYield – KI-gestützte ESG-Verifikation gegen Greenwashing
+﻿# TrueYield – KI-gestützte ESG-Verifikation gegen Greenwashing
 
-![Backend CI](https://github.com/Scampoloni/trueyield/actions/workflows/ci.yml/badge.svg)
-![Coverage Policy](https://img.shields.io/badge/coverage%20policy-70%25%20min%20%7C%2080%25%20target-blue)
+![Backend CI](https://github.com/Scampoloni/trueyield/actions/workflows/ci.yml/badge.svg?branch=main)
+![Coverage Gate](https://img.shields.io/badge/coverage%20gate-90%25%20core%20services-brightgreen)
 
 Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch geforderte Prüfung auf Greenwashing ist manuell, langsam und fehleranfällig. TrueYield löst das: Eine KI-gestützte Plattform analysiert automatisiert globale Nachrichtenquellen, bewertet ESG-Risiken und liefert Auditoren eine revisionssichere Entscheidungsgrundlage. Der Zeitpunkt ist jetzt, weil EU-Regulierungen (SFDR, EU-Taxonomie) seit 2021 scharfe Nachweispflichten fordern und Greenwashing-Bussen in Milliardenhöhe drohen.
 
 ## Testing & Coverage
 
-- Backend CI führt `mvn verify` aus (inkl. Unit/Integration-Tests).
+- Backend CI führt `mvn verify` aus (inkl. Unit- und Integrationstests mit Testcontainers).
 - JaCoCo HTML-Report wird unter `backend/target/site/jacoco/index.html` erzeugt.
-- Coverage-Gate: Build failt unter 70% Instruction Coverage für die aktuell test-abgedeckten Core Services (`PortfolioService`, `HoldingService`).
-- Coverage-Ziel: 80% (bei Unterschreitung wird in CI eine Warnung ausgegeben).
+- Coverage-Gate: Build failt wenn Instruction Coverage der Core Services (`PortfolioService`, `HoldingService`, `AuditReportService`, `AuditCommentService`, `UserService`) unter **90%** fällt.
+- Aktueller Stand: alle Core Services ≥ 90% abgedeckt (mehrere bei 100%).
 
 ## Inhaltsverzeichnis
 - [Einleitung](#einleitung)
     - [Explore-Board](#explore-board)
     - [Create-Board](#create-board)
     - [Evaluate-Board](#evaluate-board)
+    - [Feedback aus Pitch und Board-Beurteilung](#feedback-aus-pitch-und-board-beurteilung)
 - [Anforderungen](#anforderungen)
     - [Use Case Diagram](#use-case-diagram)
     - [Entity-Relations Diagram](#entity-relations-diagram)
@@ -508,6 +509,62 @@ Wenn ein Fonds später als "Greenwashing" entlarvt wird, muss die Bank beweisen 
 - Ja, weil: Gute Compliance-Tools sprechen sich in der Branche herum (Konferenzen, LinkedIn)
 - Compliance-Community ist eng vernetzt (CFA-Holder kennen sich untereinander)
 - Nicht 10/10 weil: Vertraulichkeit (Banken geben nicht gerne Details ihrer Compliance-Prozesse preis)
+
+---
+
+## Feedback aus Pitch und Board-Beurteilung
+
+Dieses Kapitel dokumentiert zusammengefasstes Peer-Feedback (anonymisiert) und leitet daraus konkrete Konsequenzen für TrueYield ab.
+
+Hinweis für die Endfassung: Diese Sektion wird vor Abgabe nochmals kürzer, straffer und visuell sauberer in die Storyline integriert (Problem -> Lösung -> Umsetzung -> Evidenz).
+
+### Wichtigste Punkte aus dem Pitch-Feedback
+
+1. Unklarheit bei Datenbeschaffung für KI (API vs. Scraping, Datenpipeline).
+  Konsequenz für TrueYield:
+  Wir priorisieren eine klar dokumentierte Datenarchitektur mit API-first Ansatz (News-APIs als Primärquelle, kein ungeklärtes Scraping im MVP) und beschreiben den Datenfluss Ende-zu-Ende im Implementation-Kapitel.
+
+2. Unklarheit, was die KI konkret macht und was nicht.
+  Konsequenz für TrueYield:
+  Wir trennen explizit zwischen KI-Aufgaben (News-Klassifikation, Risiko-Hinweise, Zusammenfassung) und menschlichen Aufgaben (Audit-Entscheid, Freigabe/Ablehnung). Damit wird Human-in-the-Loop als Kernprinzip sichtbarer.
+
+3. Frage nach MVP-Fokus (zu breiter Scope für Start).
+  Konsequenz für TrueYield:
+  MVP-Fokus bleibt auf einem klaren Kernflow: Portfolio -> Holdings -> AuditReport -> Evidence-gestützte Entscheidung durch Auditor. Erweiterungen (z.B. tiefere Multilingualität, erweitertes Partnernetzwerk) kommen iterativ.
+
+4. Frage nach Abdeckung kleiner/lokaler und nicht-englischer Quellen.
+  Konsequenz für TrueYield:
+  Wir definieren das als explizites Folgeziel mit priorisierten Quellenklassen und dokumentieren bekannte Coverage-Limits transparent im MVP.
+
+5. Frage nach Differenzierung zu allgemeiner Deep-Research-KI.
+  Konsequenz für TrueYield:
+  Das Value-Proposition-Narrativ wird geschärft: TrueYield ist kein allgemeiner Prompt-Output, sondern ein revisionssicherer Workflow mit Rollen, Ownership-Regeln, State Machine und nachvollziehbarer Evidence-Kette.
+
+6. Frage nach Quellenvertrauen und Qualitätssicherung.
+  Konsequenz für TrueYield:
+  Wir ergänzen Qualitätskriterien für Quellen (Reputation, Aktualität, Duplikatkontrolle, Nachvollziehbarkeit) und machen diese Regeln als Governance-Baustein sichtbar.
+
+7. Frage nach Preislogik und Go-to-Market (insb. großer Sprung zwischen Tiers).
+  Konsequenz für TrueYield:
+  Das Pricing wird mit nachvollziehbaren Annahmen (Volumen, SLA, Integrationsaufwand, Risiko-Exposure) begründet und in der Dokumentation klarer vom Pilot- in den Enterprise-Modus überführt.
+
+8. Frage nach Betriebsmodell und Update-Frequenz.
+  Konsequenz für TrueYield:
+  Wir ergänzen ein einfaches Operating-Modell (Release-Zyklus, Monitoring, Kosten-/Leistungsgrenzen), damit Skalierungs- und Wartungsaspekte früh adressiert sind.
+
+### Wichtigste Punkte aus der Board-Beurteilung
+
+1. Sehr starke Marktrecherche, kohärente Boards, überzeugender regulatorischer Moat.
+  Konsequenz für TrueYield:
+  Diese Stärken bleiben Kern der Projekterzählung und werden in der Schlusspräsentation als Primärargumente priorisiert.
+
+2. Board ist teilweise zu umfangreich, Kernaussage geht stellenweise unter.
+  Konsequenz für TrueYield:
+  Wir komprimieren die Kommunikation auf wenige Leitbotschaften: Problemgröße, differenzierender Mechanismus (Human-in-the-Loop + Evidence), messbare Wirkung (Zeit/Risiko).
+
+3. Nutzergruppen sind gut differenziert, aber in der WKW-Frage zu stark zusammengefasst.
+  Konsequenz für TrueYield:
+  Die WKW-Frage wird in der Endfassung präzisiert, sodass Fund Manager und Auditor mit ihren unterschiedlichen Jobs-to-be-done klarer getrennt adressiert werden.
 
 ---
 
