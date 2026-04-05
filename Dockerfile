@@ -2,6 +2,7 @@
 FROM eclipse-temurin:25-jdk AS build
 WORKDIR /app
 COPY backend/mvnw backend/pom.xml ./
+COPY backend/.mvn ./.mvn
 RUN chmod +x mvnw && ./mvnw dependency:go-offline -q
 COPY backend/src ./src
 RUN ./mvnw package -DskipTests -q
