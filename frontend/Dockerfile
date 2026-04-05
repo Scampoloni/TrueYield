@@ -5,7 +5,13 @@ COPY package*.json ./
 RUN npm ci --silent
 COPY . .
 ARG API_BASE_URL
+ARG AUTH0_DOMAIN
+ARG AUTH0_CLIENT_ID
+ARG AUTH0_AUDIENCE
 ENV API_BASE_URL=${API_BASE_URL}
+ENV AUTH0_DOMAIN=${AUTH0_DOMAIN}
+ENV AUTH0_CLIENT_ID=${AUTH0_CLIENT_ID}
+ENV AUTH0_AUDIENCE=${AUTH0_AUDIENCE}
 RUN npm run build
 
 # ─── Stage 2: Runtime ────────────────────────────────────────────────────────

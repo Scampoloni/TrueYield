@@ -33,6 +33,7 @@ jobs:
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME_BACKEND }}
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_BACKEND }}
           images: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-backend:latest
 
   deploy-frontend:
@@ -59,9 +60,13 @@ jobs:
           tags: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-frontend:latest
           build-args: |
             API_BASE_URL=https://trueyield-backend.azurewebsites.net
+            AUTH0_DOMAIN=${{ secrets.AUTH0_DOMAIN }}
+            AUTH0_CLIENT_ID=${{ secrets.AUTH0_CLIENT_ID }}
+            AUTH0_AUDIENCE=https://trueyield.api
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME_FRONTEND }}
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_FRONTEND }}
           images: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-frontend:latest
