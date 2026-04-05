@@ -18,8 +18,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.MongoDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,15 +35,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Import(TestSecurityConfig.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@Testcontainers
 class PortfolioIntegrationTest {
 
-    @Container
-    static MongoDBContainer mongo = new MongoDBContainer("mongo:7.0");
+    // Container is started in a static initializer — before any JUnit 5 lifecycle
+    // callbacks fire. This guarantees getConnectionString() is called on a running
+    // container when @DynamicPropertySource is invoked during Spring context creation.
+    // Using @Testcontainers + @Container caused a race: SpringExtension (declared first)
+    // created the ApplicationContext before TestcontainersExtension started the container.
+    private static final MongoDBContainer mongo = new MongoDBContainer("mongo:7.0");
+
+    static {
+        mongo.start();
+    }
 
     @DynamicPropertySource
     static void mongoProps(DynamicPropertyRegistry registry) {
-        registry.add("spring.data.mongodb.uri", mongo::getConnectionString);
+        // getConnectionString() returns "mongodb://localhost:PORT" without a database name.
+        // Spring's mongoDatabaseFactory requires one → append it explicitly.
+        registry.add("spring.mongodb.uri", () -> mongo.getConnectionString() + "/trueyield-test");
     }
 
     @Autowired
