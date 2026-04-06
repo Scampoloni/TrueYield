@@ -12,6 +12,16 @@ Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch ge
 - Coverage-Gate: Build failt wenn Instruction Coverage der Core Services (`PortfolioService`, `HoldingService`, `AuditReportService`, `AuditCommentService`, `UserService`) unter **90%** fällt.
 - Aktueller Stand: alle Core Services ≥ 90% abgedeckt (mehrere bei 100%).
 
+## Deployment
+
+Die Anwendung ist auf Azure App Service deployed.
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://trueyield-frontend.azurewebsites.net |
+| Backend | https://trueyield-backend.azurewebsites.net |
+| API Health | https://trueyield-backend.azurewebsites.net/actuator/health |
+
 ## Inhaltsverzeichnis
 - [Einleitung](#einleitung)
     - [Explore-Board](#explore-board)
