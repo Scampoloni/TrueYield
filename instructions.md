@@ -927,9 +927,9 @@ Die Roadmap orientiert sich am offiziellen Semesterprogramm der ZHAW (Vorlesungs
 
 | Issue # | Titel | Labels | Status |
 |---------|-------|--------|--------|
-| #47 | Dockerfile erstellen (Multi-Stage Build) | `deployment`, `chore` | 🔄 PR #83 open |
-| #48 | Azure App Service: Deployment konfigurieren | `deployment`, `chore` | ⬜ |
-| #49 | GitHub Actions: CD Pipeline (Build → Push → Deploy) | `deployment`, `chore` | ⬜ |
+| #47 | Dockerfile erstellen (Multi-Stage Build) | `deployment`, `chore` | ✅ Done |
+| #48 | Azure App Service: Deployment konfigurieren | `deployment`, `chore` | ✅ Done |
+| #49 | GitHub Actions: CD Pipeline (Build → Push → Deploy) | `deployment`, `chore` | ✅ Done |
 | #50 | Coverage-Optimierung: Lücken schliessen (Ziel 90%) | `testing`, `backend` | ✅ Done |
 | #51 | SonarQube: Projekt aufsetzen & CI-Integration | `testing`, `quality` | ⬜ |
 
