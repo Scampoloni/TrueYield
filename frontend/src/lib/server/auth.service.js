@@ -38,6 +38,12 @@ export async function signIn(email, password, cookies) {
     const { access_token, id_token } = response.data;
     const userInfo = await getUserInfo(access_token);
 
+    // Merge user_roles from the access token JWT (not available via /userinfo)
+    const jwtPayload = JSON.parse(atob(access_token.split('.')[1]));
+    if (jwtPayload.user_roles) {
+        userInfo.user_roles = jwtPayload.user_roles;
+    }
+
     if (cookies) {
         /** @type {Parameters<Cookies['set']>[2]} */
         const cookieOpts = {
