@@ -4,6 +4,7 @@ import java.util.List;
 
 import ch.zhaw.trueyield.model.AuditReport;
 import ch.zhaw.trueyield.model.dto.AuditReportAggregationDTO;
+import ch.zhaw.trueyield.model.dto.AuditReportCreateDTO;
 import ch.zhaw.trueyield.model.dto.StateChangeDTO;
 import ch.zhaw.trueyield.model.enums.AuditStatus;
 import ch.zhaw.trueyield.repository.AuditReportRepository;
@@ -20,6 +21,15 @@ public class AuditReportService {
 
     @Autowired
     private PortfolioService portfolioService;
+
+    public AuditReport createAuditReport(AuditReportCreateDTO dto) {
+        if (!portfolioService.portfolioExists(dto.getPortfolioId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Portfolio not found: " + dto.getPortfolioId());
+        }
+        AuditReport report = new AuditReport(dto.getPortfolioId(), AuditStatus.PENDING_REVIEW);
+        return auditReportRepository.save(report);
+    }
 
     public AuditReport getAuditReportById(String id) {
         return auditReportRepository.findById(id)
