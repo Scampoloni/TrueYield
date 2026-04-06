@@ -4,6 +4,7 @@ import java.util.List;
 
 import ch.zhaw.trueyield.model.AuditReport;
 import ch.zhaw.trueyield.model.dto.AuditReportAggregationDTO;
+import ch.zhaw.trueyield.model.dto.AuditReportCreateDTO;
 import ch.zhaw.trueyield.model.dto.StateChangeDTO;
 import ch.zhaw.trueyield.service.AuditReportService;
 import jakarta.validation.Valid;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +28,17 @@ public class AuditReportServiceController {
 
     @Autowired
     private AuditReportService auditReportService;
+
+    @PostMapping
+    @PreAuthorize("hasRole('fund-manager')")
+    public ResponseEntity<AuditReport> createAuditReport(@Valid @RequestBody AuditReportCreateDTO dto) {
+        try {
+            AuditReport created = auditReportService.createAuditReport(dto);
+            return new ResponseEntity<>(created, HttpStatus.CREATED);
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(e.getStatusCode());
+        }
+    }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
