@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+.env
+
+### Claude Code ###
+.claude/
+
+### Node ###
+package-lock.json
