@@ -2,6 +2,7 @@ package ch.zhaw.trueyield.service;
 
 import ch.zhaw.trueyield.model.AuditReport;
 import ch.zhaw.trueyield.model.enums.AuditStatus;
+import ch.zhaw.trueyield.model.dto.AuditReportCreateDTO;
 import ch.zhaw.trueyield.model.dto.StateChangeDTO;
 import ch.zhaw.trueyield.repository.AuditReportRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -228,5 +229,35 @@ class AuditReportServiceTest {
         auditReportService.getAuditReportDashboard("portfolio-001");
 
         verify(auditReportRepository, times(1)).aggregateByPortfolioId("portfolio-001");
+    }
+
+    // ── createAuditReport ────────────────────────────────────────────────────
+
+    @Test
+    void createAuditReport_savesReport_whenPortfolioExists() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertEquals("portfolio-001", result.getPortfolioId());
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+        verify(auditReportRepository, times(1)).save(any(AuditReport.class));
+    }
+
+    @Test
+    void createAuditReport_throwsBadRequest_whenPortfolioNotFound() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("unknown-portfolio");
+        when(portfolioService.portfolioExists("unknown-portfolio")).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> auditReportService.createAuditReport(createDTO));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(auditReportRepository, never()).save(any());
     }
 }
