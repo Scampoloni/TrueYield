@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { goto, invalidateAll } from '$app/navigation';
 
   function toErrorText(value: unknown, fallback: string) {
     if (typeof value === 'string' && value.trim()) return value;
@@ -62,7 +62,8 @@
           });
           const data = await res.json();
           if (!res.ok) throw new Error(toErrorText(data?.error, 'Signup failed'));
-          goto('/');
+          await invalidateAll();
+          await goto('/', { invalidateAll: true });
         } catch (e: any) {
           error = toErrorText(e?.message, 'Signup failed');
         } finally {
