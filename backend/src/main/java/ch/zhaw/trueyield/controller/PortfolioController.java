@@ -1,9 +1,11 @@
 package ch.zhaw.trueyield.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
+import ch.zhaw.trueyield.model.dto.PortfolioResponseDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioUpdateDTO;
 import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.PortfolioService;
@@ -34,11 +36,11 @@ public class PortfolioController {
 
     @PostMapping
     @PreAuthorize("hasRole('fund-manager')")
-    public ResponseEntity<Portfolio> createPortfolio(@Valid @RequestBody PortfolioCreateDTO dto) {
+    public ResponseEntity<PortfolioResponseDTO> createPortfolio(@Valid @RequestBody PortfolioCreateDTO dto) {
         try {
             String fundManagerId = userService.getCurrentUserId();
             Portfolio created = portfolioService.createPortfolio(dto, fundManagerId);
-            return new ResponseEntity<>(created, HttpStatus.CREATED);
+            return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(created), HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -46,19 +48,22 @@ public class PortfolioController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<Portfolio>> getAllPortfolios() {
+    public ResponseEntity<List<PortfolioResponseDTO>> getAllPortfolios() {
         String fundManagerId = userService.getCurrentUserId();
         List<Portfolio> portfolios = portfolioService.getAllPortfoliosByFundManager(fundManagerId);
-        return new ResponseEntity<>(portfolios, HttpStatus.OK);
+        List<PortfolioResponseDTO> response = portfolios.stream()
+                .map(PortfolioResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Portfolio> getPortfolioById(@PathVariable String id) {
+    public ResponseEntity<PortfolioResponseDTO> getPortfolioById(@PathVariable String id) {
         try {
             String fundManagerId = userService.getCurrentUserId();
             Portfolio portfolio = portfolioService.getPortfolioById(id, fundManagerId);
-            return new ResponseEntity<>(portfolio, HttpStatus.OK);
+            return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(portfolio), HttpStatus.OK);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getStatusCode());
         }
@@ -66,13 +71,13 @@ public class PortfolioController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('fund-manager')")
-    public ResponseEntity<Portfolio> updatePortfolio(
+    public ResponseEntity<PortfolioResponseDTO> updatePortfolio(
             @PathVariable String id,
             @RequestBody PortfolioUpdateDTO dto) {
         try {
             String fundManagerId = userService.getCurrentUserId();
             Portfolio updated = portfolioService.updatePortfolio(id, dto, fundManagerId);
-            return new ResponseEntity<>(updated, HttpStatus.OK);
+            return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(updated), HttpStatus.OK);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getStatusCode());
         }
