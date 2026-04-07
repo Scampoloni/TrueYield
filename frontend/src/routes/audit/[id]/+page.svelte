@@ -42,6 +42,17 @@
 
   function stateIndex(s: string) { return STATES.indexOf(s); }
 
+  function toggleAccordion(symbol: string) {
+    openAccordions[symbol] = !openAccordions[symbol];
+  }
+
+  function handleAccordionKeydown(event: KeyboardEvent, symbol: string) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggleAccordion(symbol);
+    }
+  }
+
   function statusClass(s: string) {
     if (s === 'APPROVED')     return 'approved';
     if (s === 'REJECTED')     return 'rejected';
@@ -201,8 +212,14 @@
       {:else}
         {#each holdings as h}
           <div class="accordion-item">
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class="accordion-header" onclick={() => openAccordions[h.symbol] = !openAccordions[h.symbol]}>
+            <div
+              class="accordion-header"
+              onclick={() => toggleAccordion(h.symbol)}
+              onkeydown={(event) => handleAccordionKeydown(event, h.symbol)}
+              role="button"
+              tabindex="0"
+              aria-expanded={openAccordions[h.symbol]}
+            >
               <div>
                 <div class="accordion-title">{h.symbol}</div>
                 <div class="accordion-sub">{h.name || '—'}</div>
