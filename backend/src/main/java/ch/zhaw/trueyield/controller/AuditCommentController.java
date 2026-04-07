@@ -2,6 +2,7 @@ package ch.zhaw.trueyield.controller;
 
 import ch.zhaw.trueyield.model.AuditComment;
 import ch.zhaw.trueyield.model.dto.AuditCommentCreateDTO;
+import ch.zhaw.trueyield.model.dto.AuditCommentResponseDTO;
 import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.AuditCommentService;
 import jakarta.validation.Valid;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/service/auditcomment")
@@ -31,18 +33,21 @@ public class AuditCommentController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<AuditComment>> getComments(@RequestParam String auditReportId) {
+    public ResponseEntity<List<AuditCommentResponseDTO>> getComments(@RequestParam String auditReportId) {
         List<AuditComment> comments = auditCommentService.getCommentsByReportId(auditReportId);
-        return new ResponseEntity<>(comments, HttpStatus.OK);
+        List<AuditCommentResponseDTO> response = comments.stream()
+                .map(AuditCommentResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('auditor')")
-    public ResponseEntity<AuditComment> createComment(@Valid @RequestBody AuditCommentCreateDTO dto) {
+    public ResponseEntity<AuditCommentResponseDTO> createComment(@Valid @RequestBody AuditCommentCreateDTO dto) {
         try {
             String auditorId = userService.getCurrentUserId();
             AuditComment created = auditCommentService.createComment(dto, auditorId);
-            return new ResponseEntity<>(created, HttpStatus.CREATED);
+            return new ResponseEntity<>(AuditCommentResponseDTO.fromEntity(created), HttpStatus.CREATED);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getStatusCode());
         }
