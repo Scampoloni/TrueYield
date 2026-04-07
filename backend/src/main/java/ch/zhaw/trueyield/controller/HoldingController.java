@@ -2,6 +2,7 @@ package ch.zhaw.trueyield.controller;
 
 import ch.zhaw.trueyield.model.Holding;
 import ch.zhaw.trueyield.model.dto.HoldingCreateDTO;
+import ch.zhaw.trueyield.model.dto.HoldingResponseDTO;
 import ch.zhaw.trueyield.service.HoldingService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/holding")
@@ -29,8 +31,11 @@ public class HoldingController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<Holding>> getHoldingsByPortfolioId(@RequestParam String portfolioId) {
-        return new ResponseEntity<>(holdingService.getHoldingsByPortfolioId(portfolioId), HttpStatus.OK);
+    public ResponseEntity<List<HoldingResponseDTO>> getHoldingsByPortfolioId(@RequestParam String portfolioId) {
+        List<HoldingResponseDTO> response = holdingService.getHoldingsByPortfolioId(portfolioId).stream()
+                .map(HoldingResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
@@ -46,10 +51,10 @@ public class HoldingController {
 
     @PostMapping
     @PreAuthorize("hasRole('fund-manager')")
-    public ResponseEntity<Holding> createHolding(@Valid @RequestBody HoldingCreateDTO dto) {
+    public ResponseEntity<HoldingResponseDTO> createHolding(@Valid @RequestBody HoldingCreateDTO dto) {
         try {
             Holding created = holdingService.createHolding(dto);
-            return new ResponseEntity<>(created, HttpStatus.CREATED);
+            return new ResponseEntity<>(HoldingResponseDTO.fromEntity(created), HttpStatus.CREATED);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getStatusCode());
         }

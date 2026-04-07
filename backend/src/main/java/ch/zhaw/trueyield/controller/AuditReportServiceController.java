@@ -5,6 +5,7 @@ import java.util.List;
 import ch.zhaw.trueyield.model.AuditReport;
 import ch.zhaw.trueyield.model.dto.AuditReportAggregationDTO;
 import ch.zhaw.trueyield.model.dto.AuditReportCreateDTO;
+import ch.zhaw.trueyield.model.dto.AuditReportResponseDTO;
 import ch.zhaw.trueyield.model.dto.StateChangeDTO;
 import ch.zhaw.trueyield.service.AuditReportService;
 import jakarta.validation.Valid;
@@ -31,10 +32,10 @@ public class AuditReportServiceController {
 
     @PostMapping
     @PreAuthorize("hasRole('fund-manager')")
-    public ResponseEntity<AuditReport> createAuditReport(@Valid @RequestBody AuditReportCreateDTO dto) {
+    public ResponseEntity<AuditReportResponseDTO> createAuditReport(@Valid @RequestBody AuditReportCreateDTO dto) {
         try {
             AuditReport created = auditReportService.createAuditReport(dto);
-            return new ResponseEntity<>(created, HttpStatus.CREATED);
+            return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(created), HttpStatus.CREATED);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getStatusCode());
         }
@@ -42,10 +43,10 @@ public class AuditReportServiceController {
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<AuditReport> getAuditReportById(@PathVariable String id) {
+    public ResponseEntity<AuditReportResponseDTO> getAuditReportById(@PathVariable String id) {
         try {
             AuditReport report = auditReportService.getAuditReportById(id);
-            return new ResponseEntity<>(report, HttpStatus.OK);
+            return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(report), HttpStatus.OK);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getStatusCode());
         }
@@ -53,10 +54,10 @@ public class AuditReportServiceController {
 
     @PutMapping("/reject")
     @PreAuthorize("hasRole('auditor')")
-    public ResponseEntity<AuditReport> rejectAuditReport(@Valid @RequestBody StateChangeDTO dto) {
+    public ResponseEntity<AuditReportResponseDTO> rejectAuditReport(@Valid @RequestBody StateChangeDTO dto) {
         try {
             AuditReport updated = auditReportService.rejectAuditReport(dto);
-            return new ResponseEntity<>(updated, HttpStatus.OK);
+            return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(updated), HttpStatus.OK);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getStatusCode());
         }
@@ -64,10 +65,10 @@ public class AuditReportServiceController {
 
     @PutMapping("/assign")
     @PreAuthorize("hasRole('auditor')")
-    public ResponseEntity<AuditReport> assignAuditReport(@Valid @RequestBody StateChangeDTO dto) {
+    public ResponseEntity<AuditReportResponseDTO> assignAuditReport(@Valid @RequestBody StateChangeDTO dto) {
         try {
             AuditReport updated = auditReportService.assignAuditReport(dto);
-            return new ResponseEntity<>(updated, HttpStatus.OK);
+            return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(updated), HttpStatus.OK);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getStatusCode());
         }
@@ -75,10 +76,10 @@ public class AuditReportServiceController {
 
     @PutMapping("/complete")
     @PreAuthorize("hasRole('auditor')")
-    public ResponseEntity<AuditReport> completeAuditReport(@Valid @RequestBody StateChangeDTO dto) {
+    public ResponseEntity<AuditReportResponseDTO> completeAuditReport(@Valid @RequestBody StateChangeDTO dto) {
         try {
             AuditReport updated = auditReportService.completeAuditReport(dto);
-            return new ResponseEntity<>(updated, HttpStatus.OK);
+            return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(updated), HttpStatus.OK);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getStatusCode());
         }
