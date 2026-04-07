@@ -11,6 +11,12 @@
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') onCancel();
   }
+
+  function handleModalKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.stopPropagation();
+    }
+  }
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -18,7 +24,15 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="modal-overlay" onclick={onCancel} role="presentation">
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="modal" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
+  <div
+    class="modal"
+    onclick={(e) => e.stopPropagation()}
+    onkeydown={handleModalKeydown}
+    role="dialog"
+    aria-modal="true"
+    aria-label={title}
+    tabindex="-1"
+  >
     <div class="modal-title">{title}</div>
     <div class="modal-desc">{description}</div>
     <div class="modal-actions">

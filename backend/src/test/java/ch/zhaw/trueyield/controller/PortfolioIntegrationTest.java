@@ -2,6 +2,7 @@ package ch.zhaw.trueyield.controller;
 
 import ch.zhaw.trueyield.security.TestSecurityConfig;
 import ch.zhaw.trueyield.security.UserService;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -17,11 +18,16 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MongoDBContainer;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -43,16 +49,39 @@ class PortfolioIntegrationTest {
     // Using @Testcontainers + @Container caused a race: SpringExtension (declared first)
     // created the ApplicationContext before TestcontainersExtension started the container.
     private static final MongoDBContainer mongo = new MongoDBContainer("mongo:7.0");
-
-    static {
-        mongo.start();
-    }
+    private static final String LOCAL_MONGO_URI = "mongodb://localhost:27017/trueyield-test";
+    private static final boolean DOCKER_AVAILABLE = DockerClientFactory.instance().isDockerAvailable();
 
     @DynamicPropertySource
     static void mongoProps(DynamicPropertyRegistry registry) {
         // getConnectionString() returns "mongodb://localhost:PORT" without a database name.
         // Spring's mongoDatabaseFactory requires one → append it explicitly.
-        registry.add("spring.mongodb.uri", () -> mongo.getConnectionString() + "/trueyield-test");
+        if (DOCKER_AVAILABLE) {
+            if (!mongo.isRunning()) {
+                mongo.start();
+            }
+            registry.add("spring.mongodb.uri", () -> mongo.getConnectionString() + "/trueyield-test");
+            return;
+        }
+
+        registry.add("spring.mongodb.uri", () -> LOCAL_MONGO_URI);
+    }
+
+    @BeforeAll
+    static void requireMongoEnvironment() {
+        assumeTrue(
+                DOCKER_AVAILABLE || isLocalMongoReachable(),
+                "Skipping PortfolioIntegrationTest because neither Docker/Testcontainers nor a local MongoDB on localhost:27017 is available."
+        );
+    }
+
+    private static boolean isLocalMongoReachable() {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress("localhost", 27017), 500);
+            return true;
+        } catch (IOException ignored) {
+            return false;
+        }
     }
 
     @Autowired
