@@ -4,6 +4,9 @@ import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
 import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.PortfolioService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -227,5 +230,43 @@ class PortfolioControllerTest {
         mockMvc.perform(delete("/api/portfolio/abc-123")
                         .with(user("auditor").roles("esg-auditor")))
                 .andExpect(status().isForbidden());
+    }
+
+    // ── GET /api/portfolio?pageNumber=X&pageSize=Y (paginiert) ──────────────
+
+    @Test
+    void getAllPortfolios_paginated_returnsPagedResponse() throws Exception {
+        Page<Portfolio> mockPage = new PageImpl<>(
+                List.of(samplePortfolio), PageRequest.of(0, 5), 1L);
+        when(portfolioService.getAllPortfoliosByFundManagerPaged("user-123", 0, 5))
+                .thenReturn(mockPage);
+
+        mockMvc.perform(get("/api/portfolio")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "5")
+                        .with(user("manager").roles("fund-manager")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.pageNumber").value(0))
+                .andExpect(jsonPath("$.pageSize").value(5));
+    }
+
+    @Test
+    void getAllPortfolios_paginated_emptyPage_returnsEmptyContent() throws Exception {
+        Page<Portfolio> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 5), 0L);
+        when(portfolioService.getAllPortfoliosByFundManagerPaged("user-123", 0, 5))
+                .thenReturn(emptyPage);
+
+        mockMvc.perform(get("/api/portfolio")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "5")
+                        .with(user("manager").roles("fund-manager")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0));
     }
 }

@@ -8,6 +8,9 @@ import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioUpdateDTO;
 import ch.zhaw.trueyield.repository.PortfolioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,6 +31,12 @@ public class PortfolioService {
     // READ ALL (nur eigene!)
     public List<Portfolio> getAllPortfoliosByFundManager(String fundManagerId) {
         return portfolioRepository.findByFundManagerId(fundManagerId);
+    }
+
+    // READ ALL PAGED (nur eigene!)
+    public Page<Portfolio> getAllPortfoliosByFundManagerPaged(String fundManagerId, int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        return portfolioRepository.findByFundManagerId(fundManagerId, pageable);
     }
 
     // READ ONE (mit Ownership Check!)
