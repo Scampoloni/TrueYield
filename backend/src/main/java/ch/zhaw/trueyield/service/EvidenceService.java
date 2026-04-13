@@ -24,6 +24,12 @@ public class EvidenceService {
         return evidenceRepository.findByHoldingId(holdingId);
     }
 
+    public Evidence getEvidenceById(String id) {
+        return evidenceRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Evidence not found: " + id));
+    }
+
     public Evidence createEvidence(EvidenceCreateDTO dto) {
         double sentimentScore = 0.0;
         try {

@@ -2,6 +2,7 @@ package ch.zhaw.trueyield.controller;
 
 import ch.zhaw.trueyield.model.Evidence;
 import ch.zhaw.trueyield.model.dto.EvidenceCreateDTO;
+import ch.zhaw.trueyield.model.dto.EvidenceResponseDTO;
 import ch.zhaw.trueyield.service.EvidenceService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,14 +29,26 @@ public class EvidenceController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<Evidence>> getByHoldingId(@RequestParam String holdingId) {
-        return ResponseEntity.ok(evidenceService.getEvidenceByHoldingId(holdingId));
+    public ResponseEntity<List<EvidenceResponseDTO>> getByHoldingId(@RequestParam String holdingId) {
+        List<EvidenceResponseDTO> evidence = evidenceService.getEvidenceByHoldingId(holdingId)
+                .stream()
+                .map(EvidenceResponseDTO::fromEntity)
+                .toList();
+        return ResponseEntity.ok(evidence);
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<EvidenceResponseDTO> getById(@PathVariable String id) {
+        Evidence evidence = evidenceService.getEvidenceById(id);
+        return ResponseEntity.ok(EvidenceResponseDTO.fromEntity(evidence));
     }
 
     @PostMapping
     @PreAuthorize("hasRole('fund-manager')")
-    public ResponseEntity<Evidence> createEvidence(@Valid @RequestBody EvidenceCreateDTO dto) {
-        return new ResponseEntity<>(evidenceService.createEvidence(dto), HttpStatus.CREATED);
+    public ResponseEntity<EvidenceResponseDTO> createEvidence(@Valid @RequestBody EvidenceCreateDTO dto) {
+        Evidence created = evidenceService.createEvidence(dto);
+        return new ResponseEntity<>(EvidenceResponseDTO.fromEntity(created), HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{id}")
