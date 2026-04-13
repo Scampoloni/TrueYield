@@ -12,34 +12,18 @@
     try {
       const res = await fetch(`/api/evidence?holdingId=${holdingId}`, { cache: 'no-store' });
       if (res.ok) {
-        evidence = await res.json();
+        const items = await res.json();
+        evidence = items.sort((a: any, b: any) => b.riskScore - a.riskScore);
       }
     } finally {
       loading = false;
     }
   });
 
-  function riskPercent(score: number): number {
-    return Math.round((1 - (score + 1) / 2) * 100);
-  }
-
   function riskClass(score: number): string {
     if (score > 0.3) return 'low';
     if (score > -0.3) return 'medium';
     return 'high';
-  }
-
-  function sentimentLabel(score: number): string {
-    if (score > 0.3) return 'Positive';
-    if (score > -0.3) return 'Neutral';
-    return 'Negative';
-  }
-
-  function sentimentClass(score: number): string {
-    if (score > 0.3) return 'badge-approved';
-    if (score > -0.3) return 'badge-pending';
-    if (score <= -0.3) return 'badge-rejected';
-    return 'badge-pending';
   }
 </script>
 
@@ -77,17 +61,17 @@
     <div class="evidence-grid">
       {#each evidence as e}
         <div class="evidence-card">
-          <div class="evidence-headline">{e.contentSnippet}</div>
-          <div class="evidence-source">{e.sourceUrl}</div>
-          <div class="evidence-date">{e.publishedAt}</div>
+          <div class="evidence-headline">{e.headline}</div>
+          <div class="evidence-source">{e.summary}</div>
+          <div class="evidence-date">{e.createdAt}</div>
           <div class="risk-label">
             <span>Risk Score</span>
-            <span style="font-weight:600;color:{riskPercent(e.aiSentimentScore ?? 0) < 30 ? 'var(--green)' : riskPercent(e.aiSentimentScore ?? 0) < 60 ? 'var(--amber)' : 'var(--red)'}">{riskPercent(e.aiSentimentScore ?? 0)}%</span>
+            <span style="font-weight:600;color:{e.riskScore < 3 ? 'var(--green)' : e.riskScore < 6 ? 'var(--amber)' : 'var(--red)'}">{e.riskScore}/10</span>
           </div>
           <div class="risk-bar">
-            <div class="risk-fill {riskClass(e.aiSentimentScore ?? 0)}" style="width:{riskPercent(e.aiSentimentScore ?? 0)}%"></div>
+            <div class="risk-fill {riskClass((5 - e.riskScore) / 5)}" style="width:{Math.round((e.riskScore / 10) * 100)}%"></div>
           </div>
-          <span class="badge {sentimentClass(e.aiSentimentScore ?? 0)}">{sentimentLabel(e.aiSentimentScore ?? 0)}</span>
+          <span class="badge {e.sentiment === 'POSITIVE' ? 'badge-approved' : e.sentiment === 'NEUTRAL' ? 'badge-pending' : 'badge-rejected'}">{e.sentiment}</span>
         </div>
       {/each}
     </div>
