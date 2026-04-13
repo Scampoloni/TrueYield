@@ -22,7 +22,7 @@ public class AuditReportService {
     @Autowired
     private PortfolioService portfolioService;
 
-    @Autowired
+    @Autowired(required = false)
     private AiAnalysisService aiAnalysisService;
 
     public AuditReport createAuditReport(AuditReportCreateDTO dto) {
@@ -34,8 +34,12 @@ public class AuditReportService {
         report = auditReportRepository.save(report);
 
         try {
-            String summary = aiAnalysisService.generateRiskSummary(dto.getPortfolioId());
-            report.setAiRiskSummary(summary);
+            if (aiAnalysisService != null) {
+                String summary = aiAnalysisService.generateRiskSummary(dto.getPortfolioId());
+                report.setAiRiskSummary(summary);
+            } else {
+                report.setAiRiskSummary("AI analysis unavailable.");
+            }
         } catch (Exception e) {
             report.setAiRiskSummary("AI analysis unavailable.");
         }
