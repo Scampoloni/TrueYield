@@ -22,12 +22,29 @@ public class AuditReportService {
     @Autowired
     private PortfolioService portfolioService;
 
+    @Autowired(required = false)
+    private AiAnalysisService aiAnalysisService;
+
     public AuditReport createAuditReport(AuditReportCreateDTO dto) {
         if (!portfolioService.portfolioExists(dto.getPortfolioId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Portfolio not found: " + dto.getPortfolioId());
         }
-        AuditReport report = new AuditReport(dto.getPortfolioId(), AuditStatus.PENDING_REVIEW);
+        AuditReport report = new AuditReport(dto.getPortfolioId(), AuditStatus.AI_ANALYZING);
+        report = auditReportRepository.save(report);
+
+        try {
+            if (aiAnalysisService != null) {
+                String summary = aiAnalysisService.generateRiskSummary(dto.getPortfolioId());
+                report.setAiRiskSummary(summary);
+            } else {
+                report.setAiRiskSummary("AI analysis unavailable.");
+            }
+        } catch (Exception e) {
+            report.setAiRiskSummary("AI analysis unavailable.");
+        }
+
+        report.setAuditStatus(AuditStatus.PENDING_REVIEW);
         return auditReportRepository.save(report);
     }
 

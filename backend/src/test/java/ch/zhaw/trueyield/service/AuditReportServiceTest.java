@@ -22,6 +22,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +33,9 @@ class AuditReportServiceTest {
 
     @Mock
     private PortfolioService portfolioService;
+
+    @Mock
+    private AiAnalysisService aiAnalysisService;
 
     @InjectMocks
     private AuditReportService auditReportService;
@@ -51,6 +55,8 @@ class AuditReportServiceTest {
         dto = mock(StateChangeDTO.class);
         lenient().when(dto.getAuditReportId()).thenReturn("report-001");
         lenient().when(dto.getAuditorId()).thenReturn("auditor-001");
+        lenient().when(aiAnalysisService.generateRiskSummary(anyString()))
+            .thenReturn("Mock AI risk summary.");
     }
 
     // ── getAuditReportById ───────────────────────────────────────────────────
@@ -245,7 +251,7 @@ class AuditReportServiceTest {
 
         assertEquals("portfolio-001", result.getPortfolioId());
         assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
-        verify(auditReportRepository, times(1)).save(any(AuditReport.class));
+        verify(auditReportRepository, times(2)).save(any(AuditReport.class));
     }
 
     @Test
