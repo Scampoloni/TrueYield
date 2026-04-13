@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,6 +45,28 @@ class EvidenceServiceTest {
 
         assertEquals(1, result.size());
         verify(evidenceRepository).findByHoldingId("holding-1");
+    }
+
+    @Test
+    void getEvidenceById_returnsEvidence_whenFound() {
+        Evidence evidence = new Evidence("holding-1");
+        evidence.setId("e-1");
+        when(evidenceRepository.findById("e-1")).thenReturn(Optional.of(evidence));
+
+        Evidence result = evidenceService.getEvidenceById("e-1");
+
+        assertEquals("e-1", result.getId());
+        verify(evidenceRepository).findById("e-1");
+    }
+
+    @Test
+    void getEvidenceById_notFound_throwsNotFound() {
+        when(evidenceRepository.findById("missing")).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> evidenceService.getEvidenceById("missing"));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
     @Test
