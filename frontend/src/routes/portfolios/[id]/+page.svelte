@@ -22,6 +22,24 @@
       loading = false;
     }
   });
+
+  async function triggerAnalysis() {
+    try {
+      const res = await fetch('/api/service/auditreport', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ portfolioId: id })
+      });
+
+      if (res.ok) {
+        showToast('AI analysis started — check Audit Dashboard', 'success');
+      } else {
+        showToast('Failed to start analysis', 'error');
+      }
+    } catch {
+      showToast('Failed to start analysis', 'error');
+    }
+  }
 </script>
 
 {#if loading}
@@ -42,7 +60,7 @@
     <div class="btns">
       <a href="/portfolios/{id}/edit" class="btn btn-ghost">Edit</a>
       <a href="/portfolios/{id}/holdings/create" class="btn btn-primary">+ Add Holding</a>
-      <button class="btn btn-success" onclick={() => showToast('AI analysis triggered — report will appear in Audit Dashboard', 'success')}>
+      <button class="btn btn-success" onclick={() => triggerAnalysis()}>
         Analyse starten
       </button>
     </div>
