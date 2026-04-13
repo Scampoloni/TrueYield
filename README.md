@@ -742,4 +742,27 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 
 ## Fazit
 
-> Wird in späteren Iterationen ausgefüllt (Implementierungsstand, nächste Schritte, Backlog-Referenz).
+TrueYield wurde als vollständige ESG-Verification-Plattform mit KI-Unterstützung implementiert.
+Das Backend basiert auf Spring Boot 4.0.2 mit MongoDB Atlas und Auth0 JWT-Authentifizierung.
+Die Kernfunktionen - Portfolio-Verwaltung, Holdings, Audit-Workflow und KI-gestützte
+Risikoanalyse - sind vollständig umgesetzt und getestet.
+
+**KI-Integration (Spring AI):** Spring AI 1.0.0 mit Anthropic Claude Haiku analysiert beim
+Erstellen eines Audit-Berichts das Portfolio und generiert automatisch eine ESG-Risikozusammenfassung
+(`AI_ANALYZING -> PENDING_REVIEW`). Evidence-Einträge erhalten KI-basierte Sentimentwerte
+(-1.0 bis +1.0), die Greenwashing-relevante Nachrichten klassifizieren.
+
+**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf
+PortfolioService, HoldingService, AuditReportService, AuditCommentService und UserService.
+Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und
+Spring MVC MockMvc-Tests für alle Controller.
+
+**Deployment:** Vollautomatisches CI/CD über GitHub Actions - Tests und Build bei jedem Push,
+Docker-basiertes Deployment auf Azure App Service bei Merge in `main`.
+
+### Screenshots
+
+![Portfolios](docs/screenshots/portfolios-list.png)
+![Audit Dashboard](docs/screenshots/audit-dashboard.png)
+![Audit Detail](docs/screenshots/audit-detail-ai-summary.png)
+![Evidence](docs/screenshots/evidence-page.png)
