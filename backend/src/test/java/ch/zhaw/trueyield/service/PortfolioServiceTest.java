@@ -16,12 +16,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -203,6 +209,34 @@ class PortfolioServiceTest {
                 () -> portfolioService.deletePortfolio("portfolio-1", "other-manager"));
 
         verify(portfolioRepository, never()).deleteById(anyString());
+    }
+
+    // ── getAllPortfoliosByFundManagerPaged ───────────────────────────────────
+
+    @Test
+    void getAllPortfoliosByFundManagerPaged_returnsPage() {
+        Page<Portfolio> mockPage = new PageImpl<>(
+                List.of(portfolio), PageRequest.of(0, 5), 1L);
+        when(portfolioRepository.findByFundManagerId(eq("manager-001"), any(Pageable.class)))
+                .thenReturn(mockPage);
+
+        Page<Portfolio> result = portfolioService.getAllPortfoliosByFundManagerPaged("manager-001", 0, 5);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        assertEquals("ESG Global Fund", result.getContent().get(0).getName());
+    }
+
+    @Test
+    void getAllPortfoliosByFundManagerPaged_emptyPage_returnsEmpty() {
+        Page<Portfolio> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 5), 0L);
+        when(portfolioRepository.findByFundManagerId(eq("unknown"), any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        Page<Portfolio> result = portfolioService.getAllPortfoliosByFundManagerPaged("unknown", 0, 5);
+
+        assertTrue(result.getContent().isEmpty());
+        assertEquals(0, result.getTotalElements());
     }
 
     // ── portfolioExists ──────────────────────────────────────────────────────

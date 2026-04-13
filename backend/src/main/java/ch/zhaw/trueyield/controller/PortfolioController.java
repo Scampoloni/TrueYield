@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import ch.zhaw.trueyield.model.Portfolio;
+import ch.zhaw.trueyield.model.dto.PagedResponseDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioResponseDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioUpdateDTO;
@@ -11,6 +12,7 @@ import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.PortfolioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -48,13 +51,33 @@ public class PortfolioController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<PortfolioResponseDTO>> getAllPortfolios() {
+    public ResponseEntity<?> getAllPortfolios(
+            @RequestParam(required = false) Integer pageNumber,
+            @RequestParam(required = false) Integer pageSize) {
         String fundManagerId = userService.getCurrentUserId();
-        List<Portfolio> portfolios = portfolioService.getAllPortfoliosByFundManager(fundManagerId);
-        List<PortfolioResponseDTO> response = portfolios.stream()
+
+        // Unpaginierter Pfad — bestehende Tests und andere Seiten nutzen diesen (kein Query-Param)
+        if (pageNumber == null || pageSize == null) {
+            List<Portfolio> portfolios = portfolioService.getAllPortfoliosByFundManager(fundManagerId);
+            List<PortfolioResponseDTO> response = portfolios.stream()
+                    .map(PortfolioResponseDTO::fromEntity)
+                    .collect(Collectors.toList());
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }
+
+        // Paginierter Pfad
+        Page<Portfolio> page = portfolioService.getAllPortfoliosByFundManagerPaged(
+                fundManagerId, pageNumber, pageSize);
+        List<PortfolioResponseDTO> content = page.getContent().stream()
                 .map(PortfolioResponseDTO::fromEntity)
                 .collect(Collectors.toList());
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        PagedResponseDTO<PortfolioResponseDTO> pagedResponse = new PagedResponseDTO<>(
+                content,
+                page.getTotalPages(),
+                page.getTotalElements(),
+                pageNumber,
+                pageSize);
+        return new ResponseEntity<>(pagedResponse, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")

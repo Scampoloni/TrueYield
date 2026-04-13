@@ -6,21 +6,35 @@
   let portfolios: any[] = $state([]);
   let loading = $state(true);
   let deleteTarget: any = $state(null);
+  let currentPage = $state(0);
+  let totalPages = $state(0);
+  let totalElements = $state(0);
+  const PAGE_SIZE = 5;
 
-  onMount(async () => {
+  async function loadPage(page: number) {
+    loading = true;
     try {
-      const res = await fetch('/api/portfolio', { cache: 'no-store' });
-      portfolios = await res.json();
+      const res = await fetch(
+        `/api/portfolio?pageNumber=${page}&pageSize=${PAGE_SIZE}`,
+        { cache: 'no-store' }
+      );
+      const data = await res.json();
+      portfolios = data.content;
+      totalPages = data.totalPages;
+      totalElements = data.totalElements;
+      currentPage = page;
     } finally {
       loading = false;
     }
-  });
+  }
+
+  onMount(() => loadPage(0));
 
   async function confirmDelete() {
     try {
       await fetch(`/api/portfolio/${deleteTarget.id}`, { method: 'DELETE' });
-      portfolios = portfolios.filter(p => p.id !== deleteTarget.id);
       showToast('Portfolio deleted successfully');
+      await loadPage(currentPage);
     } catch {
       showToast('Failed to delete portfolio', 'error');
     } finally {
@@ -47,7 +61,7 @@
   <div>
     <div class="pg-ttl">Portfolios</div>
     <div class="pg-sub">
-      {loading ? '...' : `${portfolios.length} portfolio${portfolios.length !== 1 ? 's' : ''} total`}
+      {loading ? '...' : `${totalElements} portfolio${totalElements !== 1 ? 's' : ''} total`}
     </div>
   </div>
   <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
@@ -106,6 +120,22 @@
   </div>
 </div>
 
+{#if totalPages > 1}
+  <div class="pagination">
+    <button class="btn btn-ghost btn-sm"
+      disabled={currentPage === 0}
+      onclick={() => loadPage(currentPage - 1)}>
+      ← Prev
+    </button>
+    <span class="pg-info">Page {currentPage + 1} of {totalPages}</span>
+    <button class="btn btn-ghost btn-sm"
+      disabled={currentPage >= totalPages - 1}
+      onclick={() => loadPage(currentPage + 1)}>
+      Next →
+    </button>
+  </div>
+{/if}
+
 {#if deleteTarget}
   <ConfirmModal
     title="Delete Portfolio"
@@ -116,3 +146,19 @@
     onCancel={() => deleteTarget = null}
   />
 {/if}
+
+<style>
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 0 8px;
+  }
+  .pg-info {
+    font-size: 13px;
+    color: var(--text-3);
+    min-width: 100px;
+    text-align: center;
+  }
+</style>
