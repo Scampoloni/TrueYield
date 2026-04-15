@@ -37,7 +37,7 @@ public class AuditReportService {
     @Autowired
     private NewsService newsService;
 
-    @Autowired(required = false)
+    @Autowired
     private AiAnalysisService aiAnalysisService;
 
     public AuditReport createAuditReport(AuditReportCreateDTO dto) {
@@ -50,16 +50,8 @@ public class AuditReportService {
 
         fetchAndStoreNewsEvidence(dto.getPortfolioId());
 
-        try {
-            if (aiAnalysisService != null) {
-                String summary = aiAnalysisService.generateRiskSummary(dto.getPortfolioId());
-                report.setAiRiskSummary(summary);
-            } else {
-                report.setAiRiskSummary("AI analysis unavailable.");
-            }
-        } catch (Exception e) {
-            report.setAiRiskSummary("AI analysis unavailable.");
-        }
+        String summary = aiAnalysisService.generateRiskSummary(dto.getPortfolioId());
+        report.setAiRiskSummary(summary);
 
         report.setAuditStatus(AuditStatus.PENDING_REVIEW);
         return auditReportRepository.save(report);
