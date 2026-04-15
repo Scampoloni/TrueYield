@@ -19,24 +19,29 @@ public class AiConfig {
     private int maxTokens;
 
     @Bean
-    @ConditionalOnProperty(name = "spring.ai.anthropic.api-key", matchIfMissing = false)
+    @ConditionalOnProperty(name = "spring.ai.anthropic.api-key")
     public AnthropicApi anthropicApi(
             @Value("${spring.ai.anthropic.api-key}") String apiKey) {
-        return new AnthropicApi(apiKey);
+        return AnthropicApi.builder()
+                .apiKey(apiKey)
+                .build();
     }
 
     @Bean
-    @ConditionalOnProperty(name = "spring.ai.anthropic.api-key", matchIfMissing = false)
+    @ConditionalOnProperty(name = "spring.ai.anthropic.api-key")
     public AnthropicChatModel anthropicChatModel(AnthropicApi anthropicApi) {
         AnthropicChatOptions options = AnthropicChatOptions.builder()
                 .model(model)
                 .maxTokens(maxTokens)
                 .build();
-        return new AnthropicChatModel(anthropicApi, options);
+        return AnthropicChatModel.builder()
+                .anthropicApi(anthropicApi)
+                .defaultOptions(options)
+                .build();
     }
 
     @Bean
-    @ConditionalOnProperty(name = "spring.ai.anthropic.api-key", matchIfMissing = false)
+    @ConditionalOnProperty(name = "spring.ai.anthropic.api-key")
     public ChatClient.Builder chatClientBuilder(AnthropicChatModel chatModel) {
         return ChatClient.builder(chatModel);
     }
