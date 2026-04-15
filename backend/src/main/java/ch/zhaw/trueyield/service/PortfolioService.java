@@ -30,6 +30,11 @@ public class PortfolioService {
         return portfolioRepository.findByFundManagerId(fundManagerId);
     }
 
+    // READ ALL (für Auditoren)
+    public List<Portfolio> getAllPortfolios() {
+        return portfolioRepository.findAll();
+    }
+
     // READ ONE (mit Ownership Check!)
     public Portfolio getPortfolioById(String id, String requestingUserId) {
         Optional<Portfolio> optionalPortfolio = portfolioRepository.findById(id);

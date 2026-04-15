@@ -49,8 +49,10 @@ public class PortfolioController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PortfolioResponseDTO>> getAllPortfolios() {
-        String fundManagerId = userService.getCurrentUserId();
-        List<Portfolio> portfolios = portfolioService.getAllPortfoliosByFundManager(fundManagerId);
+        String userId = userService.getCurrentUserId();
+        List<Portfolio> portfolios = userService.userHasRole("auditor")
+                ? portfolioService.getAllPortfolios()
+                : portfolioService.getAllPortfoliosByFundManager(userId);
         List<PortfolioResponseDTO> response = portfolios.stream()
                 .map(PortfolioResponseDTO::fromEntity)
                 .collect(Collectors.toList());
