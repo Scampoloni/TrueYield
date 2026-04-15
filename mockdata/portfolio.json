@@ -1,0 +1,20 @@
+[
+  {
+    "_id": { "$oid": "664000000000000000000001" },
+    "name": "Green Future Fund",
+    "description": "Focus on renewable energy and sustainable infrastructure.",
+    "fundManagerId": "auth0|mock-fundmanager-001"
+  },
+  {
+    "_id": { "$oid": "664000000000000000000002" },
+    "name": "Tech Innovation Portfolio",
+    "description": "High-growth technology companies with ESG screening.",
+    "fundManagerId": "auth0|mock-fundmanager-001"
+  },
+  {
+    "_id": { "$oid": "664000000000000000000003" },
+    "name": "Balanced ESG Fund",
+    "description": "Diversified portfolio across sectors with strong ESG ratings.",
+    "fundManagerId": "auth0|mock-fundmanager-002"
+  }
+]

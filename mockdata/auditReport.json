@@ -1,0 +1,26 @@
+[
+  {
+    "_id": { "$oid": "664000000000000000000031" },
+    "portfolioId": "664000000000000000000001",
+    "auditStatus": "APPROVED",
+    "aiRiskSummary": "The Green Future Fund shows strong ESG alignment. NextEra and Vestas demonstrate positive momentum, though Enphase faces short-term headwinds from slowing residential demand. Overall risk profile is moderate.",
+    "auditorId": "auth0|69c4289e6b6e4525dcca14e8",
+    "createdAt": { "$date": "2024-04-01T09:00:00" }
+  },
+  {
+    "_id": { "$oid": "664000000000000000000032" },
+    "portfolioId": "664000000000000000000002",
+    "auditStatus": "PENDING_REVIEW",
+    "aiRiskSummary": "Tech Innovation Portfolio carries elevated risk. NVIDIA is exposed to US-China export control escalation. Microsoft remains a strong anchor. ASML shows resilient demand fundamentals.",
+    "auditorId": null,
+    "createdAt": { "$date": "2024-04-11T14:30:00" }
+  },
+  {
+    "_id": { "$oid": "664000000000000000000033" },
+    "portfolioId": "664000000000000000000003",
+    "auditStatus": "UNDER_REVIEW",
+    "aiRiskSummary": "Balanced ESG Fund shows mixed signals. J&J litigation resolution is a positive catalyst. BlackRock's ESG retreat and Apple's Vision Pro disappointment introduce uncertainty. Portfolio remains broadly diversified.",
+    "auditorId": "auth0|69c4289e6b6e4525dcca14e8",
+    "createdAt": { "$date": "2024-04-09T11:00:00" }
+  }
+]

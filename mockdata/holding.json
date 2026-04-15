@@ -1,0 +1,74 @@
+[
+  {
+    "_id": { "$oid": "664000000000000000000011" },
+    "portfolioId": "664000000000000000000001",
+    "symbol": "NEE",
+    "isin": "US65339F1012",
+    "name": "NextEra Energy Inc.",
+    "weightPercent": 18.5
+  },
+  {
+    "_id": { "$oid": "664000000000000000000012" },
+    "portfolioId": "664000000000000000000001",
+    "symbol": "ENPH",
+    "isin": "US29355A1079",
+    "name": "Enphase Energy Inc.",
+    "weightPercent": 14.2
+  },
+  {
+    "_id": { "$oid": "664000000000000000000013" },
+    "portfolioId": "664000000000000000000001",
+    "symbol": "VWSYF",
+    "isin": "DK0010268606",
+    "name": "Vestas Wind Systems A/S",
+    "weightPercent": 12.0
+  },
+  {
+    "_id": { "$oid": "664000000000000000000014" },
+    "portfolioId": "664000000000000000000002",
+    "symbol": "MSFT",
+    "isin": "US5949181045",
+    "name": "Microsoft Corporation",
+    "weightPercent": 22.0
+  },
+  {
+    "_id": { "$oid": "664000000000000000000015" },
+    "portfolioId": "664000000000000000000002",
+    "symbol": "NVDA",
+    "isin": "US67066G1040",
+    "name": "NVIDIA Corporation",
+    "weightPercent": 19.5
+  },
+  {
+    "_id": { "$oid": "664000000000000000000016" },
+    "portfolioId": "664000000000000000000002",
+    "symbol": "ASML",
+    "isin": "NL0010273215",
+    "name": "ASML Holding N.V.",
+    "weightPercent": 11.0
+  },
+  {
+    "_id": { "$oid": "664000000000000000000017" },
+    "portfolioId": "664000000000000000000003",
+    "symbol": "AAPL",
+    "isin": "US0378331005",
+    "name": "Apple Inc.",
+    "weightPercent": 15.0
+  },
+  {
+    "_id": { "$oid": "664000000000000000000018" },
+    "portfolioId": "664000000000000000000003",
+    "symbol": "JNJ",
+    "isin": "US4781601046",
+    "name": "Johnson & Johnson",
+    "weightPercent": 13.0
+  },
+  {
+    "_id": { "$oid": "664000000000000000000019" },
+    "portfolioId": "664000000000000000000003",
+    "symbol": "BLK",
+    "isin": "US09247X1019",
+    "name": "BlackRock Inc.",
+    "weightPercent": 10.5
+  }
+]
