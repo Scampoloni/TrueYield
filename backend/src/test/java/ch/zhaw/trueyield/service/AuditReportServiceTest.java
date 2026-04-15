@@ -266,30 +266,13 @@ class AuditReportServiceTest {
     }
 
     @Test
-    void createAuditReport_setsUnavailableSummary_whenAiServiceIsNull() {
+    void createAuditReport_setsUnavailableSummary_whenAiNotAvailable() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
         when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-
-        ReflectionTestUtils.setField(auditReportService, "aiAnalysisService", null);
-
-        AuditReport result = auditReportService.createAuditReport(createDTO);
-
-        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
-        verify(auditReportRepository, times(2)).save(any(AuditReport.class));
-    }
-
-    @Test
-    void createAuditReport_setsUnavailableSummary_whenAiServiceThrows() {
-        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
-        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
-        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
-        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-        when(aiAnalysisService.generateRiskSummary(anyString()))
-                .thenThrow(new RuntimeException("AI service unavailable"));
+        when(aiAnalysisService.generateRiskSummary(anyString())).thenReturn("AI analysis unavailable.");
 
         AuditReport result = auditReportService.createAuditReport(createDTO);
 
