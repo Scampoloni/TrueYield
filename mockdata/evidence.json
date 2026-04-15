@@ -1,0 +1,82 @@
+[
+  {
+    "_id": { "$oid": "664000000000000000000021" },
+    "holdingId": "664000000000000000000011",
+    "sourceUrl": "https://example.com/news/nextera-renewable-expansion",
+    "contentSnippet": "NextEra Energy announces major expansion of solar capacity in Florida, targeting 10 GW of new installations by 2026.",
+    "aiSentimentScore": 0.82,
+    "publishedAt": { "$date": "2024-03-15" }
+  },
+  {
+    "_id": { "$oid": "664000000000000000000022" },
+    "holdingId": "664000000000000000000011",
+    "sourceUrl": "https://example.com/news/nextera-regulatory-risk",
+    "contentSnippet": "Analysts warn of increased regulatory uncertainty in Florida's energy market following recent legislative changes.",
+    "aiSentimentScore": -0.45,
+    "publishedAt": { "$date": "2024-03-20" }
+  },
+  {
+    "_id": { "$oid": "664000000000000000000023" },
+    "holdingId": "664000000000000000000012",
+    "sourceUrl": "https://example.com/news/enphase-q1-results",
+    "contentSnippet": "Enphase Energy reports Q1 results below expectations as residential solar demand slows amid higher interest rates.",
+    "aiSentimentScore": -0.61,
+    "publishedAt": { "$date": "2024-04-02" }
+  },
+  {
+    "_id": { "$oid": "664000000000000000000024" },
+    "holdingId": "664000000000000000000013",
+    "sourceUrl": "https://example.com/news/vestas-record-order",
+    "contentSnippet": "Vestas secures record offshore wind order in the North Sea, strengthening its position as Europe's leading turbine manufacturer.",
+    "aiSentimentScore": 0.75,
+    "publishedAt": { "$date": "2024-03-28" }
+  },
+  {
+    "_id": { "$oid": "664000000000000000000025" },
+    "holdingId": "664000000000000000000014",
+    "sourceUrl": "https://example.com/news/microsoft-ai-investment",
+    "contentSnippet": "Microsoft commits $13B additional investment into AI infrastructure, expanding Azure capacity across Europe and Asia.",
+    "aiSentimentScore": 0.88,
+    "publishedAt": { "$date": "2024-04-05" }
+  },
+  {
+    "_id": { "$oid": "664000000000000000000026" },
+    "holdingId": "664000000000000000000015",
+    "sourceUrl": "https://example.com/news/nvidia-export-controls",
+    "contentSnippet": "NVIDIA faces new US export controls on advanced chips to China, potentially impacting up to 20% of annual revenue.",
+    "aiSentimentScore": -0.72,
+    "publishedAt": { "$date": "2024-04-10" }
+  },
+  {
+    "_id": { "$oid": "664000000000000000000027" },
+    "holdingId": "664000000000000000000016",
+    "sourceUrl": "https://example.com/news/asml-euv-demand",
+    "contentSnippet": "ASML reports strong order backlog for EUV lithography machines, driven by semiconductor capacity expansions in Europe and Japan.",
+    "aiSentimentScore": 0.79,
+    "publishedAt": { "$date": "2024-04-01" }
+  },
+  {
+    "_id": { "$oid": "664000000000000000000028" },
+    "holdingId": "664000000000000000000017",
+    "sourceUrl": "https://example.com/news/apple-vision-pro-sales",
+    "contentSnippet": "Apple Vision Pro sales disappoint in first quarter; analysts revise spatial computing revenue forecasts downward.",
+    "aiSentimentScore": -0.38,
+    "publishedAt": { "$date": "2024-04-08" }
+  },
+  {
+    "_id": { "$oid": "664000000000000000000029" },
+    "holdingId": "664000000000000000000018",
+    "sourceUrl": "https://example.com/news/jnj-talc-settlement",
+    "contentSnippet": "Johnson & Johnson reaches $6.5B settlement in talc litigation, removing a major long-standing legal overhang.",
+    "aiSentimentScore": 0.55,
+    "publishedAt": { "$date": "2024-03-25" }
+  },
+  {
+    "_id": { "$oid": "664000000000000000000030" },
+    "holdingId": "664000000000000000000019",
+    "sourceUrl": "https://example.com/news/blackrock-esg-retreat",
+    "contentSnippet": "BlackRock scales back ESG commitments under political pressure, raising concerns among sustainability-focused investors.",
+    "aiSentimentScore": -0.52,
+    "publishedAt": { "$date": "2024-04-03" }
+  }
+]
