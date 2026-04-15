@@ -23,7 +23,7 @@ public class AiAnalysisService {
 
     @PostConstruct
     public void init() {
-        if (chatClientBuilder != null && apiKey != null && !apiKey.isBlank() && !apiKey.equals("dummy-key")) {
+        if (chatClientBuilder != null && apiKey != null && !apiKey.isBlank()) {
             this.chatClient = chatClientBuilder.build();
             log.info("AiAnalysisService: ChatClient initialised (Anthropic).");
         } else {
