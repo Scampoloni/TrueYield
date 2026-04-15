@@ -36,6 +36,15 @@ class AuditReportServiceTest {
     private PortfolioService portfolioService;
 
     @Mock
+    private HoldingService holdingService;
+
+    @Mock
+    private EvidenceService evidenceService;
+
+    @Mock
+    private NewsService newsService;
+
+    @Mock
     private AiAnalysisService aiAnalysisService;
 
     @InjectMocks
@@ -58,6 +67,7 @@ class AuditReportServiceTest {
         lenient().when(dto.getAuditorId()).thenReturn("auditor-001");
         lenient().when(aiAnalysisService.generateRiskSummary(anyString()))
             .thenReturn("Mock AI risk summary.");
+        lenient().when(newsService.isConfigured()).thenReturn(false);
     }
 
     // ── getAuditReportById ───────────────────────────────────────────────────
@@ -280,6 +290,60 @@ class AuditReportServiceTest {
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
         when(aiAnalysisService.generateRiskSummary(anyString()))
                 .thenThrow(new RuntimeException("AI service unavailable"));
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+        verify(auditReportRepository, times(2)).save(any(AuditReport.class));
+    }
+
+    @Test
+    void createAuditReport_fetchesNewsAndCreatesEvidence_whenNewsServiceConfigured() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+        when(newsService.isConfigured()).thenReturn(true);
+
+        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "AAPL");
+        holding.setId("holding-001");
+        holding.setName("Apple Inc.");
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
+        when(newsService.fetchNewsForHolding("Apple Inc.")).thenReturn(java.util.List.of(
+                new NewsService.NewsArticle("ESG headline", "ESG content snippet", "https://example.com", java.time.LocalDate.now())
+        ));
+
+        auditReportService.createAuditReport(createDTO);
+
+        verify(evidenceService, times(1)).createEvidence(any(ch.zhaw.trueyield.model.dto.EvidenceCreateDTO.class));
+    }
+
+    @Test
+    void createAuditReport_skipsNewsEvidence_whenNewsServiceNotConfigured() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+        when(newsService.isConfigured()).thenReturn(false);
+
+        auditReportService.createAuditReport(createDTO);
+
+        verify(holdingService, never()).getHoldingsByPortfolioId(anyString());
+        verify(evidenceService, never()).createEvidence(any());
+    }
+
+    @Test
+    void createAuditReport_continuesGracefully_whenNewsFetchThrows() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+        when(newsService.isConfigured()).thenReturn(true);
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001"))
+                .thenThrow(new RuntimeException("DB unavailable"));
 
         AuditReport result = auditReportService.createAuditReport(createDTO);
 
