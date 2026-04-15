@@ -32,7 +32,10 @@
     <div class="page-title">Holding {holdingId}</div>
     <div class="page-subtitle">Evidence & Risk Analysis</div>
   </div>
-  <a href="/portfolios/{portfolioId}" class="btn btn-ghost">← Back to Portfolio</a>
+  <div style="display:flex;gap:0.5rem;">
+    <a href="/portfolios/{portfolioId}/holdings/{holdingId}/create" class="btn btn-primary">+ Add Evidence</a>
+    <a href="/portfolios/{portfolioId}" class="btn btn-ghost">← Back to Portfolio</a>
+  </div>
 </div>
 
 {#if loading}
@@ -50,7 +53,7 @@
           <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
         </div>
         <div class="empty-title">No evidence yet</div>
-        <div class="empty-desc">Start an AI analysis from the portfolio detail page to generate ESG evidence for this holding.</div>
+        <div class="empty-desc">Add ESG news snippets via "+ Add Evidence". The AI will automatically analyse the sentiment and assign a risk score.</div>
       </div>
     </div>
   {:else}
