@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class AuditReportServiceTest {
@@ -250,6 +251,38 @@ class AuditReportServiceTest {
         AuditReport result = auditReportService.createAuditReport(createDTO);
 
         assertEquals("portfolio-001", result.getPortfolioId());
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+        verify(auditReportRepository, times(2)).save(any(AuditReport.class));
+    }
+
+    @Test
+    void createAuditReport_setsUnavailableSummary_whenAiServiceIsNull() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+
+        ReflectionTestUtils.setField(auditReportService, "aiAnalysisService", null);
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+        verify(auditReportRepository, times(2)).save(any(AuditReport.class));
+    }
+
+    @Test
+    void createAuditReport_setsUnavailableSummary_whenAiServiceThrows() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+        when(aiAnalysisService.generateRiskSummary(anyString()))
+                .thenThrow(new RuntimeException("AI service unavailable"));
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
         assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
         verify(auditReportRepository, times(2)).save(any(AuditReport.class));
     }
