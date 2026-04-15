@@ -727,16 +727,120 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 | Methode | Endpoint | Beschreibung | Status Codes |
 |---|---|---|---|
 | POST | `/api/holding` | Holding hinzufügen | 201 Created, 400 Bad Request |
+| GET | `/api/holding?portfolioId={id}` | Holdings eines Portfolios abrufen | 200 OK |
+| DELETE | `/api/holding/{id}` | Holding löschen | 204 No Content, 403 Forbidden, 404 Not Found |
+
+#### Evidence (`/api/evidence`)
+
+| Methode | Endpoint | Beschreibung | Status Codes |
+|---|---|---|---|
+| POST | `/api/evidence` | Evidence erstellen (inkl. KI-Sentiment-Analyse) | 201 Created, 400 Bad Request |
+| GET | `/api/evidence?holdingId={id}` | Evidence einer Holding abrufen | 200 OK |
+| GET | `/api/evidence/{id}` | Evidence by ID | 200 OK, 404 Not Found |
+| DELETE | `/api/evidence/{id}` | Evidence löschen | 204 No Content, 403 Forbidden, 404 Not Found |
 
 #### AuditReport Service (`/api/service/auditreport`)
 
 | Methode | Endpoint | Beschreibung | Status Codes |
 |---|---|---|---|
+| POST | `/api/service/auditreport` | Audit-Report erstellen (KI-Analyse wird ausgelöst) | 201 Created, 400 Bad Request |
+| GET | `/api/service/auditreport/{id}` | Audit-Report by ID | 200 OK, 404 Not Found |
 | PUT | `/api/service/auditreport/assign` | AuditReport zuweisen (PENDING_REVIEW → UNDER_REVIEW) | 200 OK, 400 Bad Request |
 | PUT | `/api/service/auditreport/complete` | AuditReport abschliessen (UNDER_REVIEW → APPROVED) | 200 OK, 400 Bad Request |
-| GET | `/api/service/auditreport/dashboard` | Dashboard-Aggregation per Portfolio | 200 OK |
+| PUT | `/api/service/auditreport/reject` | AuditReport ablehnen (UNDER_REVIEW → REJECTED) | 200 OK, 400 Bad Request |
+| GET | `/api/service/auditreport/dashboard?portfolioId={id}` | Dashboard-Aggregation per Portfolio | 200 OK |
 
-> Weitere Endpoints (Evidence, AI-Analyse) folgen in späteren Iterationen.
+#### AuditComment (`/api/service/auditcomment`)
+
+| Methode | Endpoint | Beschreibung | Status Codes |
+|---|---|---|---|
+| POST | `/api/service/auditcomment` | Kommentar hinzufügen (Auditor) | 201 Created, 400 Bad Request |
+| GET | `/api/service/auditcomment?auditReportId={id}` | Alle Kommentare eines Reports | 200 OK |
+
+---
+
+### KI-Integration (Spring AI)
+
+TrueYield nutzt **Spring AI 1.0.0** mit dem Modell **Claude Haiku** (Anthropic) für zwei KI-Funktionen im ESG-Workflow:
+
+#### 1. ESG-Risikozusammenfassung beim Audit-Erstellen
+
+Wenn ein Fund Manager einen Audit-Report erstellt (`POST /api/service/auditreport`), wechselt der Report zunächst in den Status `AI_ANALYZING`. Der `AiAnalysisService` sendet einen Prompt an Claude Haiku:
+
+> *"You are an ESG risk analyst. Provide a concise 2-3 sentence risk summary for the investment portfolio … Focus on potential greenwashing risks and ESG compliance concerns."*
+
+Die generierte Zusammenfassung wird als `aiRiskSummary` im `AuditReport` gespeichert und ist für den Auditor auf der Detailseite sichtbar. Danach wechselt der Status automatisch zu `PENDING_REVIEW`.
+
+#### 2. Sentiment-Analyse für Evidence
+
+Beim Erstellen eines Evidence-Eintrags (`POST /api/evidence`) analysiert Claude Haiku das `contentSnippet` und gibt einen Dezimalwert zwischen `-1.0` (sehr negative ESG-Nachricht) und `+1.0` (sehr positiv) zurück. Dieser Wert (`aiSentimentScore`) wird persistiert und im Frontend als:
+- **Risk-Score** (0–10 Skala, invertiert)
+- **Sentiment-Badge** (POSITIVE / NEUTRAL / NEGATIVE)
+- **Farbige Risk-Bar** (grün / gelb / rot)
+
+dargestellt. Dies ermöglicht dem Auditor eine schnelle visuelle Einschätzung der ESG-Nachrichtenlage je Holding.
+
+---
+
+### Frontend
+
+#### Rolle: Fund Manager
+
+**Login**
+![Login](doc/screenshots/login-page.png)
+
+**Portfolio-Übersicht** — Alle eigenen Portfolios mit Status-Badges
+![Portfolio-Übersicht](doc/screenshots/portfolios-list.png)
+
+**Portfolio erstellen** — Formular für neues Portfolio
+![Portfolio erstellen](doc/screenshots/portfolio-create.png)
+
+**Portfolio-Detail** — Holdings-Tabelle, Audit-Report triggern
+![Portfolio-Detail](doc/screenshots/portfolio-detail.png)
+
+**Portfolio bearbeiten**
+![Portfolio bearbeiten](doc/screenshots/portfolio-edit.png)
+
+**Holding hinzufügen** — Formular mit Symbol, ISIN, Gewichtung
+![Holding hinzufügen](doc/screenshots/holding-create.png)
+
+**Holdings-Übersicht** — Aggregierte Ansicht aller Holdings über alle Portfolios
+![Holdings-Übersicht](doc/screenshots/holdings-overview.png)
+
+**Evidence & Risk Analysis** — KI-generierte Evidence-Cards mit Sentiment-Badge und Risk-Score pro Holding
+![Evidence](doc/screenshots/evidence-page.png)
+
+**Account** — Benutzerprofil mit Rolle (fund-manager)
+![Account Fund Manager](doc/screenshots/account-manager.png)
+
+---
+
+#### Rolle: ESG Auditor
+
+**Audit-Dashboard** — Metrics-Karten, Filter nach Status, Tabelle aller Reports
+![Audit-Dashboard](doc/screenshots/audit-dashboard.png)
+
+**Audit-Detail: AI Risk Summary** — KI-generierte Risikozusammenfassung und Status-Timeline
+![Audit-Detail AI Summary](doc/screenshots/audit-detail-ai-summary.png)
+
+**Audit-Detail: Assign & Actions** — Assign-Button (PENDING_REVIEW → UNDER_REVIEW), Approve/Reject
+![Audit-Detail Actions](doc/screenshots/audit-detail-actions.png)
+
+**Audit-Detail: Kommentare** — Auditor-Begründung hinzufügen
+![Audit-Kommentare](doc/screenshots/audit-detail-comments.png)
+
+**Account** — Benutzerprofil mit Rolle (auditor)
+![Account Auditor](doc/screenshots/account-auditor.png)
+
+---
+
+### Umgesetzte optionale Anforderungen
+
+| Anforderung | Beschreibung |
+|---|---|
+| Komplexes Datenmodell (5 Entitäten) | Portfolio, Holding, Evidence, AuditReport, AuditComment — übererfüllt gegenüber Mindestanforderung (3) |
+| Detaillierte Dokumentation auf GitHub | Issues mit Labels, Sprints als GitHub Iterations, Branch-and-Pull-Modell durchgehend eingesetzt |
+| Mehrere Branches sinnvoll verwendet | Jedes Feature in eigenem `feature/issue-<nr>-<titel>`-Branch entwickelt und via Pull Request gemerged |
 
 ---
 
@@ -744,25 +848,24 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 
 TrueYield wurde als vollständige ESG-Verification-Plattform mit KI-Unterstützung implementiert.
 Das Backend basiert auf Spring Boot 4.0.2 mit MongoDB Atlas und Auth0 JWT-Authentifizierung.
-Die Kernfunktionen - Portfolio-Verwaltung, Holdings, Audit-Workflow und KI-gestützte
-Risikoanalyse - sind vollständig umgesetzt und getestet.
+Alle Kernfunktionen — Portfolio-Verwaltung, Holdings, Evidence-Erfassung, Audit-Workflow und
+KI-gestützte Risikoanalyse — sind vollständig umgesetzt, getestet und auf Azure App Service deployed.
 
 **KI-Integration (Spring AI):** Spring AI 1.0.0 mit Anthropic Claude Haiku analysiert beim
 Erstellen eines Audit-Berichts das Portfolio und generiert automatisch eine ESG-Risikozusammenfassung
-(`AI_ANALYZING -> PENDING_REVIEW`). Evidence-Einträge erhalten KI-basierte Sentimentwerte
-(-1.0 bis +1.0), die Greenwashing-relevante Nachrichten klassifizieren.
+(`AI_ANALYZING → PENDING_REVIEW`). Evidence-Einträge erhalten KI-basierte Sentimentwerte
+(-1.0 bis +1.0), die Greenwashing-relevante Nachrichten klassifizieren und als Risk-Score (0–10)
+sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert werden.
 
 **Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf
 PortfolioService, HoldingService, AuditReportService, AuditCommentService und UserService.
 Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und
-Spring MVC MockMvc-Tests für alle Controller.
+Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
 
-**Deployment:** Vollautomatisches CI/CD über GitHub Actions - Tests und Build bei jedem Push,
+**Deployment:** Vollautomatisches CI/CD über GitHub Actions — Tests und Build bei jedem Push,
 Docker-basiertes Deployment auf Azure App Service bei Merge in `main`.
 
-### Screenshots
-
-![Portfolios](docs/screenshots/portfolios-list.png)
-![Audit Dashboard](docs/screenshots/audit-dashboard.png)
-![Audit Detail](docs/screenshots/audit-detail-ai-summary.png)
-![Evidence](docs/screenshots/evidence-page.png)
+**Nächste Schritte (Backlog):**
+- Issue #58: Externe News-API-Integration (GNews/NewsAPI) für automatische Evidence-Generierung
+- Issue #51: SonarQube-Integration für statische Code-Analyse
+- Issue #63–68: Cypress End-to-End Tests für kritische User Flows

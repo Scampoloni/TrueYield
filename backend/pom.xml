@@ -171,6 +171,7 @@
 										<include>ch.zhaw.trueyield.service.HoldingService</include>
 										<include>ch.zhaw.trueyield.service.AuditReportService</include>
 										<include>ch.zhaw.trueyield.service.AuditCommentService</include>
+										<include>ch.zhaw.trueyield.service.EvidenceService</include>
 										<include>ch.zhaw.trueyield.security.UserService</include>
 									</includes>
 									<limits>
