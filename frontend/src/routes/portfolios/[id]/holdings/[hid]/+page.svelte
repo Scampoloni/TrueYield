@@ -64,7 +64,11 @@
     <div class="evidence-grid">
       {#each evidence as e}
         <div class="evidence-card">
-          <div class="evidence-headline">{e.headline}</div>
+          {#if e.sourceUrl}
+            <a class="evidence-headline" href={e.sourceUrl} target="_blank" rel="noopener noreferrer">{e.headline}</a>
+          {:else}
+            <div class="evidence-headline">{e.headline}</div>
+          {/if}
           <div class="evidence-source">{e.summary}</div>
           <div class="evidence-date">{e.createdAt}</div>
           <div class="risk-label">
@@ -81,3 +85,13 @@
   {/if}
 </div>
 {/if}
+
+<style>
+  a.evidence-headline {
+    text-decoration: none;
+    color: inherit;
+  }
+  a.evidence-headline:hover {
+    text-decoration: underline;
+  }
+</style>
