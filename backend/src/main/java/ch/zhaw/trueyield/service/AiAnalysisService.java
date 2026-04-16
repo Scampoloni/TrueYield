@@ -49,6 +49,7 @@ public class AiAnalysisService {
         String holdings = holdingNames.isEmpty()
                 ? "no holdings listed"
                 : String.join(", ", holdingNames);
+        log.info("AiAnalysisService: generating risk summary for holdings: [{}]", holdings);
         String prompt = """
                 You are an ESG risk analyst. Provide a concise 2-3 sentence risk summary
                 for an ESG investment portfolio containing the following holdings: %s.
