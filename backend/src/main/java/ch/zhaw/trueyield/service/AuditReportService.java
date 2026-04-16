@@ -48,21 +48,32 @@ public class AuditReportService {
         AuditReport report = new AuditReport(dto.getPortfolioId(), AuditStatus.AI_ANALYZING);
         report = auditReportRepository.save(report);
 
-        fetchAndStoreNewsEvidence(dto.getPortfolioId());
+        List<Holding> holdings;
+        try {
+            holdings = holdingService.getHoldingsByPortfolioId(dto.getPortfolioId());
+        } catch (Exception e) {
+            log.warn("Could not load holdings for portfolio '{}': {}", dto.getPortfolioId(), e.getMessage());
+            holdings = List.of();
+        }
+        List<String> holdingNames = holdings.stream()
+                .map(h -> h.getName() != null ? h.getName() : h.getSymbol())
+                .filter(n -> n != null && !n.isBlank())
+                .toList();
 
-        String summary = aiAnalysisService.generateRiskSummary(dto.getPortfolioId());
+        fetchAndStoreNewsEvidence(dto.getPortfolioId(), holdings);
+
+        String summary = aiAnalysisService.generateRiskSummary(holdingNames);
         report.setAiRiskSummary(summary);
 
         report.setAuditStatus(AuditStatus.PENDING_REVIEW);
         return auditReportRepository.save(report);
     }
 
-    private void fetchAndStoreNewsEvidence(String portfolioId) {
+    private void fetchAndStoreNewsEvidence(String portfolioId, List<Holding> holdings) {
         if (!newsService.isConfigured()) {
             return;
         }
         try {
-            List<Holding> holdings = holdingService.getHoldingsByPortfolioId(portfolioId);
             for (Holding holding : holdings) {
                 String query = holding.getName() != null ? holding.getName() : holding.getSymbol();
                 List<NewsService.NewsArticle> articles = newsService.fetchNewsForHolding(query);
