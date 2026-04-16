@@ -53,7 +53,7 @@ public class NewsService {
                             .queryParam("q", query)
                             .queryParam("lang", "en")
                             .queryParam("max", MAX_ARTICLES)
-                            .queryParam("apikey", apiKey)
+                            .queryParam("token", apiKey)
                             .build())
                     .retrieve()
                     .body(Map.class);
