@@ -43,7 +43,10 @@ public class NewsService {
             return Collections.emptyList();
         }
 
-        String query = companyName + " ESG sustainability";
+        String cleanName = companyName
+                .replaceAll("(?i)\\s+(Inc\\.?|PLC\\.?|Ltd\\.?|Corp\\.?|AG|SE|NV|SA|GmbH)\\s*$", "")
+                .trim();
+        String query = "\"" + cleanName + "\" ESG";
 
         try {
             @SuppressWarnings("unchecked")

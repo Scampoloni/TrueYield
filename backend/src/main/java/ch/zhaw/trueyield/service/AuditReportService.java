@@ -81,7 +81,10 @@ public class AuditReportService {
                     EvidenceCreateDTO evidenceDTO = new EvidenceCreateDTO();
                     evidenceDTO.setHoldingId(holding.getId());
                     evidenceDTO.setSourceUrl(article.url());
-                    evidenceDTO.setContentSnippet(article.content());
+                    String snippet = !article.title().isBlank()
+                            ? article.title() + (article.content().isBlank() || article.content().equals(article.title()) ? "" : " – " + article.content())
+                            : article.content();
+                    evidenceDTO.setContentSnippet(snippet);
                     evidenceService.createEvidence(evidenceDTO);
                 }
             }

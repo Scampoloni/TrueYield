@@ -16,6 +16,7 @@ public class EvidenceResponseDTO {
     private String sentiment;
     private int riskScore;
     private LocalDate createdAt;
+    private String sourceUrl;
 
     public static EvidenceResponseDTO fromEntity(Evidence evidence) {
         double score = evidence.getAiSentimentScore() == null ? 0.0 : evidence.getAiSentimentScore();
@@ -28,7 +29,8 @@ public class EvidenceResponseDTO {
                 snippet,
                 toSentiment(score),
                 toRiskScore(score),
-                evidence.getPublishedAt()
+                evidence.getPublishedAt(),
+                evidence.getSourceUrl()
         );
     }
 
