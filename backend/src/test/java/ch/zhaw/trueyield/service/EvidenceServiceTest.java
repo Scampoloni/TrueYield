@@ -16,8 +16,10 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -116,5 +118,27 @@ class EvidenceServiceTest {
         assertDoesNotThrow(() -> evidenceService.deleteEvidence("e-1"));
 
         verify(evidenceRepository).deleteById("e-1");
+    }
+
+    @Test
+    void countByHoldingId_delegatesToRepository() {
+        when(evidenceRepository.countByHoldingId("holding-1")).thenReturn(7L);
+
+        assertEquals(7L, evidenceService.countByHoldingId("holding-1"));
+        verify(evidenceRepository).countByHoldingId("holding-1");
+    }
+
+    @Test
+    void existsByHoldingIdAndSourceUrl_returnsTrue_whenExists() {
+        when(evidenceRepository.existsByHoldingIdAndSourceUrl("holding-1", "https://example.com")).thenReturn(true);
+
+        assertTrue(evidenceService.existsByHoldingIdAndSourceUrl("holding-1", "https://example.com"));
+    }
+
+    @Test
+    void existsByHoldingIdAndSourceUrl_returnsFalse_whenNotExists() {
+        when(evidenceRepository.existsByHoldingIdAndSourceUrl("holding-1", "https://other.com")).thenReturn(false);
+
+        assertFalse(evidenceService.existsByHoldingIdAndSourceUrl("holding-1", "https://other.com"));
     }
 }

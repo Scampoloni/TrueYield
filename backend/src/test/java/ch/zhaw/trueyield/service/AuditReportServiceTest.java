@@ -347,4 +347,70 @@ class AuditReportServiceTest {
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         verify(auditReportRepository, never()).save(any());
     }
+
+    @Test
+    void createAuditReport_skipsEvidence_whenHoldingAlreadyAtMaxCapacity() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+        when(newsService.isConfigured()).thenReturn(true);
+
+        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "AAPL");
+        holding.setId("holding-001");
+        holding.setName("Apple Inc.");
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
+        when(evidenceService.countByHoldingId("holding-001")).thenReturn(10L);
+
+        auditReportService.createAuditReport(createDTO);
+
+        verify(newsService, never()).fetchNewsForHolding(anyString());
+        verify(evidenceService, never()).createEvidence(any());
+    }
+
+    @Test
+    void createAuditReport_skipsEvidence_whenUrlAlreadyExists() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+        when(newsService.isConfigured()).thenReturn(true);
+
+        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "AAPL");
+        holding.setId("holding-001");
+        holding.setName("Apple Inc.");
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
+        when(newsService.fetchNewsForHolding("Apple Inc.")).thenReturn(java.util.List.of(
+                new NewsService.NewsArticle("ESG headline", "ESG content", "https://example.com", java.time.LocalDate.now())
+        ));
+        when(evidenceService.existsByHoldingIdAndSourceUrl("holding-001", "https://example.com")).thenReturn(true);
+
+        auditReportService.createAuditReport(createDTO);
+
+        verify(evidenceService, never()).createEvidence(any());
+    }
+
+    @Test
+    void createAuditReport_skipsEvidence_whenUrlIsBlank() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+        when(newsService.isConfigured()).thenReturn(true);
+
+        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "AAPL");
+        holding.setId("holding-001");
+        holding.setName("Apple Inc.");
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
+        when(newsService.fetchNewsForHolding("Apple Inc.")).thenReturn(java.util.List.of(
+                new NewsService.NewsArticle("ESG headline", "ESG content", "", java.time.LocalDate.now())
+        ));
+
+        auditReportService.createAuditReport(createDTO);
+
+        verify(evidenceService, never()).createEvidence(any());
+    }
 }
