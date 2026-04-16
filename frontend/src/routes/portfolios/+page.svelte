@@ -3,6 +3,9 @@
   import ConfirmModal from '$lib/components/ConfirmModal.svelte';
   import { showToast } from '$lib/toast';
 
+  import { page } from '$app/state';
+
+  const isFundManager = $derived((page.data.user?.user_roles ?? []).includes('fund-manager'));
   let portfolios: any[] = $state([]);
   let loading = $state(true);
   let deleteTarget: any = $state(null);
@@ -50,7 +53,9 @@
       {loading ? '...' : `${portfolios.length} portfolio${portfolios.length !== 1 ? 's' : ''} total`}
     </div>
   </div>
-  <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
+  {#if isFundManager}
+    <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
+  {/if}
 </div>
 
 <div class="content">
@@ -94,8 +99,10 @@
               <td>
                 <div class="tbl-acts">
                   <a href="/portfolios/{p.id}" class="xb xb-blue">Holdings →</a>
-                  <a href="/portfolios/{p.id}/edit" class="xb xb-ghost">Edit</a>
-                  <button class="xb xb-red" onclick={() => deleteTarget = p}>Delete</button>
+                  {#if isFundManager}
+                    <a href="/portfolios/{p.id}/edit" class="xb xb-ghost">Edit</a>
+                    <button class="xb xb-red" onclick={() => deleteTarget = p}>Delete</button>
+                  {/if}
                 </div>
               </td>
             </tr>

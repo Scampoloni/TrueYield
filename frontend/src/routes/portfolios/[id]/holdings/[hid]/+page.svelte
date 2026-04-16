@@ -4,6 +4,7 @@
 
   const portfolioId = page.params.id;
   const holdingId = page.params.hid;
+  const isFundManager = $derived((page.data.user?.user_roles ?? []).includes('fund-manager'));
 
   let evidence: any[] = $state([]);
   let loading = $state(true);
@@ -33,7 +34,9 @@
     <div class="page-subtitle">Evidence & Risk Analysis</div>
   </div>
   <div style="display:flex;gap:0.5rem;">
-    <a href="/portfolios/{portfolioId}/holdings/{holdingId}/create" class="btn btn-primary">+ Add Evidence</a>
+    {#if isFundManager}
+      <a href="/portfolios/{portfolioId}/holdings/{holdingId}/create" class="btn btn-primary">+ Add Evidence</a>
+    {/if}
     <a href="/portfolios/{portfolioId}" class="btn btn-ghost">← Back to Portfolio</a>
   </div>
 </div>
@@ -66,12 +69,13 @@
         <div class="evidence-card">
           <div class="evidence-headline">{e.headline}</div>
           <div class="evidence-source">{e.summary}</div>
-          <div class="evidence-date">
-            {e.createdAt}
-            {#if e.sourceUrl}
-              · <a class="evidence-link" href={e.sourceUrl} target="_blank" rel="noopener noreferrer">Read article →</a>
-            {/if}
-          </div>
+          <div class="evidence-date">{e.createdAt}</div>
+          {#if e.sourceUrl}
+            <a class="evidence-link" href={e.sourceUrl} target="_blank" rel="noopener noreferrer">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style="vertical-align:middle;margin-right:3px"><path d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V7M8 1h3m0 0v3m0-3L5 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Read article
+            </a>
+          {/if}
           <div class="risk-label">
             <span>Risk Score</span>
             <span style="font-weight:600;color:{e.riskScore < 3 ? 'var(--green)' : e.riskScore < 6 ? 'var(--amber)' : 'var(--red)'}">{e.riskScore}/10</span>
@@ -89,11 +93,21 @@
 
 <style>
   .evidence-link {
-    color: var(--blue-light, #93c5fd);
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 6px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(59,130,246,0.12);
+    border: 1px solid rgba(59,130,246,0.25);
+    color: #93c5fd;
     text-decoration: none;
     font-size: 11px;
+    font-weight: 500;
+    transition: background 0.15s;
   }
   .evidence-link:hover {
-    text-decoration: underline;
+    background: rgba(59,130,246,0.22);
   }
 </style>
