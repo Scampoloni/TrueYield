@@ -92,6 +92,12 @@
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-starter-model-anthropic</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework.ai</groupId>
+					<artifactId>spring-ai-autoconfigure-model-anthropic</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
