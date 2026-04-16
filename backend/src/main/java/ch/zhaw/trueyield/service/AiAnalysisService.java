@@ -3,36 +3,43 @@ package ch.zhaw.trueyield.service;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class AiAnalysisService {
 
     private static final Logger log = LoggerFactory.getLogger(AiAnalysisService.class);
-
-    @Autowired(required = false)
-    private ChatClient.Builder chatClientBuilder;
+    private static final String ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 
     @Value("${spring.ai.anthropic.api-key:}")
     private String apiKey;
 
-    private ChatClient chatClient;
+    @Value("${spring.ai.anthropic.chat.options.model:claude-haiku-4-5-20251001}")
+    private String model;
+
+    @Value("${spring.ai.anthropic.chat.options.max-tokens:512}")
+    private int maxTokens;
+
+    private RestClient restClient;
 
     @PostConstruct
     public void init() {
-        if (chatClientBuilder != null && apiKey != null && !apiKey.isBlank()) {
-            this.chatClient = chatClientBuilder.build();
-            log.info("AiAnalysisService: ChatClient initialised (Anthropic).");
+        this.restClient = RestClient.create();
+        if (isAvailable()) {
+            log.info("AiAnalysisService: Anthropic API configured (direct RestClient).");
         } else {
-            log.warn("AiAnalysisService: ANTHROPIC_API_KEY not set or ChatClient.Builder unavailable — AI features disabled.");
+            log.warn("AiAnalysisService: ANTHROPIC_API_KEY not set — AI features disabled.");
         }
     }
 
     public boolean isAvailable() {
-        return chatClient != null;
+        return apiKey != null && !apiKey.isBlank();
     }
 
     public String generateRiskSummary(String portfolioId) {
@@ -45,12 +52,7 @@ public class AiAnalysisService {
                 Focus on potential greenwashing risks and ESG compliance concerns.
                 Be specific and professional.
                 """.formatted(portfolioId);
-        try {
-            return chatClient.prompt().user(prompt).call().content();
-        } catch (Throwable e) {
-            log.warn("AiAnalysisService: generateRiskSummary failed: {}", e.getMessage());
-            return "AI analysis unavailable.";
-        }
+        return callAnthropic(prompt, "AI analysis unavailable.");
     }
 
     public double analyzeSentiment(String contentSnippet) {
@@ -65,17 +67,44 @@ public class AiAnalysisService {
                 Text: "%s"
                 """.formatted(contentSnippet);
         try {
-            String response = chatClient.prompt()
-                    .user(prompt)
-                    .call()
-                    .content()
-                    .trim()
-                    .replace(',', '.');
-            double score = Double.parseDouble(response);
+            String text = callAnthropic(prompt, "0.0");
+            double score = Double.parseDouble(text.trim().replace(',', '.'));
             return Math.max(-1.0, Math.min(1.0, score));
-        } catch (Throwable e) {
-            log.warn("AiAnalysisService: analyzeSentiment failed: {}", e.getMessage());
+        } catch (Exception e) {
+            log.warn("AiAnalysisService: analyzeSentiment parse failed: {}", e.getMessage());
             return 0.0;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private String callAnthropic(String userMessage, String fallback) {
+        try {
+            Map<String, Object> body = Map.of(
+                    "model", model,
+                    "max_tokens", maxTokens,
+                    "messages", List.of(Map.of("role", "user", "content", userMessage))
+            );
+
+            Map<?, ?> response = restClient.post()
+                    .uri(ANTHROPIC_API_URL)
+                    .header("x-api-key", apiKey)
+                    .header("anthropic-version", "2023-06-01")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(Map.class);
+
+            if (response != null) {
+                List<Map<String, Object>> content =
+                        (List<Map<String, Object>>) response.get("content");
+                if (content != null && !content.isEmpty()) {
+                    return String.valueOf(content.get(0).get("text"));
+                }
+            }
+            return fallback;
+        } catch (Exception e) {
+            log.warn("AiAnalysisService: Anthropic call failed: {}", e.getMessage());
+            return fallback;
         }
     }
 }
