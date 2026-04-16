@@ -21,7 +21,7 @@ public class NewsService {
     private final String apiKey;
 
     public NewsService(
-            @Value("${news.api.base-url:https://gnews.io/api/v4}") String baseUrl,
+            @Value("${news.api.base-url:https://content.guardianapis.com}") String baseUrl,
             @Value("${news.api.key:}") String apiKey) {
         this.apiKey = apiKey;
         this.restClient = RestClient.builder()
@@ -51,21 +51,26 @@ public class NewsService {
                     .uri(uriBuilder -> uriBuilder
                             .path("/search")
                             .queryParam("q", query)
-                            .queryParam("lang", "en")
-                            .queryParam("max", MAX_ARTICLES)
-                            .queryParam("token", apiKey)
+                            .queryParam("page-size", MAX_ARTICLES)
+                            .queryParam("show-fields", "trailText")
+                            .queryParam("api-key", apiKey)
                             .build())
                     .retrieve()
                     .body(Map.class);
 
-            if (response == null || !response.containsKey("articles")) {
+            if (response == null || !response.containsKey("response")) {
                 return Collections.emptyList();
             }
 
             @SuppressWarnings("unchecked")
-            List<Map<String, Object>> articles = (List<Map<String, Object>>) response.get("articles");
+            Map<String, Object> inner = (Map<String, Object>) response.get("response");
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> results = (List<Map<String, Object>>) inner.get("results");
+            if (results == null) {
+                return Collections.emptyList();
+            }
 
-            return articles.stream()
+            return results.stream()
                     .map(this::mapArticle)
                     .toList();
 
@@ -76,10 +81,11 @@ public class NewsService {
     }
 
     private NewsArticle mapArticle(Map<String, Object> raw) {
-        String title = (String) raw.getOrDefault("title", "");
-        String description = (String) raw.getOrDefault("description", "");
-        String url = (String) raw.getOrDefault("url", "");
-        String content = description != null && !description.isBlank() ? description : title;
+        String title = (String) raw.getOrDefault("webTitle", "");
+        String url = (String) raw.getOrDefault("webUrl", "");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> fields = (Map<String, Object>) raw.get("fields");
+        String content = fields != null ? (String) fields.getOrDefault("trailText", title) : title;
         return new NewsArticle(title, content, url, LocalDate.now());
     }
 
