@@ -47,7 +47,7 @@ public class AiAnalysisService {
                 """.formatted(portfolioId);
         try {
             return chatClient.prompt().user(prompt).call().content();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.warn("AiAnalysisService: generateRiskSummary failed: {}", e.getMessage());
             return "AI analysis unavailable.";
         }
@@ -73,7 +73,7 @@ public class AiAnalysisService {
                     .replace(',', '.');
             double score = Double.parseDouble(response);
             return Math.max(-1.0, Math.min(1.0, score));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.warn("AiAnalysisService: analyzeSentiment failed: {}", e.getMessage());
             return 0.0;
         }
