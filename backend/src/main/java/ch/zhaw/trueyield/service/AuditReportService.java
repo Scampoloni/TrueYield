@@ -69,15 +69,23 @@ public class AuditReportService {
         return auditReportRepository.save(report);
     }
 
+    private static final int MAX_EVIDENCE_PER_HOLDING = 10;
+
     private void fetchAndStoreNewsEvidence(String portfolioId, List<Holding> holdings) {
         if (!newsService.isConfigured()) {
             return;
         }
         try {
             for (Holding holding : holdings) {
+                if (evidenceService.countByHoldingId(holding.getId()) >= MAX_EVIDENCE_PER_HOLDING) {
+                    continue;
+                }
                 String query = holding.getName() != null ? holding.getName() : holding.getSymbol();
                 List<NewsService.NewsArticle> articles = newsService.fetchNewsForHolding(query);
                 for (NewsService.NewsArticle article : articles) {
+                    if (article.url().isBlank()) continue;
+                    if (evidenceService.existsByHoldingIdAndSourceUrl(holding.getId(), article.url())) continue;
+                    if (evidenceService.countByHoldingId(holding.getId()) >= MAX_EVIDENCE_PER_HOLDING) break;
                     EvidenceCreateDTO evidenceDTO = new EvidenceCreateDTO();
                     evidenceDTO.setHoldingId(holding.getId());
                     evidenceDTO.setSourceUrl(article.url());

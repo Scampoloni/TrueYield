@@ -46,41 +46,36 @@ public class NewsService {
         String cleanName = companyName
                 .replaceAll("(?i)\\s+(Inc\\.?|PLC\\.?|Ltd\\.?|Corp\\.?|AG|SE|NV|SA|GmbH)\\s*$", "")
                 .trim();
-        String query = "\"" + cleanName + "\" ESG";
+        String firstWord = cleanName.split("\\s+")[0];
 
         try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> response = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/search")
-                            .queryParam("q", query)
-                            .queryParam("page-size", MAX_ARTICLES)
-                            .queryParam("show-fields", "trailText")
-                            .queryParam("api-key", apiKey)
-                            .build())
-                    .retrieve()
-                    .body(Map.class);
-
-            if (response == null || !response.containsKey("response")) {
-                return Collections.emptyList();
+            List<Map<String, Object>> results = searchGuardian("\"" + cleanName + "\" ESG");
+            if (results.isEmpty() && !firstWord.equals(cleanName)) {
+                results = searchGuardian(firstWord + " ESG sustainability");
             }
-
-            @SuppressWarnings("unchecked")
-            Map<String, Object> inner = (Map<String, Object>) response.get("response");
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> results = (List<Map<String, Object>>) inner.get("results");
-            if (results == null) {
-                return Collections.emptyList();
-            }
-
-            return results.stream()
-                    .map(this::mapArticle)
-                    .toList();
-
+            return results.stream().map(this::mapArticle).toList();
         } catch (Exception e) {
             log.warn("NewsService: failed to fetch news for '{}': {}", companyName, e.getMessage());
             return Collections.emptyList();
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> searchGuardian(String query) {
+        Map<String, Object> response = restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/search")
+                        .queryParam("q", query)
+                        .queryParam("page-size", MAX_ARTICLES)
+                        .queryParam("show-fields", "trailText")
+                        .queryParam("api-key", apiKey)
+                        .build())
+                .retrieve()
+                .body(Map.class);
+        if (response == null || !response.containsKey("response")) return Collections.emptyList();
+        Map<String, Object> inner = (Map<String, Object>) response.get("response");
+        List<Map<String, Object>> results = (List<Map<String, Object>>) inner.get("results");
+        return results != null ? results : Collections.emptyList();
     }
 
     private NewsArticle mapArticle(Map<String, Object> raw) {
