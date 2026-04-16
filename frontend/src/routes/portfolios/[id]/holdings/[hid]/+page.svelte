@@ -64,13 +64,14 @@
     <div class="evidence-grid">
       {#each evidence as e}
         <div class="evidence-card">
-          {#if e.sourceUrl}
-            <a class="evidence-headline" href={e.sourceUrl} target="_blank" rel="noopener noreferrer">{e.headline}</a>
-          {:else}
-            <div class="evidence-headline">{e.headline}</div>
-          {/if}
+          <div class="evidence-headline">{e.headline}</div>
           <div class="evidence-source">{e.summary}</div>
-          <div class="evidence-date">{e.createdAt}</div>
+          <div class="evidence-date">
+            {e.createdAt}
+            {#if e.sourceUrl}
+              · <a class="evidence-link" href={e.sourceUrl} target="_blank" rel="noopener noreferrer">Read article →</a>
+            {/if}
+          </div>
           <div class="risk-label">
             <span>Risk Score</span>
             <span style="font-weight:600;color:{e.riskScore < 3 ? 'var(--green)' : e.riskScore < 6 ? 'var(--amber)' : 'var(--red)'}">{e.riskScore}/10</span>
@@ -87,11 +88,12 @@
 {/if}
 
 <style>
-  a.evidence-headline {
+  .evidence-link {
+    color: var(--blue-light, #93c5fd);
     text-decoration: none;
-    color: inherit;
+    font-size: 11px;
   }
-  a.evidence-headline:hover {
+  .evidence-link:hover {
     text-decoration: underline;
   }
 </style>

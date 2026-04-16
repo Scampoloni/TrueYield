@@ -6,6 +6,7 @@
   import { showToast } from '$lib/toast';
 
   const id = page.params.id;
+  const isFundManager = $derived((page.data.user?.user_roles ?? []).includes('fund-manager'));
   let portfolio: any = $state(null);
   let holdings: any[] = $state([]);
   let loading = $state(true);
@@ -58,11 +59,13 @@
       <div class="pg-sub">{portfolio.description || 'No description'}</div>
     </div>
     <div class="btns">
-      <a href="/portfolios/{id}/edit" class="btn btn-ghost">Edit</a>
-      <a href="/portfolios/{id}/holdings/create" class="btn btn-primary">+ Add Holding</a>
-      <button class="btn btn-success" onclick={() => triggerAnalysis()}>
-        Analyse starten
-      </button>
+      {#if isFundManager}
+        <a href="/portfolios/{id}/edit" class="btn btn-ghost">Edit</a>
+        <a href="/portfolios/{id}/holdings/create" class="btn btn-primary">+ Add Holding</a>
+        <button class="btn btn-success" onclick={() => triggerAnalysis()}>
+          Analyse starten
+        </button>
+      {/if}
     </div>
   </div>
 
