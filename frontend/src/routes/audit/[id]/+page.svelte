@@ -12,6 +12,7 @@
   let showApproveModal = $state(false);
   let showRejectModal = $state(false);
   let openAccordions: Record<string, boolean> = $state({});
+  let portfolioRiskScore: number | null = $state(null);
   let comments: any[] = $state([]);
   let newComment = $state('');
   let submittingComment = $state(false);
@@ -31,7 +32,17 @@
         fetch(`/api/holding?portfolioId=${report.portfolioId}`)
       ]);
       if (pRes.ok) { const p = await pRes.json(); portfolioName = p.name; }
-      if (hRes.ok) holdings = await hRes.json();
+      if (hRes.ok) {
+        holdings = await hRes.json();
+        const evidencePerHolding = await Promise.all(
+          holdings.map((h: any) => fetch(`/api/evidence?holdingId=${h.id}`).then(r => r.ok ? r.json() : []))
+        );
+        const allEvidence = evidencePerHolding.flat();
+        if (allEvidence.length > 0) {
+          const avg = allEvidence.reduce((sum: number, e: any) => sum + e.riskScore, 0) / allEvidence.length;
+          portfolioRiskScore = Math.round(avg * 10) / 10;
+        }
+      }
 
       const cRes = await fetch(`/api/service/auditcomment?auditReportId=${reportId}`);
       if (cRes.ok) comments = await cRes.json();
@@ -185,6 +196,18 @@
       </div>
     </div>
 
+    {#if portfolioRiskScore !== null}
+      <div class="risk-score-banner">
+        <div class="risk-score-label">Overall Portfolio Risk Score</div>
+        <div class="risk-score-value" style="color:{portfolioRiskScore < 4 ? 'var(--green,#4ade80)' : portfolioRiskScore < 7 ? 'var(--amber,#fbbf24)' : 'var(--red,#f87171)'}">
+          {portfolioRiskScore}<span style="font-size:14px;opacity:0.6">/10</span>
+        </div>
+        <div class="risk-score-bar">
+          <div class="risk-score-fill" style="width:{portfolioRiskScore * 10}%;background:{portfolioRiskScore < 4 ? 'var(--green,#4ade80)' : portfolioRiskScore < 7 ? 'var(--amber,#fbbf24)' : 'var(--red,#f87171)'}"></div>
+        </div>
+      </div>
+    {/if}
+
     {#if report.aiRiskSummary}
       <div class="ai-summary">
         <div class="ai-icon">
@@ -305,6 +328,39 @@
 {/if}
 
 <style>
+  .risk-score-banner {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .risk-score-label {
+    font-size: 12px;
+    color: var(--text-3, #7a90aa);
+    flex: 1;
+  }
+  .risk-score-value {
+    font-size: 28px;
+    font-weight: 700;
+    min-width: 70px;
+    text-align: right;
+  }
+  .risk-score-bar {
+    flex: 2;
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .risk-score-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
   .comment-card {
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.07);
