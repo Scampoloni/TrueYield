@@ -42,16 +42,19 @@ public class AiAnalysisService {
         return apiKey != null && !apiKey.isBlank();
     }
 
-    public String generateRiskSummary(String portfolioId) {
+    public String generateRiskSummary(java.util.List<String> holdingNames) {
         if (!isAvailable()) {
             return "AI analysis unavailable.";
         }
+        String holdings = holdingNames.isEmpty()
+                ? "no holdings listed"
+                : String.join(", ", holdingNames);
         String prompt = """
                 You are an ESG risk analyst. Provide a concise 2-3 sentence risk summary
-                for the investment portfolio with ID "%s".
-                Focus on potential greenwashing risks and ESG compliance concerns.
-                Be specific and professional.
-                """.formatted(portfolioId);
+                for an ESG investment portfolio containing the following holdings: %s.
+                Focus on potential greenwashing risks and ESG compliance concerns for these
+                specific companies. Be specific and professional.
+                """.formatted(holdings);
         return callAnthropic(prompt, "AI analysis unavailable.");
     }
 

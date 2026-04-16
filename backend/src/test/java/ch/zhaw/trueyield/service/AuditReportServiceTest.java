@@ -65,7 +65,7 @@ class AuditReportServiceTest {
         dto = mock(StateChangeDTO.class);
         lenient().when(dto.getAuditReportId()).thenReturn("report-001");
         lenient().when(dto.getAuditorId()).thenReturn("auditor-001");
-        lenient().when(aiAnalysisService.generateRiskSummary(anyString()))
+        lenient().when(aiAnalysisService.generateRiskSummary(anyList()))
             .thenReturn("Mock AI risk summary.");
         lenient().when(newsService.isConfigured()).thenReturn(false);
     }
@@ -272,7 +272,7 @@ class AuditReportServiceTest {
         when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-        when(aiAnalysisService.generateRiskSummary(anyString())).thenReturn("AI analysis unavailable.");
+        when(aiAnalysisService.generateRiskSummary(anyList())).thenReturn("AI analysis unavailable.");
 
         AuditReport result = auditReportService.createAuditReport(createDTO);
 
@@ -311,9 +311,10 @@ class AuditReportServiceTest {
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
         when(newsService.isConfigured()).thenReturn(false);
 
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of());
+
         auditReportService.createAuditReport(createDTO);
 
-        verify(holdingService, never()).getHoldingsByPortfolioId(anyString());
         verify(evidenceService, never()).createEvidence(any());
     }
 
