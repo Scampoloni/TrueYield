@@ -24,6 +24,14 @@ public class EvidenceService {
         return evidenceRepository.findByHoldingId(holdingId);
     }
 
+    public long countByHoldingId(String holdingId) {
+        return evidenceRepository.countByHoldingId(holdingId);
+    }
+
+    public boolean existsByHoldingIdAndSourceUrl(String holdingId, String sourceUrl) {
+        return evidenceRepository.existsByHoldingIdAndSourceUrl(holdingId, sourceUrl);
+    }
+
     public Evidence getEvidenceById(String id) {
         return evidenceRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
