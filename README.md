@@ -583,6 +583,46 @@ Hinweis für die Endfassung: Diese Sektion wird vor Abgabe nochmals kürzer, s
 ### Use Case Diagram
 ![Use Case Diagram](doc/uc-diagram.drawio.svg)
 
+### AuditStatus State Machine
+
+Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmaschine. Ungültige Übergänge werden mit `400 Bad Request` abgewiesen.
+
+```
+                         POST /api/service/auditreport
+                                      │
+                                      ▼
+                              ┌───────────────┐
+                              │ AI_ANALYZING  │  (KI generiert aiRiskSummary)
+                              └───────┬───────┘
+                                      │  KI fertig
+                                      ▼
+                            ┌──────────────────┐
+                            │  PENDING_REVIEW   │  (sichtbar in Audit-Queue)
+                            └────────┬─────────┘
+                                     │  PUT /assign  (ESG Auditor)
+                                     ▼
+                            ┌──────────────────┐
+                            │   UNDER_REVIEW    │  (Auditor zugewiesen)
+                            └────────┬─────────┘
+                           ┌─────────┴─────────┐
+                           │                   │
+              PUT /complete │                   │ PUT /reject
+                           ▼                   ▼
+                    ┌──────────┐         ┌──────────┐
+                    │ APPROVED │         │ REJECTED │
+                    └──────────┘         └──────────┘
+```
+
+> **Hinweis:** Der Status `DRAFT` ist im Enum deklariert, wird aber von `createAuditReport()` nicht verwendet — neu erstellte Reports starten direkt in `AI_ANALYZING`.
+
+| Übergang | Auslöser | HTTP-Endpunkt |
+|---|---|---|
+| → `AI_ANALYZING` | Fund Manager erstellt Audit | `POST /api/service/auditreport` |
+| `AI_ANALYZING` → `PENDING_REVIEW` | KI-Analyse abgeschlossen | intern (AiAnalysisService) |
+| `PENDING_REVIEW` → `UNDER_REVIEW` | ESG Auditor übernimmt | `PUT /api/service/auditreport/assign` |
+| `UNDER_REVIEW` → `APPROVED` | ESG Auditor genehmigt | `PUT /api/service/auditreport/complete` |
+| `UNDER_REVIEW` → `REJECTED` | ESG Auditor lehnt ab | `PUT /api/service/auditreport/reject` |
+
 ### Use-Case Beschreibungen
 
 ---

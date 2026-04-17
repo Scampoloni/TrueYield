@@ -49,7 +49,7 @@ export async function signIn(email, password, cookies) {
         const cookieOpts = {
             path: '/',
             httpOnly: true,
-            secure: false,
+            secure: true,
             sameSite: 'lax',
             maxAge: 60 * 60 * 24
         };

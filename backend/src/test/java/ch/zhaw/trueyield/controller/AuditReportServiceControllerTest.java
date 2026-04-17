@@ -79,7 +79,7 @@ class AuditReportServiceControllerTest {
 
     // Parametrisiert: beide Rollen dürfen GET /{id} aufrufen
     @ParameterizedTest
-    @ValueSource(strings = {"fund-manager", "esg-auditor"})
+    @ValueSource(strings = {"fund-manager", "auditor"})
     void getAuditReportById_anyAuthenticatedRole_returnsOk(String role) throws Exception {
         when(auditReportService.getAuditReportById(anyString())).thenReturn(sampleReport);
 

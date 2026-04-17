@@ -39,7 +39,6 @@ public class SecurityConfig {
 
         if (StringUtils.hasText(jwtIssuerUri)) {
             http.authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers("/api/testmongodb").permitAll()
                     .requestMatchers("/api/**").authenticated()
                     .anyRequest().permitAll()
             )
