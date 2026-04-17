@@ -151,6 +151,17 @@ class PortfolioControllerTest {
                 .andExpect(jsonPath("$.name").value("ESG Global Fund"));
     }
 
+    @Test
+    void getPortfolioById_asAuditor_returnsOk() throws Exception {
+        when(userService.userHasRole("auditor")).thenReturn(true);
+        when(portfolioService.getPortfolioByIdForAuditor("abc-123")).thenReturn(samplePortfolio);
+
+        mockMvc.perform(get("/api/portfolio/abc-123")
+                        .with(user("auditor").roles("auditor")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("ESG Global Fund"));
+    }
+
     // Parametrisierter Test mit CsvSource: 404 und 403 als Fehlerszenarien
     @ParameterizedTest
     @CsvSource({

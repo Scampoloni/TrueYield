@@ -113,7 +113,7 @@ class CrossRoleAccessTest {
     @Test
     void createPortfolio_asAuditor_returnsForbidden() throws Exception {
         mockMvc.perform(post("/api/portfolio")
-                        .with(user("auditor").roles("esg-auditor"))
+                        .with(user("auditor").roles("auditor"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(PORTFOLIO_CREATE_BODY))
                 .andExpect(status().isForbidden());
@@ -122,7 +122,7 @@ class CrossRoleAccessTest {
     @Test
     void updatePortfolio_asAuditor_returnsForbidden() throws Exception {
         mockMvc.perform(put("/api/portfolio/portfolio-001")
-                        .with(user("auditor").roles("esg-auditor"))
+                        .with(user("auditor").roles("auditor"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Updated\"}"))
                 .andExpect(status().isForbidden());
@@ -131,7 +131,7 @@ class CrossRoleAccessTest {
     @Test
     void deletePortfolio_asAuditor_returnsForbidden() throws Exception {
         mockMvc.perform(delete("/api/portfolio/portfolio-001")
-                        .with(user("auditor").roles("esg-auditor")))
+                        .with(user("auditor").roles("auditor")))
                 .andExpect(status().isForbidden());
     }
 
