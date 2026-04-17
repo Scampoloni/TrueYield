@@ -39,7 +39,7 @@ public class AiAnalysisService {
                 """.formatted(holdings);
         try {
             return chatModel.call(new Prompt(prompt))
-                    .getResult().getOutput().getContent();
+                    .getResult().getOutput().getText();
         } catch (Exception e) {
             log.warn("AiAnalysisService: generateRiskSummary failed: {}", e.getMessage());
             return "AI analysis unavailable.";
@@ -59,7 +59,7 @@ public class AiAnalysisService {
                 """.formatted(contentSnippet);
         try {
             String text = chatModel.call(new Prompt(prompt))
-                    .getResult().getOutput().getContent();
+                    .getResult().getOutput().getText();
             double score = Double.parseDouble(text.trim().replace(',', '.'));
             return Math.max(-1.0, Math.min(1.0, score));
         } catch (Exception e) {
