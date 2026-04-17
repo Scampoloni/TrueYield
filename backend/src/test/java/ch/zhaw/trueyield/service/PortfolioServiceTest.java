@@ -134,6 +134,30 @@ class PortfolioServiceTest {
         assertEquals(HttpStatus.valueOf(expectedStatus.trim()), ex.getStatusCode());
     }
 
+    // ── getPortfolioByIdForAuditor ───────────────────────────────────────────
+
+    @Test
+    void getPortfolioByIdForAuditor_returnsPortfolio_withoutOwnershipCheck() {
+        Portfolio otherManagerPortfolio = new Portfolio("Other Fund", "manager-other");
+        when(portfolioRepository.findById("portfolio-1")).thenReturn(Optional.of(otherManagerPortfolio));
+
+        Portfolio result = portfolioService.getPortfolioByIdForAuditor("portfolio-1");
+
+        assertNotNull(result);
+        assertEquals("Other Fund", result.getName());
+        assertEquals("manager-other", result.getFundManagerId());
+    }
+
+    @Test
+    void getPortfolioByIdForAuditor_throwsNotFound_whenIdDoesNotExist() {
+        when(portfolioRepository.findById("nonexistent")).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> portfolioService.getPortfolioByIdForAuditor("nonexistent"));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
     // ── updatePortfolio ──────────────────────────────────────────────────────
 
     @Test
