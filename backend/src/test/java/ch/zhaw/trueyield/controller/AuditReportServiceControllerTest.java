@@ -74,7 +74,7 @@ class AuditReportServiceControllerTest {
     @Test
     void getAuditReportById_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(get("/api/service/auditreport/report-001"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     // Parametrisiert: beide Rollen dürfen GET /{id} aufrufen
@@ -119,7 +119,7 @@ class AuditReportServiceControllerTest {
         mockMvc.perform(put("/api/service/auditreport/assign")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(STATE_CHANGE_BODY))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -226,7 +226,7 @@ class AuditReportServiceControllerTest {
     void getDashboard_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(get("/api/service/auditreport/dashboard")
                         .param("portfolioId", "portfolio-001"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     @Test

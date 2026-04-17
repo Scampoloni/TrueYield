@@ -81,7 +81,7 @@ class HoldingControllerTest {
     void getHoldings_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(get("/api/holding")
                         .param("portfolioId", "portfolio-001"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     // Parametrisiert: Auditor und Fund-Manager dürfen beide lesen
@@ -131,7 +131,7 @@ class HoldingControllerTest {
                         .content("""
                                 {"portfolioId":"portfolio-001","symbol":"AAPL"}
                                 """))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     // Parametrisiert: Pflichtfelder blank → 400 Bad Request
@@ -170,7 +170,7 @@ class HoldingControllerTest {
     @Test
     void deleteHolding_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(delete("/api/holding/holding-1"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     @Test

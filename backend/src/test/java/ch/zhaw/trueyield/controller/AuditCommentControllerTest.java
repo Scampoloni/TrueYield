@@ -82,7 +82,7 @@ class AuditCommentControllerTest {
     void getComments_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(get("/api/service/auditcomment")
                         .param("auditReportId", "report-001"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     // ── POST /api/service/auditcomment ───────────────────────────────────────
@@ -114,7 +114,7 @@ class AuditCommentControllerTest {
         mockMvc.perform(post("/api/service/auditcomment")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_BODY))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     @Test

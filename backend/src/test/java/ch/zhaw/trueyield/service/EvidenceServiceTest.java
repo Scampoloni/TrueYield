@@ -1,6 +1,7 @@
 package ch.zhaw.trueyield.service;
 
 import ch.zhaw.trueyield.model.Evidence;
+import ch.zhaw.trueyield.model.Holding;
 import ch.zhaw.trueyield.model.dto.EvidenceCreateDTO;
 import ch.zhaw.trueyield.repository.EvidenceRepository;
 import ch.zhaw.trueyield.security.AccessControlService;
@@ -41,7 +42,8 @@ class EvidenceServiceTest {
 
     @Test
     void getEvidenceByHoldingId_returnsList() {
-        org.mockito.Mockito.doNothing().when(accessControlService).requireHoldingAccess("holding-1");
+        when(accessControlService.requireHoldingAccess("holding-1"))
+            .thenReturn(new Holding("portfolio-001", "AAPL"));
         Evidence e = new Evidence("holding-1");
         when(evidenceRepository.findByHoldingId("holding-1")).thenReturn(List.of(e));
 
@@ -81,7 +83,8 @@ class EvidenceServiceTest {
         dto.setHoldingId("holding-1");
         dto.setSourceUrl("https://example.com");
         dto.setContentSnippet("Great ESG news");
-        org.mockito.Mockito.doNothing().when(accessControlService).requireHoldingAccess("holding-1");
+        when(accessControlService.requireHoldingAccess("holding-1"))
+            .thenReturn(new Holding("portfolio-001", "AAPL"));
         when(aiAnalysisService.analyzeSentiment(anyString())).thenReturn(0.75);
         when(evidenceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -97,7 +100,8 @@ class EvidenceServiceTest {
         EvidenceCreateDTO dto = new EvidenceCreateDTO();
         dto.setHoldingId("holding-1");
         dto.setContentSnippet("Some news");
-        org.mockito.Mockito.doNothing().when(accessControlService).requireHoldingAccess("holding-1");
+        when(accessControlService.requireHoldingAccess("holding-1"))
+            .thenReturn(new Holding("portfolio-001", "AAPL"));
         when(aiAnalysisService.analyzeSentiment(anyString())).thenThrow(new RuntimeException("AI error"));
         when(evidenceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 

@@ -92,7 +92,7 @@ class PortfolioControllerTest {
                         .content("""
                                 {"name":"Should be forbidden"}
                                 """))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     // Parametrisierter Test: verschiedene leere Namen → 400 Bad Request
@@ -135,7 +135,7 @@ class PortfolioControllerTest {
     @Test
     void getAllPortfolios_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(get("/api/portfolio"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     // ── GET /api/portfolio/{id} ──────────────────────────────────────────────
