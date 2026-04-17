@@ -35,9 +35,9 @@
   </div>
   <div style="display:flex;gap:0.5rem;">
     {#if isFundManager}
-      <a href="/portfolios/{portfolioId}/holdings/{holdingId}/create" class="btn btn-primary">+ Add Evidence</a>
+      <a href={`/portfolios/${portfolioId}/holdings/${holdingId}/create`} class="btn btn-primary">+ Add Evidence</a>
     {/if}
-    <a href="/portfolios/{portfolioId}" class="btn btn-ghost">← Back to Portfolio</a>
+    <a href={`/portfolios/${portfolioId}`} class="btn btn-ghost">← Back to Portfolio</a>
   </div>
 </div>
 

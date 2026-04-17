@@ -60,8 +60,8 @@
     </div>
     <div class="btns">
       {#if isFundManager}
-        <a href="/portfolios/{id}/edit" class="btn btn-ghost">Edit</a>
-        <a href="/portfolios/{id}/holdings/create" class="btn btn-primary">+ Add Holding</a>
+        <a href={`/portfolios/${id}/edit`} class="btn btn-ghost">Edit</a>
+        <a href={`/portfolios/${id}/holdings/create`} class="btn btn-primary">+ Add Holding</a>
         <button class="btn btn-success" onclick={() => triggerAnalysis()}>
           Analyse starten
         </button>
@@ -84,7 +84,7 @@
           </div>
           <div class="e-ttl">No holdings yet</div>
           <div class="e-sub">Add your first holding to this portfolio to begin ESG analysis.</div>
-          <a href="/portfolios/{id}/holdings/create" class="btn btn-primary">+ Add Holding</a>
+          <a href={`/portfolios/${id}/holdings/create`} class="btn btn-primary">+ Add Holding</a>
         </div>
       {:else}
         <table>
@@ -106,7 +106,7 @@
                 <td>{h.weightPercent != null ? h.weightPercent + '%' : '—'}</td>
                 <td>
                   <div class="tbl-acts">
-                    <a href="/portfolios/{id}/holdings/{h.id}" class="xb xb-blue">View Evidence →</a>
+                    <a href={`/portfolios/${id}/holdings/${h.id}`} class="xb xb-blue">View Evidence →</a>
                     <button class="xb xb-red" onclick={() => deleteHoldingTarget = h}>Delete</button>
                   </div>
                 </td>

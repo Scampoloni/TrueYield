@@ -89,7 +89,7 @@
               <td>{h.weightPercent != null ? h.weightPercent + '%' : '—'}</td>
               <td><span class="badge badge-active">{h.portfolioName}</span></td>
               <td>
-                <a href="/portfolios/{h.portfolioId}/holdings/{h.id}" class="xb xb-blue">View Evidence →</a>
+                <a href={`/portfolios/${h.portfolioId}/holdings/${h.id}`} class="xb xb-blue">View Evidence →</a>
               </td>
             </tr>
           {/each}

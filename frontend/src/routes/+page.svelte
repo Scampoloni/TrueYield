@@ -176,7 +176,7 @@
               <td class="pf-desc">{p.description || '—'}</td>
               <td><span class="badge {statusClass(p.auditStatus)}">{statusLabel(p.auditStatus)}</span></td>
               <td class="text-right">
-                <a href="/portfolios/{p.id}" class="xb xb-blue">View →</a>
+                <a href={`/portfolios/${p.id}`} class="xb xb-blue">View →</a>
               </td>
             </tr>
           {/each}

@@ -173,7 +173,7 @@
                 {/if}
               </td>
               <td class="text-muted">{r.date}</td>
-              <td><a href="/audit/{r.id}" class="xb xb-blue">Review →</a></td>
+              <td><a href={`/audit/${r.id}`} class="xb xb-blue">Review →</a></td>
             </tr>
           {/each}
         </tbody>
