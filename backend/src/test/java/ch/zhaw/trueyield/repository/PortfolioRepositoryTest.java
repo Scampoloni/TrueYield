@@ -1,97 +1,119 @@
 package ch.zhaw.trueyield.repository;
 
 import ch.zhaw.trueyield.model.Portfolio;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.DockerClientFactory;
+import org.testcontainers.containers.MongoDBContainer;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
- * Unit-Tests für PortfolioRepository.
- * Testet die Schnittstelle und erwartetes Verhalten der Repository-Methoden.
- * Integration gegen echte MongoDB: manuell mit MONGODB_URI ausführen.
+ * Slice-Integration-Test für PortfolioRepository gegen eine echte MongoDB.
+ * Läuft mit Testcontainers (Docker) oder einer lokalen MongoDB auf 27017.
  */
-@ExtendWith(MockitoExtension.class)
+@DataMongoTest
 class PortfolioRepositoryTest {
 
-    @Mock
+    private static final MongoDBContainer mongo = new MongoDBContainer("mongo:7.0");
+    private static final boolean DOCKER_AVAILABLE = DockerClientFactory.instance().isDockerAvailable();
+
+    @DynamicPropertySource
+    static void mongoProps(DynamicPropertyRegistry registry) {
+        if (DOCKER_AVAILABLE) {
+            if (!mongo.isRunning()) mongo.start();
+            registry.add("spring.data.mongodb.uri",
+                    () -> mongo.getConnectionString() + "/trueyield-repo-test");
+        } else {
+            registry.add("spring.data.mongodb.uri",
+                    () -> "mongodb://localhost:27017/trueyield-repo-test");
+        }
+    }
+
+    @BeforeAll
+    static void requireMongo() {
+        assumeTrue(
+                DOCKER_AVAILABLE || isLocalMongoReachable(),
+                "Skipping PortfolioRepositoryTest: neither Docker/Testcontainers nor local MongoDB on 27017 is available."
+        );
+    }
+
+    private static boolean isLocalMongoReachable() {
+        try (Socket s = new Socket()) {
+            s.connect(new InetSocketAddress("localhost", 27017), 500);
+            return true;
+        } catch (IOException ignored) {
+            return false;
+        }
+    }
+
+    @Autowired
     private PortfolioRepository portfolioRepository;
 
-    private Portfolio samplePortfolio;
-
     @BeforeEach
-    void setUp() {
-        samplePortfolio = new Portfolio("Test Fund", "manager-001");
-        samplePortfolio.setDescription("A test portfolio");
+    void cleanUp() {
+        portfolioRepository.deleteAll();
     }
 
     @Test
-    void findByFundManagerId_returnsPortfolios_whenManagerHasPortfolios() {
-        when(portfolioRepository.findByFundManagerId("manager-001"))
-                .thenReturn(List.of(samplePortfolio));
+    void save_andFindById_returnsStoredPortfolio() {
+        Portfolio p = new Portfolio("Test Fund", "manager-001");
+        p.setDescription("A test portfolio");
+        Portfolio saved = portfolioRepository.save(p);
+
+        Optional<Portfolio> found = portfolioRepository.findById(saved.getId());
+        assertTrue(found.isPresent());
+        assertEquals("Test Fund", found.get().getName());
+        assertEquals("manager-001", found.get().getFundManagerId());
+        assertEquals("A test portfolio", found.get().getDescription());
+    }
+
+    @Test
+    void findById_returnsEmpty_forNonExistentId() {
+        Optional<Portfolio> result = portfolioRepository.findById("nonexistent-id");
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void findByFundManagerId_returnsOnlyOwnPortfolios() {
+        portfolioRepository.save(new Portfolio("Fund A", "manager-001"));
+        portfolioRepository.save(new Portfolio("Fund B", "manager-002"));
 
         List<Portfolio> results = portfolioRepository.findByFundManagerId("manager-001");
-
-        assertFalse(results.isEmpty());
         assertEquals(1, results.size());
-        assertEquals("Test Fund", results.get(0).getName());
         assertEquals("manager-001", results.get(0).getFundManagerId());
     }
 
     @Test
     void findByFundManagerId_returnsEmptyList_forUnknownManager() {
-        when(portfolioRepository.findByFundManagerId("unknown-id"))
-                .thenReturn(List.of());
+        portfolioRepository.save(new Portfolio("Fund A", "manager-001"));
 
-        List<Portfolio> results = portfolioRepository.findByFundManagerId("unknown-id");
-
+        List<Portfolio> results = portfolioRepository.findByFundManagerId("unknown-manager");
         assertTrue(results.isEmpty());
-        assertEquals(0, results.size());
     }
 
-    // Parametrisierter Test: verschiedene Manager-IDs → jeder bekommt nur eigene Portfolios
     @ParameterizedTest
     @ValueSource(strings = {"manager-001", "manager-002", "manager-003"})
-    void findByFundManagerId_returnsOnlyOwnPortfolios(String managerId) {
-        Portfolio ownPortfolio = new Portfolio("Fund for " + managerId, managerId);
-        when(portfolioRepository.findByFundManagerId(managerId))
-                .thenReturn(List.of(ownPortfolio));
+    void findByFundManagerId_isolatesPerManager(String managerId) {
+        portfolioRepository.save(new Portfolio("Own Fund", managerId));
+        portfolioRepository.save(new Portfolio("Other Fund", "other-manager"));
 
         List<Portfolio> results = portfolioRepository.findByFundManagerId(managerId);
-
         assertEquals(1, results.size());
         assertEquals(managerId, results.get(0).getFundManagerId());
-    }
-
-    @Test
-    void findById_returnsEmpty_forNonExistentId() {
-        when(portfolioRepository.findById("nonexistent"))
-                .thenReturn(Optional.empty());
-
-        Optional<Portfolio> result = portfolioRepository.findById("nonexistent");
-
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void save_returnsPortfolioWithSetFields() {
-        Portfolio toSave = new Portfolio("New Fund", "manager-001");
-        when(portfolioRepository.save(toSave)).thenReturn(toSave);
-
-        Portfolio saved = portfolioRepository.save(toSave);
-
-        assertNotNull(saved);
-        assertEquals("New Fund", saved.getName());
-        assertEquals("manager-001", saved.getFundManagerId());
-        verify(portfolioRepository, times(1)).save(toSave);
     }
 }
