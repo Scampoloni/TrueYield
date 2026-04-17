@@ -9,7 +9,7 @@ Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch ge
 
 - Backend CI führt `mvn verify` aus (inkl. Unit- und Integrationstests mit Testcontainers).
 - JaCoCo HTML-Report wird unter `backend/target/site/jacoco/index.html` erzeugt.
-- Coverage-Gate: Build failt wenn Instruction Coverage der Core Services (`PortfolioService`, `HoldingService`, `AuditReportService`, `AuditCommentService`, `UserService`) unter **90%** fällt.
+- Coverage-Gate: Build failt wenn Instruction Coverage der Core Services (`PortfolioService`, `HoldingService`, `AuditReportService`, `AuditCommentService`, `EvidenceService`, `UserService`) unter **90%** fällt.
 - Aktueller Stand: alle Core Services ≥ 90% abgedeckt (mehrere bei 100%).
 
 ## Deployment
@@ -761,7 +761,7 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 
 ### KI-Integration (Spring AI)
 
-TrueYield nutzt **Spring AI 1.0.0** mit dem Modell **Claude Haiku** (Anthropic) für zwei KI-Funktionen im ESG-Workflow:
+TrueYield nutzt **Spring AI 1.0.0** (`spring-ai-starter-model-anthropic`) mit **AnthropicChatModel** und dem Modell **Claude Haiku (claude-haiku-4-5-20251001)** für zwei KI-Funktionen im ESG-Workflow:
 
 #### 1. ESG-Risikozusammenfassung beim Audit-Erstellen
 
@@ -810,6 +810,9 @@ dargestellt. Dies ermöglicht dem Auditor eine schnelle visuelle Einschätzung d
 **Evidence & Risk Analysis** — KI-generierte Evidence-Cards mit Sentiment-Badge und Risk-Score pro Holding
 ![Evidence](doc/screenshots/evidence-page.png)
 
+**Evidence erfassen** — Manuelles Erstellen eines Evidence-Eintrags mit KI-Sentiment-Analyse
+![Evidence erfassen](doc/screenshots/evidence-create.png)
+
 **Account** — Benutzerprofil mit Rolle (fund-manager)
 ![Account Fund Manager](doc/screenshots/account-manager.png)
 
@@ -839,6 +842,8 @@ dargestellt. Dies ermöglicht dem Auditor eine schnelle visuelle Einschätzung d
 | Anforderung | Beschreibung |
 |---|---|
 | Komplexes Datenmodell (5 Entitäten) | Portfolio, Holding, Evidence, AuditReport, AuditComment — übererfüllt gegenüber Mindestanforderung (3) |
+| Zugriff auf Drittsysteme | The Guardian API — automatische ESG-News-Abfrage pro Holding bei Audit-Start, gespeichert als Evidence |
+| Komplexe Abfragen auf der Datenbank | MongoDB Aggregation Pipeline für Audit-Dashboard (gruppiert nach Status pro Portfolio) |
 | Detaillierte Dokumentation auf GitHub | Issues mit Labels, Sprints als GitHub Iterations, Branch-and-Pull-Modell durchgehend eingesetzt |
 | Mehrere Branches sinnvoll verwendet | Jedes Feature in eigenem `feature/issue-<nr>-<titel>`-Branch entwickelt und via Pull Request gemerged |
 
@@ -851,21 +856,23 @@ Das Backend basiert auf Spring Boot 4.0.2 mit MongoDB Atlas und Auth0 JWT-Authen
 Alle Kernfunktionen — Portfolio-Verwaltung, Holdings, Evidence-Erfassung, Audit-Workflow und
 KI-gestützte Risikoanalyse — sind vollständig umgesetzt, getestet und auf Azure App Service deployed.
 
-**KI-Integration (Spring AI):** Spring AI 1.0.0 mit Anthropic Claude Haiku analysiert beim
-Erstellen eines Audit-Berichts das Portfolio und generiert automatisch eine ESG-Risikozusammenfassung
-(`AI_ANALYZING → PENDING_REVIEW`). Evidence-Einträge erhalten KI-basierte Sentimentwerte
+**KI-Integration (Spring AI):** Spring AI 1.0.0 (`spring-ai-starter-model-anthropic`) mit `AnthropicChatModel`
+und Claude Haiku analysiert beim Erstellen eines Audit-Berichts das Portfolio und generiert automatisch eine
+ESG-Risikozusammenfassung (`AI_ANALYZING → PENDING_REVIEW`). Evidence-Einträge erhalten KI-basierte Sentimentwerte
 (-1.0 bis +1.0), die Greenwashing-relevante Nachrichten klassifizieren und als Risk-Score (0–10)
 sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert werden.
 
+**Drittsystem-Integration (Guardian API):** Beim Audit-Start ruft TrueYield automatisch aktuelle
+ESG-Nachrichten pro Holding über die The Guardian API ab und speichert sie als Evidence-Einträge in MongoDB.
+
 **Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf
-PortfolioService, HoldingService, AuditReportService, AuditCommentService und UserService.
-Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und
-Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
+PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService und UserService.
+151+ Testmethoden in 17 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
+und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
 
 **Deployment:** Vollautomatisches CI/CD über GitHub Actions — Tests und Build bei jedem Push,
 Docker-basiertes Deployment auf Azure App Service bei Merge in `main`.
 
 **Nächste Schritte (Backlog):**
-- Issue #58: Externe News-API-Integration (GNews/NewsAPI) für automatische Evidence-Generierung
 - Issue #51: SonarQube-Integration für statische Code-Analyse
 - Issue #63–68: Cypress End-to-End Tests für kritische User Flows
