@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { page } from '$app/state';
+
+  const isFundManager = $derived((page.data.user?.user_roles ?? []).includes('fund-manager'));
 
   let portfolios: any[] = $state([]);
   let totalHoldings = $state(0);
@@ -61,7 +64,9 @@
     <div class="pg-sub">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
   </div>
   <div class="btns">
-    <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
+    {#if isFundManager}
+      <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
+    {/if}
   </div>
 </div>
 
@@ -147,7 +152,9 @@
         </div>
         <div class="e-ttl">No portfolios yet</div>
         <div class="e-sub">Create your first investment portfolio to get started.</div>
-        <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
+        {#if isFundManager}
+          <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
+        {/if}
       </div>
     {:else}
       <table>

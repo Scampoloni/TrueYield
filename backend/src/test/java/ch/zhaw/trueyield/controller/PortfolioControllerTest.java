@@ -77,7 +77,7 @@ class PortfolioControllerTest {
     @Test
     void createPortfolio_asAuditor_returnsForbidden() throws Exception {
         mockMvc.perform(post("/api/portfolio")
-                        .with(user("auditor").roles("esg-auditor"))
+                        .with(user("auditor").roles("auditor"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"Should be forbidden"}
@@ -191,7 +191,7 @@ class PortfolioControllerTest {
     @Test
     void updatePortfolio_asAuditor_returnsForbidden() throws Exception {
         mockMvc.perform(put("/api/portfolio/abc-123")
-                        .with(user("auditor").roles("esg-auditor"))
+                        .with(user("auditor").roles("auditor"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"Should be forbidden"}
@@ -225,7 +225,7 @@ class PortfolioControllerTest {
     @Test
     void deletePortfolio_asAuditor_returnsForbidden() throws Exception {
         mockMvc.perform(delete("/api/portfolio/abc-123")
-                        .with(user("auditor").roles("esg-auditor")))
+                        .with(user("auditor").roles("auditor")))
                 .andExpect(status().isForbidden());
     }
 }
