@@ -1,3 +1,4 @@
+import { dev } from '$app/environment';
 import { signUp } from '$lib/server/auth.service.js';
 import { json } from '@sveltejs/kit';
 import axios from 'axios';
@@ -63,7 +64,7 @@ export async function POST({ request, cookies }) {
         const cookieOpts = {
             path: '/',
             httpOnly: true,
-            secure: false,
+            secure: !dev,
             sameSite: 'lax',
             maxAge: 60 * 60 * 24
         };

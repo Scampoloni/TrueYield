@@ -80,7 +80,7 @@
       const res = await fetch('/api/service/auditreport/assign', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ auditReportId: reportId, auditorId: auditorId() })
+        body: JSON.stringify({ auditReportId: reportId })
       });
       if (!res.ok) throw new Error();
       report = { ...report, auditStatus: 'UNDER_REVIEW', auditorId: auditorId() };
@@ -95,7 +95,7 @@
       const res = await fetch('/api/service/auditreport/complete', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ auditReportId: reportId, auditorId: auditorId() })
+        body: JSON.stringify({ auditReportId: reportId })
       });
       if (!res.ok) throw new Error();
       report = { ...report, auditStatus: 'APPROVED' };
@@ -111,7 +111,7 @@
       const res = await fetch('/api/service/auditreport/reject', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ auditReportId: reportId, auditorId: auditorId() })
+        body: JSON.stringify({ auditReportId: reportId })
       });
       if (!res.ok) throw new Error();
       report = { ...report, auditStatus: 'REJECTED' };
