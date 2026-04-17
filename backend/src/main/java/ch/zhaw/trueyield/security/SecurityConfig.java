@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -27,6 +26,9 @@ public class SecurityConfig {
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:}")
     private String jwtIssuerUri;
 
+    @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:}")
+    private String jwtJwkSetUri;
+
     @Value("${cors.allowed-origins:http://localhost:5173}")
     private String allowedOrigins;
 
@@ -37,16 +39,16 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
-        if (StringUtils.hasText(jwtIssuerUri)) {
-            http.authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers("/api/**").authenticated()
-                    .anyRequest().permitAll()
-            )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-        } else {
-            // No JWT configured → permit all (used in controller unit tests)
-            http.authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll());
+        if (!StringUtils.hasText(jwtIssuerUri) && !StringUtils.hasText(jwtJwkSetUri)) {
+            throw new IllegalStateException("Missing JWT configuration: set issuer-uri or jwk-set-uri");
         }
+
+        http.authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/api/**").authenticated()
+                .anyRequest().permitAll()
+        )
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
+                jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
         return http.build();
     }

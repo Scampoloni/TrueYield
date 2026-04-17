@@ -42,7 +42,7 @@ public class AuditReportServiceController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('fund-manager','auditor')")
     public ResponseEntity<AuditReportResponseDTO> getAuditReportById(@PathVariable String id) {
         try {
             AuditReport report = auditReportService.getAuditReportById(id);
@@ -86,7 +86,7 @@ public class AuditReportServiceController {
     }
 
     @GetMapping("/dashboard")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('fund-manager','auditor')")
     public ResponseEntity<List<AuditReportAggregationDTO>> getDashboard(
             @RequestParam String portfolioId) {
         try {

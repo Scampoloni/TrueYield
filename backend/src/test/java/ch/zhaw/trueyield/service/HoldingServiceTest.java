@@ -3,6 +3,7 @@ package ch.zhaw.trueyield.service;
 import ch.zhaw.trueyield.model.Holding;
 import ch.zhaw.trueyield.model.dto.HoldingCreateDTO;
 import ch.zhaw.trueyield.repository.HoldingRepository;
+import ch.zhaw.trueyield.security.AccessControlService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,8 +12,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -28,7 +27,7 @@ class HoldingServiceTest {
     private HoldingRepository holdingRepository;
 
     @Mock
-    private PortfolioService portfolioService;
+    private AccessControlService accessControlService;
 
     @InjectMocks
     private HoldingService holdingService;
@@ -57,6 +56,7 @@ class HoldingServiceTest {
 
     @Test
     void getHoldingsByPortfolioId_returnsHoldings_whenHoldingsExist() {
+        doNothing().when(accessControlService).requirePortfolioAccess("portfolio-001");
         when(holdingRepository.findByPortfolioId("portfolio-001"))
                 .thenReturn(List.of(sampleHolding));
 
@@ -69,6 +69,7 @@ class HoldingServiceTest {
 
     @Test
     void getHoldingsByPortfolioId_returnsEmptyList_whenNoHoldings() {
+        doNothing().when(accessControlService).requirePortfolioAccess("portfolio-empty");
         when(holdingRepository.findByPortfolioId("portfolio-empty")).thenReturn(List.of());
 
         List<Holding> result = holdingService.getHoldingsByPortfolioId("portfolio-empty");
@@ -80,6 +81,7 @@ class HoldingServiceTest {
     @ParameterizedTest
     @ValueSource(strings = {"portfolio-001", "portfolio-002", "portfolio-003"})
     void getHoldingsByPortfolioId_isolatesPerPortfolio(String portfolioId) {
+        doNothing().when(accessControlService).requirePortfolioAccess(portfolioId);
         Holding ownHolding = new Holding(portfolioId, "MSFT");
         when(holdingRepository.findByPortfolioId(portfolioId)).thenReturn(List.of(ownHolding));
 
@@ -93,7 +95,9 @@ class HoldingServiceTest {
 
     @Test
     void deleteHolding_deletesSuccessfully_whenHoldingExists() {
-        when(holdingRepository.existsById("holding-1")).thenReturn(true);
+        Holding holding = new Holding("portfolio-001", "AAPL");
+        holding.setId("holding-1");
+        when(accessControlService.requireHoldingAccess("holding-1")).thenReturn(holding);
 
         assertDoesNotThrow(() -> holdingService.deleteHolding("holding-1"));
 
@@ -102,12 +106,15 @@ class HoldingServiceTest {
 
     @Test
     void deleteHolding_throwsNotFound_neverCallsDelete() {
-        when(holdingRepository.existsById("nonexistent")).thenReturn(false);
+        when(accessControlService.requireHoldingAccess("nonexistent"))
+            .thenThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> holdingService.deleteHolding("nonexistent"));
+        org.springframework.web.server.ResponseStatusException ex = assertThrows(
+            org.springframework.web.server.ResponseStatusException.class,
+            () -> holdingService.deleteHolding("nonexistent"));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals(org.springframework.http.HttpStatus.NOT_FOUND, ex.getStatusCode());
         verify(holdingRepository, never()).deleteById(anyString());
     }
 
@@ -115,7 +122,7 @@ class HoldingServiceTest {
 
     @Test
     void createHolding_savesHolding_whenPortfolioExists() {
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         when(holdingRepository.save(any(Holding.class))).thenReturn(sampleHolding);
 
         Holding result = holdingService.createHolding(createDTO);
@@ -130,12 +137,15 @@ class HoldingServiceTest {
 
     @Test
     void createHolding_throwsBadRequest_whenPortfolioNotFound() {
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(false);
+        doThrow(new org.springframework.web.server.ResponseStatusException(
+            org.springframework.http.HttpStatus.BAD_REQUEST))
+            .when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> holdingService.createHolding(createDTO));
+        org.springframework.web.server.ResponseStatusException ex = assertThrows(
+            org.springframework.web.server.ResponseStatusException.class,
+            () -> holdingService.createHolding(createDTO));
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, ex.getStatusCode());
         verify(holdingRepository, never()).save(any());
     }
 }

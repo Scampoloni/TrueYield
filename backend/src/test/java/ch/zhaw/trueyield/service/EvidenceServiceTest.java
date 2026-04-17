@@ -3,16 +3,14 @@ package ch.zhaw.trueyield.service;
 import ch.zhaw.trueyield.model.Evidence;
 import ch.zhaw.trueyield.model.dto.EvidenceCreateDTO;
 import ch.zhaw.trueyield.repository.EvidenceRepository;
+import ch.zhaw.trueyield.security.AccessControlService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,11 +33,15 @@ class EvidenceServiceTest {
     @Mock
     private AiAnalysisService aiAnalysisService;
 
+    @Mock
+    private AccessControlService accessControlService;
+
     @InjectMocks
     private EvidenceService evidenceService;
 
     @Test
     void getEvidenceByHoldingId_returnsList() {
+        org.mockito.Mockito.doNothing().when(accessControlService).requireHoldingAccess("holding-1");
         Evidence e = new Evidence("holding-1");
         when(evidenceRepository.findByHoldingId("holding-1")).thenReturn(List.of(e));
 
@@ -53,22 +55,24 @@ class EvidenceServiceTest {
     void getEvidenceById_returnsEvidence_whenFound() {
         Evidence evidence = new Evidence("holding-1");
         evidence.setId("e-1");
-        when(evidenceRepository.findById("e-1")).thenReturn(Optional.of(evidence));
+        when(accessControlService.requireEvidenceAccess("e-1")).thenReturn(evidence);
 
         Evidence result = evidenceService.getEvidenceById("e-1");
 
         assertEquals("e-1", result.getId());
-        verify(evidenceRepository).findById("e-1");
     }
 
     @Test
     void getEvidenceById_notFound_throwsNotFound() {
-        when(evidenceRepository.findById("missing")).thenReturn(Optional.empty());
+        when(accessControlService.requireEvidenceAccess("missing"))
+            .thenThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> evidenceService.getEvidenceById("missing"));
+        org.springframework.web.server.ResponseStatusException ex = assertThrows(
+            org.springframework.web.server.ResponseStatusException.class,
+            () -> evidenceService.getEvidenceById("missing"));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals(org.springframework.http.HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
     @Test
@@ -77,6 +81,7 @@ class EvidenceServiceTest {
         dto.setHoldingId("holding-1");
         dto.setSourceUrl("https://example.com");
         dto.setContentSnippet("Great ESG news");
+        org.mockito.Mockito.doNothing().when(accessControlService).requireHoldingAccess("holding-1");
         when(aiAnalysisService.analyzeSentiment(anyString())).thenReturn(0.75);
         when(evidenceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -92,6 +97,7 @@ class EvidenceServiceTest {
         EvidenceCreateDTO dto = new EvidenceCreateDTO();
         dto.setHoldingId("holding-1");
         dto.setContentSnippet("Some news");
+        org.mockito.Mockito.doNothing().when(accessControlService).requireHoldingAccess("holding-1");
         when(aiAnalysisService.analyzeSentiment(anyString())).thenThrow(new RuntimeException("AI error"));
         when(evidenceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -102,18 +108,23 @@ class EvidenceServiceTest {
 
     @Test
     void deleteEvidence_notFound_throwsNotFound() {
-        when(evidenceRepository.existsById("nonexistent")).thenReturn(false);
+        when(accessControlService.requireEvidenceAccess("nonexistent"))
+            .thenThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> evidenceService.deleteEvidence("nonexistent"));
+        org.springframework.web.server.ResponseStatusException ex = assertThrows(
+            org.springframework.web.server.ResponseStatusException.class,
+            () -> evidenceService.deleteEvidence("nonexistent"));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals(org.springframework.http.HttpStatus.NOT_FOUND, ex.getStatusCode());
         verify(evidenceRepository, never()).deleteById(anyString());
     }
 
     @Test
     void deleteEvidence_existing_callsDelete() {
-        when(evidenceRepository.existsById("e-1")).thenReturn(true);
+        Evidence evidence = new Evidence("holding-1");
+        evidence.setId("e-1");
+        when(accessControlService.requireEvidenceAccess("e-1")).thenReturn(evidence);
 
         assertDoesNotThrow(() -> evidenceService.deleteEvidence("e-1"));
 

@@ -5,6 +5,7 @@ import ch.zhaw.trueyield.model.enums.AuditStatus;
 import ch.zhaw.trueyield.model.dto.AuditReportCreateDTO;
 import ch.zhaw.trueyield.model.dto.StateChangeDTO;
 import ch.zhaw.trueyield.repository.AuditReportRepository;
+import ch.zhaw.trueyield.security.AccessControlService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,13 +25,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class AuditReportServiceTest {
 
     @Mock
     private AuditReportRepository auditReportRepository;
+
+    @Mock
+    private AccessControlService accessControlService;
 
     @Mock
     private PortfolioService portfolioService;
@@ -64,7 +67,6 @@ class AuditReportServiceTest {
 
         dto = mock(StateChangeDTO.class);
         lenient().when(dto.getAuditReportId()).thenReturn("report-001");
-        lenient().when(dto.getAuditorId()).thenReturn("auditor-001");
         lenient().when(aiAnalysisService.generateRiskSummary(anyList()))
             .thenReturn("Mock AI risk summary.");
         lenient().when(newsService.isConfigured()).thenReturn(false);
@@ -76,6 +78,7 @@ class AuditReportServiceTest {
     void getAuditReportById_returnsReport_whenFound() {
         when(auditReportRepository.findById("report-001"))
                 .thenReturn(Optional.of(pendingReport));
+        doNothing().when(accessControlService).requireAuditReportAccess(pendingReport);
 
         AuditReport result = auditReportService.getAuditReportById("report-001");
 
@@ -100,6 +103,7 @@ class AuditReportServiceTest {
         when(auditReportRepository.findById("report-001"))
                 .thenReturn(Optional.of(pendingReport));
         when(auditReportRepository.save(any(AuditReport.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(accessControlService.requireAuditorId()).thenReturn("auditor-001");
 
         AuditReport result = auditReportService.assignAuditReport(dto);
 
@@ -111,6 +115,7 @@ class AuditReportServiceTest {
     @Test
     void assignAuditReport_throwsBadRequest_whenReportNotFound() {
         when(auditReportRepository.findById("report-001")).thenReturn(Optional.empty());
+        when(accessControlService.requireAuditorId()).thenReturn("auditor-001");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.assignAuditReport(dto));
@@ -135,6 +140,7 @@ class AuditReportServiceTest {
 
         AuditReport report = new AuditReport("portfolio-001", status);
         when(auditReportRepository.findById("report-001")).thenReturn(Optional.of(report));
+        when(accessControlService.requireAuditorId()).thenReturn("auditor-001");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.assignAuditReport(dto));
@@ -150,6 +156,7 @@ class AuditReportServiceTest {
         when(auditReportRepository.findById("report-001"))
                 .thenReturn(Optional.of(underReviewReport));
         when(auditReportRepository.save(any(AuditReport.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(accessControlService.requireAuditorId()).thenReturn("auditor-001");
 
         AuditReport result = auditReportService.rejectAuditReport(dto);
 
@@ -161,7 +168,7 @@ class AuditReportServiceTest {
     void rejectAuditReport_throwsBadRequest_whenAuditorDoesNotMatch() {
         when(auditReportRepository.findById("report-001"))
                 .thenReturn(Optional.of(underReviewReport));
-        when(dto.getAuditorId()).thenReturn("wrong-auditor");
+        when(accessControlService.requireAuditorId()).thenReturn("wrong-auditor");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.rejectAuditReport(dto));
@@ -176,6 +183,7 @@ class AuditReportServiceTest {
     void rejectAuditReport_throwsBadRequest_forNonUnderReviewStatus(String statusName) {
         AuditReport report = new AuditReport("portfolio-001", AuditStatus.valueOf(statusName));
         when(auditReportRepository.findById("report-001")).thenReturn(Optional.of(report));
+        when(accessControlService.requireAuditorId()).thenReturn("auditor-001");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.rejectAuditReport(dto));
@@ -191,6 +199,7 @@ class AuditReportServiceTest {
         when(auditReportRepository.findById("report-001"))
                 .thenReturn(Optional.of(underReviewReport));
         when(auditReportRepository.save(any(AuditReport.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(accessControlService.requireAuditorId()).thenReturn("auditor-001");
 
         AuditReport result = auditReportService.completeAuditReport(dto);
 
@@ -202,7 +211,7 @@ class AuditReportServiceTest {
     void completeAuditReport_throwsBadRequest_whenAuditorDoesNotMatch() {
         when(auditReportRepository.findById("report-001"))
                 .thenReturn(Optional.of(underReviewReport));
-        when(dto.getAuditorId()).thenReturn("wrong-auditor");
+        when(accessControlService.requireAuditorId()).thenReturn("wrong-auditor");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.completeAuditReport(dto));
@@ -217,6 +226,7 @@ class AuditReportServiceTest {
     void completeAuditReport_throwsBadRequest_forNonUnderReviewStatus(String statusName) {
         AuditReport report = new AuditReport("portfolio-001", AuditStatus.valueOf(statusName));
         when(auditReportRepository.findById("report-001")).thenReturn(Optional.of(report));
+        when(accessControlService.requireAuditorId()).thenReturn("auditor-001");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.completeAuditReport(dto));
@@ -241,6 +251,7 @@ class AuditReportServiceTest {
     @Test
     void getAuditReportDashboard_callsRepository_whenPortfolioExists() {
         when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        doNothing().when(accessControlService).requirePortfolioAccess("portfolio-001");
         when(auditReportRepository.aggregateByPortfolioId("portfolio-001")).thenReturn(java.util.List.of());
 
         auditReportService.getAuditReportDashboard("portfolio-001");
@@ -254,7 +265,7 @@ class AuditReportServiceTest {
     void createAuditReport_savesReport_whenPortfolioExists() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
 
@@ -269,7 +280,7 @@ class AuditReportServiceTest {
     void createAuditReport_setsUnavailableSummary_whenAiNotAvailable() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
         when(aiAnalysisService.generateRiskSummary(anyList())).thenReturn("AI analysis unavailable.");
@@ -284,7 +295,7 @@ class AuditReportServiceTest {
     void createAuditReport_fetchesNewsAndCreatesEvidence_whenNewsServiceConfigured() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
         when(newsService.isConfigured()).thenReturn(true);
@@ -306,7 +317,7 @@ class AuditReportServiceTest {
     void createAuditReport_skipsNewsEvidence_whenNewsServiceNotConfigured() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
         when(newsService.isConfigured()).thenReturn(false);
@@ -322,7 +333,7 @@ class AuditReportServiceTest {
     void createAuditReport_continuesGracefully_whenNewsFetchThrows() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
         when(newsService.isConfigured()).thenReturn(true);
@@ -339,7 +350,8 @@ class AuditReportServiceTest {
     void createAuditReport_throwsBadRequest_whenPortfolioNotFound() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("unknown-portfolio");
-        when(portfolioService.portfolioExists("unknown-portfolio")).thenReturn(false);
+        doThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST))
+            .when(accessControlService).requireFundManagerPortfolioAccess("unknown-portfolio");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.createAuditReport(createDTO));
@@ -352,7 +364,7 @@ class AuditReportServiceTest {
     void createAuditReport_skipsEvidence_whenHoldingAlreadyAtMaxCapacity() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
         when(newsService.isConfigured()).thenReturn(true);
@@ -373,7 +385,7 @@ class AuditReportServiceTest {
     void createAuditReport_skipsEvidence_whenUrlAlreadyExists() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
         when(newsService.isConfigured()).thenReturn(true);
@@ -396,7 +408,7 @@ class AuditReportServiceTest {
     void createAuditReport_skipsEvidence_whenUrlIsBlank() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
         when(newsService.isConfigured()).thenReturn(true);

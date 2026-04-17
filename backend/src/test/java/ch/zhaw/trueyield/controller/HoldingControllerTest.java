@@ -86,7 +86,7 @@ class HoldingControllerTest {
 
     // Parametrisiert: Auditor und Fund-Manager dürfen beide lesen
     @ParameterizedTest
-    @ValueSource(strings = {"fund-manager", "esg-auditor"})
+    @ValueSource(strings = {"fund-manager", "auditor"})
     void getHoldings_anyAuthenticatedRole_returnsOk(String role) throws Exception {
         when(holdingService.getHoldingsByPortfolioId(anyString())).thenReturn(List.of());
 
@@ -116,7 +116,7 @@ class HoldingControllerTest {
     @Test
     void createHolding_asAuditor_returnsForbidden() throws Exception {
         mockMvc.perform(post("/api/holding")
-                        .with(user("auditor").roles("esg-auditor"))
+                .with(user("auditor").roles("auditor"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"portfolioId":"portfolio-001","symbol":"AAPL"}
@@ -163,7 +163,7 @@ class HoldingControllerTest {
     @Test
     void deleteHolding_asAuditor_returnsForbidden() throws Exception {
         mockMvc.perform(delete("/api/holding/holding-1")
-                        .with(user("auditor").roles("esg-auditor")))
+                .with(user("auditor").roles("auditor")))
                 .andExpect(status().isForbidden());
     }
 
