@@ -89,7 +89,7 @@ class EvidenceControllerTest {
 
     // Parametrisiert: fund-manager und auditor dürfen beide lesen (isAuthenticated)
     @ParameterizedTest
-    @ValueSource(strings = {"fund-manager", "esg-auditor"})
+    @ValueSource(strings = {"fund-manager", "auditor"})
     void getEvidence_anyAuthenticatedRole_returnsOk(String role) throws Exception {
         when(evidenceService.getEvidenceByHoldingId(anyString())).thenReturn(List.of());
 
@@ -148,7 +148,7 @@ class EvidenceControllerTest {
     @Test
     void createEvidence_asAuditor_returnsForbidden() throws Exception {
         mockMvc.perform(post("/api/evidence")
-                        .with(user("auditor").roles("esg-auditor"))
+                        .with(user("auditor").roles("auditor"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"holdingId":"holding-001","contentSnippet":"Some snippet."}
@@ -195,7 +195,7 @@ class EvidenceControllerTest {
     @Test
     void deleteEvidence_asAuditor_returnsForbidden() throws Exception {
         mockMvc.perform(delete("/api/evidence/evidence-001")
-                        .with(user("auditor").roles("esg-auditor")))
+                        .with(user("auditor").roles("auditor")))
                 .andExpect(status().isForbidden());
     }
 
