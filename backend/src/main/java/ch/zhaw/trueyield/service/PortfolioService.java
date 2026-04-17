@@ -53,6 +53,12 @@ public class PortfolioService {
         return portfolio;
     }
 
+    // READ ONE (für Auditoren — kein Ownership Check)
+    public Portfolio getPortfolioByIdForAuditor(String id) {
+        return portfolioRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Portfolio not found"));
+    }
+
     // UPDATE (mit Ownership Check!)
     public Portfolio updatePortfolio(String id, PortfolioUpdateDTO dto, String requestingUserId) {
         Portfolio portfolio = getPortfolioById(id, requestingUserId);

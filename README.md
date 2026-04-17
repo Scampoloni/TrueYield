@@ -1,7 +1,7 @@
 ﻿# TrueYield – KI-gestützte ESG-Verifikation gegen Greenwashing
 
 ![Backend CI](https://github.com/Scampoloni/trueyield/actions/workflows/ci.yml/badge.svg?branch=main)
-![Coverage Gate](https://img.shields.io/badge/coverage%20gate-90%25%20core%20services-brightgreen)
+![Coverage](https://raw.githubusercontent.com/Scampoloni/trueyield/main/.github/badges/jacoco.svg)
 
 Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch geforderte Prüfung auf Greenwashing ist manuell, langsam und fehleranfällig. TrueYield löst das: Eine KI-gestützte Plattform analysiert automatisiert globale Nachrichtenquellen, bewertet ESG-Risiken und liefert Auditoren eine revisionssichere Entscheidungsgrundlage. Der Zeitpunkt ist jetzt, weil EU-Regulierungen (SFDR, EU-Taxonomie) seit 2021 scharfe Nachweispflichten fordern und Greenwashing-Bussen in Milliardenhöhe drohen.
 
@@ -892,7 +892,7 @@ dargestellt. Dies ermöglicht dem Auditor eine schnelle visuelle Einschätzung d
 ## Fazit
 
 TrueYield wurde als vollständige ESG-Verification-Plattform mit KI-Unterstützung implementiert.
-Das Backend basiert auf Spring Boot 4.0.2 mit MongoDB Atlas und Auth0 JWT-Authentifizierung.
+Das Backend basiert auf Spring Boot 3.4.5 mit MongoDB Atlas und Auth0 JWT-Authentifizierung.
 Alle Kernfunktionen — Portfolio-Verwaltung, Holdings, Evidence-Erfassung, Audit-Workflow und
 KI-gestützte Risikoanalyse — sind vollständig umgesetzt, getestet und auf Azure App Service deployed.
 
@@ -907,7 +907,7 @@ ESG-Nachrichten pro Holding über die The Guardian API ab und speichert sie als 
 
 **Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf
 PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService und UserService.
-151+ Testmethoden in 17 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
+192+ Testmethoden in 17 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
 und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
 
 **Deployment:** Vollautomatisches CI/CD über GitHub Actions — Tests und Build bei jedem Push,

@@ -19,7 +19,7 @@
 
   const isAuditor = $derived((page.data.user?.user_roles ?? []).includes('auditor'));
 
-  const STATES = ['DRAFT', 'AI_ANALYZING', 'PENDING_REVIEW', 'UNDER_REVIEW', 'APPROVED'];
+  const STATES = ['DRAFT', 'AI_ANALYZING', 'PENDING_REVIEW', 'UNDER_REVIEW', 'APPROVED', 'REJECTED'];
 
   onMount(async () => {
     try {

@@ -76,7 +76,9 @@
         </div>
         <div class="e-ttl">No portfolios yet</div>
         <div class="e-sub">Create your first investment portfolio to get started.</div>
-        <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
+        {#if isFundManager}
+          <a href="/portfolios/create" class="btn btn-primary">+ New Portfolio</a>
+        {/if}
       </div>
     {:else}
       <table>
