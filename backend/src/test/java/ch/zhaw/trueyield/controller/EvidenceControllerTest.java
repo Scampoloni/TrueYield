@@ -84,7 +84,7 @@ class EvidenceControllerTest {
     void getEvidence_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(get("/api/evidence")
                         .param("holdingId", "holding-001"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     // Parametrisiert: fund-manager und auditor dürfen beide lesen (isAuthenticated)
@@ -115,7 +115,7 @@ class EvidenceControllerTest {
     @Test
     void getEvidenceById_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(get("/api/evidence/evidence-001"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -163,7 +163,7 @@ class EvidenceControllerTest {
                         .content("""
                                 {"holdingId":"holding-001","contentSnippet":"Some snippet."}
                                 """))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     // Parametrisiert: Pflichtfelder blank → 400 Bad Request
@@ -202,7 +202,7 @@ class EvidenceControllerTest {
     @Test
     void deleteEvidence_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(delete("/api/evidence/evidence-001"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     @Test

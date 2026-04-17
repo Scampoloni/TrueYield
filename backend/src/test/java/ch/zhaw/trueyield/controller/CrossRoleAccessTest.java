@@ -148,16 +148,15 @@ class CrossRoleAccessTest {
                 .andExpect(status().isOk());
     }
 
-    // ── Unauthenticated requests are rejected with 403 ───────────────────────
-    // (403 not 401: the test SecurityConfig allows all HTTP-level traffic;
-    //  @PreAuthorize throws AccessDeniedException for anonymous users → 403)
+        // ── Unauthenticated requests are rejected with 401 ───────────────────────
+        // (resource server returns 401 for missing authentication)
 
     @Test
     void assign_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(put("/api/service/auditreport/assign")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(STATE_CHANGE_BODY))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -165,7 +164,7 @@ class CrossRoleAccessTest {
         mockMvc.perform(put("/api/service/auditreport/complete")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(STATE_CHANGE_BODY))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -173,7 +172,7 @@ class CrossRoleAccessTest {
         mockMvc.perform(put("/api/service/auditreport/reject")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(STATE_CHANGE_BODY))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -181,7 +180,7 @@ class CrossRoleAccessTest {
         mockMvc.perform(post("/api/service/auditcomment")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(AUDIT_COMMENT_BODY))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -189,19 +188,19 @@ class CrossRoleAccessTest {
         mockMvc.perform(post("/api/portfolio")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(PORTFOLIO_CREATE_BODY))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void deletePortfolio_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(delete("/api/portfolio/portfolio-001"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void getDashboard_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(get("/api/service/auditreport/dashboard")
                         .param("portfolioId", "portfolio-001"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
     }
 }
