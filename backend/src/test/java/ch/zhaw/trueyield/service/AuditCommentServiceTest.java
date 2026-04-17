@@ -76,6 +76,23 @@ class AuditCommentServiceTest {
         verify(auditCommentRepository, never()).save(any());
     }
 
+    @Test
+    void createComment_throwsForbidden_whenAccessDenied() {
+        AuditReport report = new AuditReport("portfolio-001", ch.zhaw.trueyield.model.enums.AuditStatus.UNDER_REVIEW);
+        report.setId("report-001");
+        when(auditReportRepository.findById("report-001")).thenReturn(Optional.of(report));
+        doThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.FORBIDDEN))
+                .when(accessControlService).requireAuditReportAccess(report);
+
+        org.springframework.web.server.ResponseStatusException ex = assertThrows(
+                org.springframework.web.server.ResponseStatusException.class,
+                () -> auditCommentService.createComment(dto, "auditor-001"));
+
+        assertEquals(org.springframework.http.HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(auditCommentRepository, never()).save(any());
+    }
+
     // ── getCommentsByReportId ────────────────────────────────────────────────
 
     @Test
@@ -105,5 +122,32 @@ class AuditCommentServiceTest {
         List<AuditComment> result = auditCommentService.getCommentsByReportId("report-empty");
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getCommentsByReportId_throwsBadRequest_whenReportMissing() {
+        when(auditReportRepository.findById("missing")).thenReturn(Optional.empty());
+
+        org.springframework.web.server.ResponseStatusException ex = assertThrows(
+                org.springframework.web.server.ResponseStatusException.class,
+                () -> auditCommentService.getCommentsByReportId("missing"));
+
+        assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void getCommentsByReportId_throwsForbidden_whenAccessDenied() {
+        AuditReport report = new AuditReport("portfolio-001", ch.zhaw.trueyield.model.enums.AuditStatus.UNDER_REVIEW);
+        report.setId("report-001");
+        when(auditReportRepository.findById("report-001")).thenReturn(Optional.of(report));
+        doThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.FORBIDDEN))
+                .when(accessControlService).requireAuditReportAccess(report);
+
+        org.springframework.web.server.ResponseStatusException ex = assertThrows(
+                org.springframework.web.server.ResponseStatusException.class,
+                () -> auditCommentService.getCommentsByReportId("report-001"));
+
+        assertEquals(org.springframework.http.HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 }
