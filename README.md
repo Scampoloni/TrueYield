@@ -14,7 +14,7 @@ Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch ge
 
 ## Deployment
 
-Die Anwendung ist auf Azure App Service deployed.
+Deployment ist vorbereitet (Docker + GitHub Actions). Die untenstehenden URLs sind Ziel-Endpoints; Verfügbarkeit und erfolgreiche Runs sind in diesem Repo nicht als Log-/Screenshot-Artefakte abgelegt.
 
 | Service | URL |
 |---------|-----|
@@ -799,6 +799,16 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 
 ---
 
+### End-to-End Tests (Playwright)
+
+Im Frontend liegen minimale E2E-Tests unter `frontend/tests/e2e`, die Login- und Redirect-Flows prüfen.
+
+Ausführung:
+- `cd frontend`
+- `npm run test:e2e`
+
+Standardmässig erwartet Playwright die App unter `http://localhost:5173`. Alternativ kann `E2E_BASE_URL` gesetzt werden.
+
 ### KI-Integration (Spring AI)
 
 TrueYield nutzt **Spring AI 1.0.0** (`spring-ai-starter-model-anthropic`) mit **AnthropicChatModel** und dem Modell **Claude Haiku (claude-haiku-4-5-20251001)** für zwei KI-Funktionen im ESG-Workflow:
@@ -884,7 +894,7 @@ dargestellt. Dies ermöglicht dem Auditor eine schnelle visuelle Einschätzung d
 | Komplexes Datenmodell (5 Entitäten) | Portfolio, Holding, Evidence, AuditReport, AuditComment — übererfüllt gegenüber Mindestanforderung (3) |
 | Zugriff auf Drittsysteme | The Guardian API — automatische ESG-News-Abfrage pro Holding bei Audit-Start, gespeichert als Evidence |
 | Komplexe Abfragen auf der Datenbank | MongoDB Aggregation Pipeline für Audit-Dashboard (gruppiert nach Status pro Portfolio) |
-| Detaillierte Dokumentation auf GitHub | Issues mit Labels, Sprints als GitHub Iterations, Branch-and-Pull-Modell durchgehend eingesetzt |
+| Detaillierte Dokumentation auf GitHub | Branches und PR-Workflow im Repo; Issues/Boards/Iterations sind extern und nicht als Artefakt im Repo versioniert |
 | Mehrere Branches sinnvoll verwendet | Jedes Feature in eigenem `feature/issue-<nr>-<titel>`-Branch entwickelt und via Pull Request gemerged |
 
 ---
@@ -894,7 +904,7 @@ dargestellt. Dies ermöglicht dem Auditor eine schnelle visuelle Einschätzung d
 TrueYield wurde als vollständige ESG-Verification-Plattform mit KI-Unterstützung implementiert.
 Das Backend basiert auf Spring Boot 3.4.5 mit MongoDB Atlas und Auth0 JWT-Authentifizierung.
 Alle Kernfunktionen — Portfolio-Verwaltung, Holdings, Evidence-Erfassung, Audit-Workflow und
-KI-gestützte Risikoanalyse — sind vollständig umgesetzt, getestet und auf Azure App Service deployed.
+KI-gestützte Risikoanalyse — sind vollständig umgesetzt und getestet; Deployment ist vorbereitet (siehe Deployment-Sektion).
 
 **KI-Integration (Spring AI):** Spring AI 1.0.0 (`spring-ai-starter-model-anthropic`) mit `AnthropicChatModel`
 und Claude Haiku analysiert beim Erstellen eines Audit-Berichts das Portfolio und generiert automatisch eine
@@ -910,9 +920,8 @@ PortfolioService, HoldingService, AuditReportService, AuditCommentService, Evide
 192+ Testmethoden in 17 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
 und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
 
-**Deployment:** Vollautomatisches CI/CD über GitHub Actions — Tests und Build bei jedem Push,
-Docker-basiertes Deployment auf Azure App Service bei Merge in `main`.
+**Deployment:** CI/CD Workflow über GitHub Actions ist vorhanden; Docker-Deployment auf Azure App Service ist vorgesehen (Details im Deployment-Abschnitt).
 
 **Nächste Schritte (Backlog):**
 - Issue #51: SonarQube-Integration für statische Code-Analyse
-- Issue #63–68: Cypress End-to-End Tests für kritische User Flows
+- E2E-Tests gezielt erweitern (Playwright) für zusätzliche kritische Flows
