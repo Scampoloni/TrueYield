@@ -100,9 +100,9 @@
               <td><span class="badge {statusClass(p.auditStatus)}">{statusLabel(p.auditStatus)}</span></td>
               <td>
                 <div class="tbl-acts">
-                  <a href="/portfolios/{p.id}" class="xb xb-blue">Holdings →</a>
+                  <a href={`/portfolios/${p.id}`} class="xb xb-blue">Holdings →</a>
                   {#if isFundManager}
-                    <a href="/portfolios/{p.id}/edit" class="xb xb-ghost">Edit</a>
+                    <a href={`/portfolios/${p.id}/edit`} class="xb xb-ghost">Edit</a>
                     <button class="xb xb-red" onclick={() => deleteTarget = p}>Delete</button>
                   {/if}
                 </div>

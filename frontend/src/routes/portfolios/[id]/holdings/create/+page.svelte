@@ -40,7 +40,7 @@
     <div class="pg-ttl">Add Holding</div>
     <div class="pg-sub">Add a new position to this portfolio</div>
   </div>
-  <a href="/portfolios/{portfolioId}" class="btn btn-ghost">← Cancel</a>
+  <a href={`/portfolios/${portfolioId}`} class="btn btn-ghost">← Cancel</a>
 </div>
 
 <div class="content">

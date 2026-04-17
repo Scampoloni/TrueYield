@@ -38,7 +38,7 @@
     <div class="pg-ttl">Add Evidence</div>
     <div class="pg-sub">Submit an ESG news snippet for AI sentiment analysis</div>
   </div>
-  <a href="/portfolios/{portfolioId}/holdings/{holdingId}" class="btn btn-ghost">← Cancel</a>
+  <a href={`/portfolios/${portfolioId}/holdings/${holdingId}`} class="btn btn-ghost">← Cancel</a>
 </div>
 
 <div class="content">

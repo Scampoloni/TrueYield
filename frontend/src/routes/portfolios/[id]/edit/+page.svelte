@@ -54,7 +54,7 @@
     <div class="pg-ttl">Edit Portfolio</div>
     <div class="pg-sub">Update portfolio details</div>
   </div>
-  <a href="/portfolios/{id}" class="btn btn-ghost">← Cancel</a>
+  <a href={`/portfolios/${id}`} class="btn btn-ghost">← Cancel</a>
 </div>
 
 <div class="content">

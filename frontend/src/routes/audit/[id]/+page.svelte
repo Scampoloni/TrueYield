@@ -248,7 +248,7 @@
                 <div class="accordion-sub">{h.name || '—'}</div>
               </div>
               <div class="accordion-meta">
-                <a href="/portfolios/{report.portfolioId}/holdings/{h.id}" class="xb xb-blue" onclick={(e) => e.stopPropagation()}>View Evidence →</a>
+                <a href={`/portfolios/${report.portfolioId}/holdings/${h.id}`} class="xb xb-blue" onclick={(e) => e.stopPropagation()}>View Evidence →</a>
                 <span style="display:inline-block;transition:transform 0.2s;transform:{openAccordions[h.symbol] ? 'rotate(180deg)' : 'rotate(0deg)'}">&#8595;</span>
               </div>
             </div>
