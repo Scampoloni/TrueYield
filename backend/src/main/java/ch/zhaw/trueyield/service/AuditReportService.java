@@ -10,6 +10,7 @@ import ch.zhaw.trueyield.model.dto.EvidenceCreateDTO;
 import ch.zhaw.trueyield.model.dto.StateChangeDTO;
 import ch.zhaw.trueyield.model.enums.AuditStatus;
 import ch.zhaw.trueyield.repository.AuditReportRepository;
+import ch.zhaw.trueyield.security.AccessControlService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,9 @@ public class AuditReportService {
 
     @Autowired
     private AuditReportRepository auditReportRepository;
+
+    @Autowired
+    private AccessControlService accessControlService;
 
     @Autowired
     private PortfolioService portfolioService;
@@ -41,10 +45,7 @@ public class AuditReportService {
     private AiAnalysisService aiAnalysisService;
 
     public AuditReport createAuditReport(AuditReportCreateDTO dto) {
-        if (!portfolioService.portfolioExists(dto.getPortfolioId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Portfolio not found: " + dto.getPortfolioId());
-        }
+        accessControlService.requireFundManagerPortfolioAccess(dto.getPortfolioId());
         AuditReport report = new AuditReport(dto.getPortfolioId(), AuditStatus.AI_ANALYZING);
         report = auditReportRepository.save(report);
 
@@ -102,12 +103,15 @@ public class AuditReportService {
     }
 
     public AuditReport getAuditReportById(String id) {
-        return auditReportRepository.findById(id)
+        AuditReport report = auditReportRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "AuditReport not found: " + id));
+        accessControlService.requireAuditReportAccess(report);
+        return report;
     }
 
     public AuditReport rejectAuditReport(StateChangeDTO dto) {
+        String auditorId = accessControlService.requireAuditorId();
         AuditReport report = auditReportRepository.findById(dto.getAuditReportId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "AuditReport not found: " + dto.getAuditReportId()));
@@ -115,7 +119,7 @@ public class AuditReportService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "AuditReport must be in UNDER_REVIEW state");
         }
-        if (!dto.getAuditorId().equals(report.getAuditorId())) {
+        if (report.getAuditorId() == null || !auditorId.equals(report.getAuditorId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "AuditorId does not match assigned auditor");
         }
@@ -124,6 +128,7 @@ public class AuditReportService {
     }
 
     public AuditReport assignAuditReport(StateChangeDTO dto) {
+        String auditorId = accessControlService.requireAuditorId();
         AuditReport report = auditReportRepository.findById(dto.getAuditReportId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "AuditReport not found: " + dto.getAuditReportId()));
@@ -132,11 +137,12 @@ public class AuditReportService {
                     "AuditReport must be in PENDING_REVIEW state");
         }
         report.setAuditStatus(AuditStatus.UNDER_REVIEW);
-        report.setAuditorId(dto.getAuditorId());
+        report.setAuditorId(auditorId);
         return auditReportRepository.save(report);
     }
 
     public AuditReport completeAuditReport(StateChangeDTO dto) {
+        String auditorId = accessControlService.requireAuditorId();
         AuditReport report = auditReportRepository.findById(dto.getAuditReportId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "AuditReport not found: " + dto.getAuditReportId()));
@@ -144,7 +150,7 @@ public class AuditReportService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "AuditReport must be in UNDER_REVIEW state");
         }
-        if (!dto.getAuditorId().equals(report.getAuditorId())) {
+        if (report.getAuditorId() == null || !auditorId.equals(report.getAuditorId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "AuditorId does not match assigned auditor");
         }
@@ -157,6 +163,7 @@ public class AuditReportService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Portfolio not found: " + portfolioId);
         }
+        accessControlService.requirePortfolioAccess(portfolioId);
         return auditReportRepository.aggregateByPortfolioId(portfolioId);
     }
 }

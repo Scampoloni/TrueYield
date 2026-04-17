@@ -1,19 +1,20 @@
 package ch.zhaw.trueyield.service;
 
 import ch.zhaw.trueyield.model.AuditComment;
+import ch.zhaw.trueyield.model.AuditReport;
 import ch.zhaw.trueyield.model.dto.AuditCommentCreateDTO;
 import ch.zhaw.trueyield.repository.AuditCommentRepository;
 import ch.zhaw.trueyield.repository.AuditReportRepository;
+import ch.zhaw.trueyield.security.AccessControlService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,6 +28,9 @@ class AuditCommentServiceTest {
 
     @Mock
     private AuditReportRepository auditReportRepository;
+
+    @Mock
+    private AccessControlService accessControlService;
 
     @InjectMocks
     private AuditCommentService auditCommentService;
@@ -44,7 +48,10 @@ class AuditCommentServiceTest {
 
     @Test
     void createComment_savesComment_whenReportExists() {
-        when(auditReportRepository.existsById("report-001")).thenReturn(true);
+        AuditReport report = new AuditReport("portfolio-001", ch.zhaw.trueyield.model.enums.AuditStatus.UNDER_REVIEW);
+        report.setId("report-001");
+        when(auditReportRepository.findById("report-001")).thenReturn(Optional.of(report));
+        org.mockito.Mockito.doNothing().when(accessControlService).requireAuditReportAccess(report);
         when(auditCommentRepository.save(any(AuditComment.class))).thenAnswer(inv -> inv.getArgument(0));
 
         AuditComment result = auditCommentService.createComment(dto, "auditor-001");
@@ -59,12 +66,13 @@ class AuditCommentServiceTest {
 
     @Test
     void createComment_throwsBadRequest_whenReportNotFound() {
-        when(auditReportRepository.existsById("report-001")).thenReturn(false);
+        when(auditReportRepository.findById("report-001")).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> auditCommentService.createComment(dto, "auditor-001"));
+        org.springframework.web.server.ResponseStatusException ex = assertThrows(
+            org.springframework.web.server.ResponseStatusException.class,
+            () -> auditCommentService.createComment(dto, "auditor-001"));
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, ex.getStatusCode());
         verify(auditCommentRepository, never()).save(any());
     }
 
@@ -74,6 +82,10 @@ class AuditCommentServiceTest {
     void getCommentsByReportId_returnsList() {
         AuditComment c1 = new AuditComment("report-001", "Comment A", "auditor-001");
         AuditComment c2 = new AuditComment("report-001", "Comment B", "auditor-001");
+        AuditReport report = new AuditReport("portfolio-001", ch.zhaw.trueyield.model.enums.AuditStatus.UNDER_REVIEW);
+        report.setId("report-001");
+        when(auditReportRepository.findById("report-001")).thenReturn(Optional.of(report));
+        org.mockito.Mockito.doNothing().when(accessControlService).requireAuditReportAccess(report);
         when(auditCommentRepository.findByAuditReportId("report-001")).thenReturn(List.of(c1, c2));
 
         List<AuditComment> result = auditCommentService.getCommentsByReportId("report-001");
@@ -84,6 +96,10 @@ class AuditCommentServiceTest {
 
     @Test
     void getCommentsByReportId_returnsEmptyList_whenNoComments() {
+        AuditReport report = new AuditReport("portfolio-001", ch.zhaw.trueyield.model.enums.AuditStatus.UNDER_REVIEW);
+        report.setId("report-empty");
+        when(auditReportRepository.findById("report-empty")).thenReturn(Optional.of(report));
+        org.mockito.Mockito.doNothing().when(accessControlService).requireAuditReportAccess(report);
         when(auditCommentRepository.findByAuditReportId("report-empty")).thenReturn(List.of());
 
         List<AuditComment> result = auditCommentService.getCommentsByReportId("report-empty");

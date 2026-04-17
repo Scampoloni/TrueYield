@@ -65,7 +65,7 @@ class UserServiceTest {
     void userHasRole_returnsTrue_whenRolePresent() {
         setJwtAuthentication(Map.of(
                 "sub", "user-123",
-                "user_roles", List.of("fund-manager", "esg-auditor")
+                "user_roles", List.of("fund-manager", "auditor")
         ));
         assertTrue(userService.userHasRole("fund-manager"));
     }
@@ -74,7 +74,7 @@ class UserServiceTest {
     void userHasRole_returnsFalse_whenRoleMissing() {
         setJwtAuthentication(Map.of(
                 "sub", "user-123",
-                "user_roles", List.of("esg-auditor")
+                "user_roles", List.of("auditor")
         ));
         assertFalse(userService.userHasRole("fund-manager"));
     }
