@@ -852,7 +852,7 @@ dargestellt. Dies ermöglicht dem Auditor eine schnelle visuelle Einschätzung d
 ## Fazit
 
 TrueYield wurde als vollständige ESG-Verification-Plattform mit KI-Unterstützung implementiert.
-Das Backend basiert auf Spring Boot 4.0.2 mit MongoDB Atlas und Auth0 JWT-Authentifizierung.
+Das Backend basiert auf Spring Boot 3.4.5 mit MongoDB Atlas und Auth0 JWT-Authentifizierung.
 Alle Kernfunktionen — Portfolio-Verwaltung, Holdings, Evidence-Erfassung, Audit-Workflow und
 KI-gestützte Risikoanalyse — sind vollständig umgesetzt, getestet und auf Azure App Service deployed.
 
@@ -867,7 +867,7 @@ ESG-Nachrichten pro Holding über die The Guardian API ab und speichert sie als 
 
 **Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf
 PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService und UserService.
-151+ Testmethoden in 17 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
+193+ Testmethoden in 17 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
 und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
 
 **Deployment:** Vollautomatisches CI/CD über GitHub Actions — Tests und Build bei jedem Push,

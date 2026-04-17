@@ -63,8 +63,9 @@ public class PortfolioController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PortfolioResponseDTO> getPortfolioById(@PathVariable String id) {
         try {
-            String fundManagerId = userService.getCurrentUserId();
-            Portfolio portfolio = portfolioService.getPortfolioById(id, fundManagerId);
+            Portfolio portfolio = userService.userHasRole("auditor")
+                    ? portfolioService.getPortfolioByIdForAuditor(id)
+                    : portfolioService.getPortfolioById(id, userService.getCurrentUserId());
             return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(portfolio), HttpStatus.OK);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getStatusCode());

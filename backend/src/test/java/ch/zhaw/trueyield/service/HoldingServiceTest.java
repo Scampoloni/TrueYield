@@ -114,11 +114,13 @@ class HoldingServiceTest {
     // ── createHolding ────────────────────────────────────────────────────────
 
     @Test
-    void createHolding_savesHolding_whenPortfolioExists() {
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(true);
+    void createHolding_savesHolding_whenOwnerAndPortfolioExist() {
+        ch.zhaw.trueyield.model.Portfolio portfolio =
+                new ch.zhaw.trueyield.model.Portfolio("ESG Fund", "manager-001");
+        when(portfolioService.getPortfolioById("portfolio-001", "manager-001")).thenReturn(portfolio);
         when(holdingRepository.save(any(Holding.class))).thenReturn(sampleHolding);
 
-        Holding result = holdingService.createHolding(createDTO);
+        Holding result = holdingService.createHolding(createDTO, "manager-001");
 
         assertNotNull(result);
         assertEquals("AAPL", result.getSymbol());
@@ -129,13 +131,26 @@ class HoldingServiceTest {
     }
 
     @Test
-    void createHolding_throwsBadRequest_whenPortfolioNotFound() {
-        when(portfolioService.portfolioExists("portfolio-001")).thenReturn(false);
+    void createHolding_throwsNotFound_whenPortfolioMissing() {
+        when(portfolioService.getPortfolioById("portfolio-001", "manager-001"))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Portfolio not found"));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> holdingService.createHolding(createDTO));
+                () -> holdingService.createHolding(createDTO, "manager-001"));
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verify(holdingRepository, never()).save(any());
+    }
+
+    @Test
+    void createHolding_throwsForbidden_whenRequesterIsNotOwner() {
+        when(portfolioService.getPortfolioById("portfolio-001", "other-manager"))
+                .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> holdingService.createHolding(createDTO, "other-manager"));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verify(holdingRepository, never()).save(any());
     }
 }

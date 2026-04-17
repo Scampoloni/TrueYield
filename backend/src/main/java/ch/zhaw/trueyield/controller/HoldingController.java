@@ -3,6 +3,7 @@ package ch.zhaw.trueyield.controller;
 import ch.zhaw.trueyield.model.Holding;
 import ch.zhaw.trueyield.model.dto.HoldingCreateDTO;
 import ch.zhaw.trueyield.model.dto.HoldingResponseDTO;
+import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.HoldingService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ public class HoldingController {
     @Autowired
     private HoldingService holdingService;
 
+    @Autowired
+    private UserService userService;
+
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<HoldingResponseDTO>> getHoldingsByPortfolioId(@RequestParam String portfolioId) {
@@ -53,7 +57,7 @@ public class HoldingController {
     @PreAuthorize("hasRole('fund-manager')")
     public ResponseEntity<HoldingResponseDTO> createHolding(@Valid @RequestBody HoldingCreateDTO dto) {
         try {
-            Holding created = holdingService.createHolding(dto);
+            Holding created = holdingService.createHolding(dto, userService.getCurrentUserId());
             return new ResponseEntity<>(HoldingResponseDTO.fromEntity(created), HttpStatus.CREATED);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getStatusCode());

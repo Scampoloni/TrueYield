@@ -30,11 +30,8 @@ public class HoldingService {
         holdingRepository.deleteById(id);
     }
 
-    public Holding createHolding(HoldingCreateDTO dto) {
-        if (!portfolioService.portfolioExists(dto.getPortfolioId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Portfolio not found: " + dto.getPortfolioId());
-        }
+    public Holding createHolding(HoldingCreateDTO dto, String requestingUserId) {
+        portfolioService.getPortfolioById(dto.getPortfolioId(), requestingUserId);
         Holding holding = new Holding(dto.getPortfolioId(), dto.getSymbol());
         holding.setIsin(dto.getIsin());
         holding.setName(dto.getName());

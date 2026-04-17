@@ -100,7 +100,7 @@ class HoldingControllerTest {
 
     @Test
     void createHolding_asFundManager_returnsCreated() throws Exception {
-        when(holdingService.createHolding(any(HoldingCreateDTO.class))).thenReturn(sampleHolding);
+        when(holdingService.createHolding(any(HoldingCreateDTO.class), anyString())).thenReturn(sampleHolding);
 
         mockMvc.perform(post("/api/holding")
                         .with(user("manager").roles("fund-manager"))

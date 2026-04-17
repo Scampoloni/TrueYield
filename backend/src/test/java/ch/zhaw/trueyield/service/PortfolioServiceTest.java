@@ -104,6 +104,28 @@ class PortfolioServiceTest {
         assertEquals(managerId, result.get(0).getFundManagerId());
     }
 
+    // ── getPortfolioByIdForAuditor ────────────────────────────────────────────
+
+    @Test
+    void getPortfolioByIdForAuditor_returnsPortfolio_withoutOwnershipCheck() {
+        when(portfolioRepository.findById("portfolio-1")).thenReturn(Optional.of(portfolio));
+
+        Portfolio result = portfolioService.getPortfolioByIdForAuditor("portfolio-1");
+
+        assertNotNull(result);
+        assertEquals("ESG Global Fund", result.getName());
+    }
+
+    @Test
+    void getPortfolioByIdForAuditor_throwsNotFound_whenPortfolioMissing() {
+        when(portfolioRepository.findById("nonexistent")).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> portfolioService.getPortfolioByIdForAuditor("nonexistent"));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
     // ── getPortfolioById ─────────────────────────────────────────────────────
 
     @Test
