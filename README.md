@@ -1044,3 +1044,23 @@ PortfolioService, HoldingService, AuditReportService, AuditCommentService, Evide
 und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
 
 **Deployment:** CI/CD Workflow über GitHub Actions ist vorhanden; Docker-Deployment auf Azure App Service ist vorgesehen (Details im Deployment-Abschnitt).
+
+---
+
+## Backlog & Nächste Schritte
+
+Die folgenden Erweiterungen sind konzeptuell ausgearbeitet und bilden mögliche Anknüpfungspunkte für eine Bachelorarbeit oder einen produktiven Piloten:
+
+| # | Feature | Mehrwert | Aufwand |
+|---|---------|----------|---------|
+| B-01 | **Automatisches News-Monitoring** (bereits implementiert) | Guardian API liefert bei Holding-Erstellung automatisch ESG-News als Evidence | ✅ Done |
+| B-02 | **SFDR Article 8/9 Scoring** (bereits implementiert) | Sentiment-Aggregation klassifiziert Portfolios regulatorisch | ✅ Done |
+| B-03 | Longitudinales Risk Tracking | Sentiment-Zeitreihe pro Holding → Recharts-Timeseries im Frontend | 1–2 Tage |
+| B-04 | Premium-Datensource (Bloomberg/Reuters) | Bessere Datenqualität für Enterprise-Kunden | Extern/Kosten |
+| B-05 | Greenwashing Early-Warning | Negativer Sentiment-Trend 30d vor Scandal als Frühindikator | 2–3 Tage |
+| B-06 | Cypress E2E für neue Flows | Evidence-Delete + SFDR-Seite automatisiert testen | 1 Tag |
+
+**Bachelorarbeit-Anknüpfungspunkte:**
+- *AI-Assisted ESG Risk Assessment unter SFDR: Evaluation einer Human-in-the-Loop Architektur für Greenwashing-Erkennung* (direkt auf TrueYield aufbaubar)
+- *Automated ESG Compliance Monitoring for Insurance Investment Portfolios under SFDR Article 8/9* (Swiss Re/AIG-Netzwerk als Pilot)
+- *Sentiment-Based Early Warning Signals for Greenwashing Risk: A News-Driven Approach* (quantitative Analyse mit öffentlichen Daten)
