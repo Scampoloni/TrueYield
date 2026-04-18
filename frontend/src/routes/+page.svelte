@@ -31,7 +31,7 @@
         if (aRes.ok) {
           const agg: any[] = await aRes.json();
           const pending = agg.find((a: any) => a.id === 'PENDING_REVIEW');
-          if (pending) pendingCount += parseInt(pending.count || '0');
+          if (pending) pendingCount += Number(pending.count || 0);
         }
       }
       totalHoldings = holdingsCount;
