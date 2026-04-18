@@ -77,7 +77,8 @@ class AiAnalysisServiceTest {
     @Test
     void generateRiskSummary_callsChatModelAndReturnsSummary() {
         String expected = "High ESG risk detected for Tesla due to labor violations.";
-        when(chatModel.call(any(Prompt.class))).thenReturn(mockChatResponse(expected));
+        ChatResponse mockResponse = mockChatResponse(expected);
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
 
         String result = aiAnalysisService.generateRiskSummary(List.of("Tesla", "Apple Inc."));
 
@@ -88,7 +89,8 @@ class AiAnalysisServiceTest {
     @Test
     void generateRiskSummary_handlesEmptyHoldingsList() {
         String expected = "No significant ESG risks identified for this portfolio.";
-        when(chatModel.call(any(Prompt.class))).thenReturn(mockChatResponse(expected));
+        ChatResponse mockResponse = mockChatResponse(expected);
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
 
         String result = aiAnalysisService.generateRiskSummary(List.of());
 
@@ -108,7 +110,8 @@ class AiAnalysisServiceTest {
     @ParameterizedTest
     @ValueSource(strings = {"Apple Inc.", "Tesla", "Microsoft", "Nestlé AG", "Shell PLC"})
     void generateRiskSummary_invokesModelForAnyHolding(String company) {
-        when(chatModel.call(any(Prompt.class))).thenReturn(mockChatResponse("Risk summary."));
+        ChatResponse mockResponse = mockChatResponse("Risk summary.");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
 
         String result = aiAnalysisService.generateRiskSummary(List.of(company));
 
@@ -137,7 +140,8 @@ class AiAnalysisServiceTest {
         " 1.0,  1.0"
     })
     void analyzeSentiment_returnsCorrectScore_forValidDecimalValues(String aiOutput, double expected) {
-        when(chatModel.call(any(Prompt.class))).thenReturn(mockChatResponse(aiOutput.trim()));
+        ChatResponse mockResponse = mockChatResponse(aiOutput.trim());
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
 
         double result = aiAnalysisService.analyzeSentiment("Some ESG content");
 
@@ -146,7 +150,8 @@ class AiAnalysisServiceTest {
 
     @Test
     void analyzeSentiment_clampsToMaximumOne_whenAiReturnsHigherValue() {
-        when(chatModel.call(any(Prompt.class))).thenReturn(mockChatResponse("1.5"));
+        ChatResponse mockResponse = mockChatResponse("1.5");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
 
         double result = aiAnalysisService.analyzeSentiment("Extremely positive news");
 
@@ -155,7 +160,8 @@ class AiAnalysisServiceTest {
 
     @Test
     void analyzeSentiment_clampsToMinimumMinusOne_whenAiReturnsLowerValue() {
-        when(chatModel.call(any(Prompt.class))).thenReturn(mockChatResponse("-1.8"));
+        ChatResponse mockResponse = mockChatResponse("-1.8");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
 
         double result = aiAnalysisService.analyzeSentiment("Extremely negative news");
 
@@ -164,7 +170,8 @@ class AiAnalysisServiceTest {
 
     @Test
     void analyzeSentiment_handlesCommaAsDecimalSeparator() {
-        when(chatModel.call(any(Prompt.class))).thenReturn(mockChatResponse("0,75"));
+        ChatResponse mockResponse = mockChatResponse("0,75");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
 
         double result = aiAnalysisService.analyzeSentiment("Some text");
 
@@ -173,7 +180,8 @@ class AiAnalysisServiceTest {
 
     @Test
     void analyzeSentiment_returnsZero_whenResponseIsNotParseable() {
-        when(chatModel.call(any(Prompt.class))).thenReturn(mockChatResponse("not a number"));
+        ChatResponse mockResponse = mockChatResponse("not a number");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
 
         double result = aiAnalysisService.analyzeSentiment("Some text");
 
@@ -191,7 +199,8 @@ class AiAnalysisServiceTest {
 
     @Test
     void analyzeSentiment_trimsWhitespaceFromResponse() {
-        when(chatModel.call(any(Prompt.class))).thenReturn(mockChatResponse("  0.5  "));
+        ChatResponse mockResponse = mockChatResponse("  0.5  ");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
 
         double result = aiAnalysisService.analyzeSentiment("Some text");
 
