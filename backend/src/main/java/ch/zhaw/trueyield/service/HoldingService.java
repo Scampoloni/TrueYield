@@ -18,6 +18,9 @@ public class HoldingService {
     @Autowired
     private AccessControlService accessControlService;
 
+    @Autowired(required = false)
+    private NewsIngestionService newsIngestionService;
+
     public List<Holding> getHoldingsByPortfolioId(String portfolioId) {
         accessControlService.requirePortfolioAccess(portfolioId);
         return holdingRepository.findByPortfolioId(portfolioId);
@@ -34,6 +37,11 @@ public class HoldingService {
         holding.setIsin(dto.getIsin());
         holding.setName(dto.getName());
         holding.setWeightPercent(dto.getWeightPercent());
-        return holdingRepository.save(holding);
+        Holding saved = holdingRepository.save(holding);
+        String companyName = dto.getName() != null && !dto.getName().isBlank() ? dto.getName() : dto.getSymbol();
+        if (newsIngestionService != null && companyName != null) {
+            newsIngestionService.ingestNewsForHolding(saved.getId(), companyName);
+        }
+        return saved;
     }
 }
