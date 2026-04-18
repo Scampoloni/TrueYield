@@ -10,8 +10,14 @@
   const roles: string[] = $derived(user?.user_roles ?? []);
   const isFundManager = $derived(roles.includes('fund-manager'));
   const isAuditor = $derived(roles.includes('auditor'));
+  const isComplianceOfficer = $derived(roles.includes('compliance-officer'));
   const displayName = $derived(user?.name || user?.nickname || user?.email || 'User');
-  const displayRole = $derived(isFundManager ? 'Fund Manager' : isAuditor ? 'ESG Auditor' : 'Viewer');
+  const displayRole = $derived(
+    isFundManager ? 'Fund Manager'
+    : isAuditor ? 'ESG Auditor'
+    : isComplianceOfficer ? 'Compliance Officer'
+    : 'Viewer'
+  );
   const initials = $derived(displayName[0].toUpperCase());
 
   function isActive(path: string) {
@@ -83,6 +89,19 @@
             <path d="M8 1.5l1.8 3.7 4.1.5-3 2.9.7 4L8 10.5l-3.6 2.1.7-4-3-2.9 4.1-.5z" stroke-linejoin="round"/>
           </svg>
           Audit Reports
+        </a>
+      </div>
+      {/if}
+
+      {#if isComplianceOfficer}
+      <div class="nav-group">
+        <div class="nav-cat">Compliance</div>
+        <a href="/compliance" class="nav-a" class:on={isActive('/compliance')}>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="1.5" width="12" height="13" rx="1.5"/>
+            <path d="M5 5.5h6M5 8h6M5 10.5h4"/>
+          </svg>
+          Overview
         </a>
       </div>
       {/if}

@@ -32,7 +32,7 @@ public class AuditCommentController {
     private UserService userService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('fund-manager','auditor')")
+    @PreAuthorize("hasAnyRole('fund-manager','auditor','compliance-officer')")
     public ResponseEntity<List<AuditCommentResponseDTO>> getComments(@RequestParam String auditReportId) {
         List<AuditComment> comments = auditCommentService.getCommentsByReportId(auditReportId);
         List<AuditCommentResponseDTO> response = comments.stream()

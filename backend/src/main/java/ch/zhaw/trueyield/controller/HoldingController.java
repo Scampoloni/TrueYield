@@ -30,7 +30,7 @@ public class HoldingController {
     private HoldingService holdingService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('fund-manager','auditor')")
+    @PreAuthorize("hasAnyRole('fund-manager','auditor','compliance-officer')")
     public ResponseEntity<List<HoldingResponseDTO>> getHoldingsByPortfolioId(@RequestParam String portfolioId) {
         List<HoldingResponseDTO> response = holdingService.getHoldingsByPortfolioId(portfolioId).stream()
                 .map(HoldingResponseDTO::fromEntity)

@@ -28,7 +28,7 @@ public class EvidenceController {
     private EvidenceService evidenceService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('fund-manager','auditor')")
+    @PreAuthorize("hasAnyRole('fund-manager','auditor','compliance-officer')")
     public ResponseEntity<List<EvidenceResponseDTO>> getByHoldingId(@RequestParam String holdingId) {
         List<EvidenceResponseDTO> evidence = evidenceService.getEvidenceByHoldingId(holdingId)
                 .stream()
@@ -38,7 +38,7 @@ public class EvidenceController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('fund-manager','auditor')")
+    @PreAuthorize("hasAnyRole('fund-manager','auditor','compliance-officer')")
     public ResponseEntity<EvidenceResponseDTO> getById(@PathVariable String id) {
         Evidence evidence = evidenceService.getEvidenceById(id);
         return ResponseEntity.ok(EvidenceResponseDTO.fromEntity(evidence));
