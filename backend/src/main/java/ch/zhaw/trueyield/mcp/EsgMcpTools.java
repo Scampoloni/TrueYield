@@ -4,6 +4,7 @@ import ch.zhaw.trueyield.service.AiAnalysisService;
 import ch.zhaw.trueyield.service.NewsService;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -19,7 +20,7 @@ public class EsgMcpTools {
     private final AiAnalysisService aiAnalysisService;
     private final NewsService newsService;
 
-    public EsgMcpTools(AiAnalysisService aiAnalysisService, NewsService newsService) {
+    public EsgMcpTools(@Lazy AiAnalysisService aiAnalysisService, NewsService newsService) {
         this.aiAnalysisService = aiAnalysisService;
         this.newsService = newsService;
     }
