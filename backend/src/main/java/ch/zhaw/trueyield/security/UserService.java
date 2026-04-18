@@ -31,7 +31,10 @@ public class UserService {
         try {
             Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             List<String> roles = jwt.getClaimAsStringList("user_roles");
-            return roles != null && roles.contains(role);
+            if (roles == null) return false;
+            String normalized = role.trim().toLowerCase().replace(" ", "-");
+            return roles.stream()
+                    .anyMatch(r -> r.trim().toLowerCase().replace(" ", "-").equals(normalized));
         } catch (Exception e) {
             return false;
         }

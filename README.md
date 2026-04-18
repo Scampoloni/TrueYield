@@ -1036,7 +1036,7 @@ ESG-Nachrichten pro Holding über die The Guardian API ab und speichert sie als 
 
 **Compliance Officer (Anforderung 23):** Dritte RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff. Eigener Endpoint `GET /api/compliance/overview` liefert Gesamtstatistik (Portfolios, Holdings, AuditReports nach Status). Alle schreibenden Operationen sind blockiert (403). Frontend-Dashboard unter `/compliance`. Auth0-Rolle `compliance-officer` muss über Post-Login Action in den JWT-Claim `user_roles` injiziert werden (siehe Auth0-Konfiguration).
 
-**Code-Qualität (Prio 3):** `DRAFT`-Status aus `AuditStatus`-Enum entfernt (toter Code — nie erreichbar). SonarCloud-CI-Gate auf `continue-on-error: false` gesetzt — fehlende Qualitätsgates brechen den Build.
+**Code-Qualität (Prio 3):** `DRAFT`-Status aus `AuditStatus`-Enum entfernt (toter Code — nie erreichbar). SonarCloud-CI-Gate aktiviert (`continue-on-error: false`) — schlägt fehl, wenn `SONAR_TOKEN` als Repository Secret gesetzt ist.
 
 **Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf
 PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService.

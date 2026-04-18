@@ -3,7 +3,9 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
 
-  const isFundManager = $derived((page.data.user?.user_roles ?? []).includes('fund-manager'));
+  const roles = $derived(page.data.user?.user_roles ?? []);
+  const isFundManager = $derived(roles.includes('fund-manager'));
+  const isComplianceOfficer = $derived(roles.includes('compliance-officer'));
 
   let portfolios: any[] = $state([]);
   let totalHoldings = $state(0);
@@ -12,6 +14,10 @@
   let error = $state('');
 
   onMount(async () => {
+    if (isComplianceOfficer) {
+      goto('/compliance');
+      return;
+    }
     try {
       const res = await fetch('/api/portfolio', { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed');
