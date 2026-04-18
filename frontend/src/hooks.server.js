@@ -19,7 +19,7 @@ export async function handle({ event, resolve }) {
     }
 
     // Protect main app routes — redirect to /login if not authenticated
-    const protectedPaths = ['/', '/portfolios', '/holdings', '/audit', '/account'];
+    const protectedPaths = ['/', '/portfolios', '/holdings', '/audit', '/account', '/compliance'];
     const isProtected = protectedPaths.some(
         (p) => event.url.pathname === p || event.url.pathname.startsWith(p + '/')
     );
