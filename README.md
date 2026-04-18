@@ -9,8 +9,8 @@ Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch ge
 
 - Backend CI führt `mvn verify` aus (inkl. Unit- und Integrationstests mit Testcontainers).
 - JaCoCo HTML-Report wird unter `backend/target/site/jacoco/index.html` erzeugt.
-- Coverage-Gate: Build failt wenn Instruction Coverage der Core Services (`PortfolioService`, `HoldingService`, `AuditReportService`, `AuditCommentService`, `EvidenceService`, `UserService`) unter **90%** fällt.
-- Aktueller Stand: alle Core Services ≥ 90% abgedeckt (mehrere bei 100%).
+- Coverage-Gate: Build failt wenn Instruction Coverage der Core Services (`PortfolioService`, `HoldingService`, `AuditReportService`, `AuditCommentService`, `EvidenceService`, `UserService`, `ComplianceService`) unter **90%** fällt.
+- Aktueller Stand: alle Core Services ≥ 90% abgedeckt (Gate aktiv und grün). Gesamt-Projektabdeckung inkl. Controller, Modelle und Konfigurationsklassen: siehe Badge oben (~80%).
 
 ## Deployment
 
@@ -1036,11 +1036,11 @@ ESG-Nachrichten pro Holding über die The Guardian API ab und speichert sie als 
 
 **Compliance Officer (Anforderung 23):** Dritte RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff. Eigener Endpoint `GET /api/compliance/overview` liefert Gesamtstatistik (Portfolios, Holdings, AuditReports nach Status). Alle schreibenden Operationen sind blockiert (403). Frontend-Dashboard unter `/compliance`. Auth0-Rolle `compliance-officer` muss über Post-Login Action in den JWT-Claim `user_roles` injiziert werden (siehe Auth0-Konfiguration).
 
-**Code-Qualität (Prio 3):** `DRAFT`-Status aus `AuditStatus`-Enum entfernt (toter Code — nie erreichbar). SonarCloud konfiguriert und aktiv auf `main` (Token via Secret `SONAR_TOKEN`); Analyse läuft non-blocking (`continue-on-error: true`), damit fehlende Token den Build nicht brechen.
+**Code-Qualität (Prio 3):** `DRAFT`-Status existiert nicht im `AuditStatus`-Enum (nie erreichbar); die Frontend-Audit-Timeline wurde entsprechend bereinigt. SonarCloud konfiguriert und aktiv auf `main` (Token via Secret `SONAR_TOKEN`); Analyse läuft non-blocking (`continue-on-error: true`), damit fehlende Token den Build nicht brechen.
 
 **Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf
 PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService.
-210+ Testmethoden in 19 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
+269+ Testmethoden in 21 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
 und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
 
 **Deployment:** CI/CD Workflow über GitHub Actions ist vorhanden; Docker-Deployment auf Azure App Service ist vorgesehen (Details im Deployment-Abschnitt).
