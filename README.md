@@ -613,8 +613,6 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
                     └──────────┘         └──────────┘
 ```
 
-> **Hinweis:** Der Status `DRAFT` ist im Enum deklariert, wird aber von `createAuditReport()` nicht verwendet — neu erstellte Reports starten direkt in `AI_ANALYZING`.
-
 | Übergang | Auslöser | HTTP-Endpunkt |
 |---|---|---|
 | → `AI_ANALYZING` | Fund Manager erstellt Audit | `POST /api/service/auditreport` |
@@ -746,6 +744,71 @@ Interaktiver Klick-Prototyp (Figma): [https://bear-disco-77148489.figma.site/](h
 
 ## Implementation
 
+### Auth0-Konfiguration
+
+Damit Rollen (`fund-manager`, `auditor`, `compliance-officer`) korrekt im JWT landen und von Backend und Frontend ausgewertet werden können, sind folgende Schritte in Auth0 erforderlich.
+
+#### 1. Rollen anlegen
+
+Auth0 Dashboard → **User Management → Roles → + Create Role**
+
+| Rollenname | Beschreibung |
+|---|---|
+| `fund-manager` | ESG Fund Manager — verwaltet Portfolios und Holdings |
+| `auditor` | ESG Auditor — prüft und entscheidet über Audit-Reports |
+| `compliance-officer` | Compliance Officer — Lesezugriff auf alle Daten, eigenes Compliance-Dashboard |
+
+#### 2. Post-Login Action erstellen
+
+Auth0 Dashboard → **Actions → Library → Build Custom** (Trigger: **Login / Post Login**)
+
+```javascript
+exports.onExecutePostLogin = async (event, api) => {
+  const roles = event.authorization?.roles ?? [];
+  // Inject into access token — read by Spring Security and SvelteKit frontend
+  api.accessToken.setCustomClaim('user_roles', roles);
+};
+```
+
+Action deployen und unter **Actions → Flows → Login** in die Flow-Pipeline ziehen (nach "Start", vor "Complete").
+
+#### 3. Benutzer einer Rolle zuweisen
+
+Auth0 Dashboard → **User Management → Users** → Benutzer auswählen → Tab **Roles** → **Assign Roles**
+
+Jedem Testbenutzer genau eine Rolle zuweisen (`fund-manager`, `auditor` oder `compliance-officer`).
+
+#### 4. Umgebungsvariablen setzen
+
+**Backend** (`backend/src/main/resources/application.properties` oder als Env-Var im Deployment):
+
+```properties
+spring.security.oauth2.resourceserver.jwt.issuer-uri=https://YOUR_AUTH0_DOMAIN/
+spring.ai.anthropic.api-key=YOUR_ANTHROPIC_API_KEY
+news.api.key=YOUR_GUARDIAN_API_KEY
+```
+
+**Frontend** (`.env` oder Deployment-Vars):
+
+```env
+AUTH0_DOMAIN=YOUR_AUTH0_DOMAIN
+AUTH0_CLIENT_ID=YOUR_AUTH0_CLIENT_ID
+AUTH0_AUDIENCE=https://trueyield.api
+API_BASE_URL=https://trueyield-backend.azurewebsites.net
+```
+
+#### 5. GitHub Secret für SonarQube
+
+Repository → **Settings → Secrets and variables → Actions → New repository secret**
+
+| Secret | Wert |
+|---|---|
+| `SONAR_TOKEN` | Token aus SonarCloud (Account → Security → Generate Token) |
+
+> Ohne dieses Secret schlägt der SonarCloud-Step in CI fehl (seit Prio 3 ist `continue-on-error: false`).
+
+---
+
 ### API-Dokumentation
 
 Vollständige Postman-Dokumentation (veröffentlicht): [https://documenter.getpostman.com/view/52455816/2sBXihpXqi](https://documenter.getpostman.com/view/52455816/2sBXihpXqi)
@@ -797,6 +860,12 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 | POST | `/api/service/auditcomment` | Kommentar hinzufügen (Auditor) | 201 Created, 400 Bad Request |
 | GET | `/api/service/auditcomment?auditReportId={id}` | Alle Kommentare eines Reports | 200 OK |
 
+#### Compliance Overview (`/api/compliance`) — Anforderung 23
+
+| Methode | Endpoint | Beschreibung | Zugriff |
+|---|---|---|---|
+| GET | `/api/compliance/overview` | Systemweite KPIs (Portfolios, Holdings, AuditReports nach Status) | `compliance-officer` |
+
 ---
 
 ### End-to-End Tests (Playwright)
@@ -829,6 +898,43 @@ Beim Erstellen eines Evidence-Eintrags (`POST /api/evidence`) analysiert Claude 
 - **Farbige Risk-Bar** (grün / gelb / rot)
 
 dargestellt. Dies ermöglicht dem Auditor eine schnelle visuelle Einschätzung der ESG-Nachrichtenlage je Holding.
+
+---
+
+### MCP Server — ESG Tools (Anforderung 22)
+
+TrueYield exponiert drei ESG-Analyse-Tools über das **Model Context Protocol (MCP)** via Spring AI 1.0.0 (`spring-ai-starter-mcp-server-webmvc`). MCP-kompatible AI-Clients (z. B. Claude Desktop) können sich mit dem Backend verbinden und die Tools direkt aufrufen.
+
+#### SSE-Endpoint
+
+```
+GET https://trueyield-backend.azurewebsites.net/sse
+```
+
+#### Verfügbare Tools
+
+| Tool | Beschreibung | Parameter |
+|---|---|---|
+| `generateEsgRiskSummary` | Concise ESG-Risikozusammenfassung für eine oder mehrere Firmen | `companies` — kommaseparierte Firmennamen |
+| `analyseEsgSentiment` | Sentiment-Score (-1.0 bis +1.0) für einen ESG-Textausschnitt | `text` — Textausschnitt |
+| `fetchEsgNews` | Aktuelle ESG-Nachrichtenartikel über The Guardian API | `company` — Firmenname |
+
+#### Claude Desktop konfigurieren (lokal)
+
+`~/.config/claude/claude_desktop_config.json` (macOS/Linux) bzw. `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "trueyield-esg": {
+      "url": "http://localhost:8080/sse",
+      "transport": "sse"
+    }
+  }
+}
+```
+
+Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 
 ---
 
@@ -896,6 +1002,8 @@ dargestellt. Dies ermöglicht dem Auditor eine schnelle visuelle Einschätzung d
 | Komplexe Abfragen auf der Datenbank | MongoDB Aggregation Pipeline für Audit-Dashboard (gruppiert nach Status pro Portfolio) |
 | Detaillierte Dokumentation auf GitHub | Branches und PR-Workflow im Repo; Issues/Boards/Iterations sind extern und nicht als Artefakt im Repo versioniert |
 | Mehrere Branches sinnvoll verwendet | Jedes Feature in eigenem `feature/issue-<nr>-<titel>`-Branch entwickelt und via Pull Request gemerged |
+| **MCP Server (Anforderung 22)** | Spring AI MCP Server exponiert drei ESG-Analyse-Tools (`generateEsgRiskSummary`, `analyseEsgSentiment`, `fetchEsgNews`) via SSE — verbindbar mit Claude Desktop oder jedem MCP-Client |
+| **Dritte Rolle: Compliance Officer (Anforderung 23)** | Neue RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff auf alle Portfolios, Holdings, Audit-Reports und eigenem Dashboard-Endpoint `GET /api/compliance/overview` |
 
 ---
 
@@ -915,13 +1023,15 @@ sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert w
 **Drittsystem-Integration (Guardian API):** Beim Audit-Start ruft TrueYield automatisch aktuelle
 ESG-Nachrichten pro Holding über die The Guardian API ab und speichert sie als Evidence-Einträge in MongoDB.
 
+**MCP Server (Anforderung 22):** Spring AI 1.0.0 MCP Server (`spring-ai-starter-mcp-server-webmvc`) exponiert drei ESG-Analyse-Tools via SSE-Endpoint `/sse`. MCP-kompatible Clients (Claude Desktop) können sich verbinden und `generateEsgRiskSummary`, `analyseEsgSentiment` und `fetchEsgNews` direkt aufrufen. Konfiguration: `spring.ai.mcp.server.name=trueyield-esg`, `type=SYNC`.
+
+**Compliance Officer (Anforderung 23):** Dritte RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff. Eigener Endpoint `GET /api/compliance/overview` liefert Gesamtstatistik (Portfolios, Holdings, AuditReports nach Status). Alle schreibenden Operationen sind blockiert (403). Frontend-Dashboard unter `/compliance`. Auth0-Rolle `compliance-officer` muss über Post-Login Action in den JWT-Claim `user_roles` injiziert werden (siehe Auth0-Konfiguration).
+
+**Code-Qualität (Prio 3):** `DRAFT`-Status aus `AuditStatus`-Enum entfernt (toter Code — nie erreichbar). SonarCloud-CI-Gate auf `continue-on-error: false` gesetzt — fehlende Qualitätsgates brechen den Build.
+
 **Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf
-PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService und UserService.
-192+ Testmethoden in 17 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
+PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService.
+210+ Testmethoden in 19 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
 und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
 
 **Deployment:** CI/CD Workflow über GitHub Actions ist vorhanden; Docker-Deployment auf Azure App Service ist vorgesehen (Details im Deployment-Abschnitt).
-
-**Nächste Schritte (Backlog):**
-- Issue #51: SonarQube-Integration für statische Code-Analyse
-- E2E-Tests gezielt erweitern (Playwright) für zusätzliche kritische Flows
