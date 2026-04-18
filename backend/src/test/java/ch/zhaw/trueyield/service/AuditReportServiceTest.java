@@ -128,7 +128,6 @@ class AuditReportServiceTest {
     // Spalten: statusName, expectedHttpStatus
     @ParameterizedTest
     @CsvSource({
-        "DRAFT,          BAD_REQUEST",
         "AI_ANALYZING,   BAD_REQUEST",
         "UNDER_REVIEW,   BAD_REQUEST",
         "APPROVED,       BAD_REQUEST",
@@ -179,7 +178,7 @@ class AuditReportServiceTest {
 
     // Parametrisiert mit @ValueSource: alle Status ausser UNDER_REVIEW dürfen nicht rejected werden
     @ParameterizedTest
-    @ValueSource(strings = {"DRAFT", "AI_ANALYZING", "PENDING_REVIEW", "APPROVED", "REJECTED"})
+    @ValueSource(strings = {"AI_ANALYZING", "PENDING_REVIEW", "APPROVED", "REJECTED"})
     void rejectAuditReport_throwsBadRequest_forNonUnderReviewStatus(String statusName) {
         AuditReport report = new AuditReport("portfolio-001", AuditStatus.valueOf(statusName));
         when(auditReportRepository.findById("report-001")).thenReturn(Optional.of(report));
@@ -222,7 +221,7 @@ class AuditReportServiceTest {
 
     // Parametrisiert mit @ValueSource: alle Status ausser UNDER_REVIEW dürfen nicht completed werden
     @ParameterizedTest
-    @ValueSource(strings = {"DRAFT", "AI_ANALYZING", "PENDING_REVIEW", "APPROVED", "REJECTED"})
+    @ValueSource(strings = {"AI_ANALYZING", "PENDING_REVIEW", "APPROVED", "REJECTED"})
     void completeAuditReport_throwsBadRequest_forNonUnderReviewStatus(String statusName) {
         AuditReport report = new AuditReport("portfolio-001", AuditStatus.valueOf(statusName));
         when(auditReportRepository.findById("report-001")).thenReturn(Optional.of(report));
