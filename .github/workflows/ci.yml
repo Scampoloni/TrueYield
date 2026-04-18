@@ -92,8 +92,8 @@ jobs:
             sleep 1
           done
 
-      - name: Run E2E tests (unauthenticated)
-        run: npx cypress run --spec "cypress/e2e/auth.cy.js"
+      - name: Run E2E tests (all specs — authenticated tests skip gracefully without credentials)
+        run: npx cypress run --spec "cypress/e2e/**/*.cy.js"
 
   backend-tests:
     name: Backend Verify + Coverage
