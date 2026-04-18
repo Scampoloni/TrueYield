@@ -1,6 +1,8 @@
 package ch.zhaw.trueyield.controller;
 
+import ch.zhaw.trueyield.model.dto.AuditReportResponseDTO;
 import ch.zhaw.trueyield.model.dto.ComplianceOverviewDTO;
+import ch.zhaw.trueyield.model.dto.PortfolioResponseDTO;
 import ch.zhaw.trueyield.model.dto.SfdrPortfolioScoreDTO;
 import ch.zhaw.trueyield.service.ComplianceService;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/compliance")
@@ -31,5 +34,23 @@ public class ComplianceController {
     @PreAuthorize("hasRole('compliance-officer')")
     public ResponseEntity<List<SfdrPortfolioScoreDTO>> getSfdrScores() {
         return ResponseEntity.ok(complianceService.getSfdrScores());
+    }
+
+    @GetMapping("/portfolios")
+    @PreAuthorize("hasRole('compliance-officer')")
+    public ResponseEntity<List<PortfolioResponseDTO>> getAllPortfolios() {
+        List<PortfolioResponseDTO> result = complianceService.getAllPortfolios().stream()
+                .map(PortfolioResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/reports")
+    @PreAuthorize("hasRole('compliance-officer')")
+    public ResponseEntity<List<AuditReportResponseDTO>> getAllReports() {
+        List<AuditReportResponseDTO> result = complianceService.getAllReports().stream()
+                .map(AuditReportResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(result);
     }
 }

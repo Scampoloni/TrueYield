@@ -55,6 +55,14 @@ public class ComplianceService {
         return new ComplianceOverviewDTO(totalPortfolios, totalHoldings, totalAuditReports, reportsByStatus);
     }
 
+    public List<Portfolio> getAllPortfolios() {
+        return portfolioRepository.findAll();
+    }
+
+    public List<AuditReport> getAllReports() {
+        return auditReportRepository.findAll();
+    }
+
     public List<SfdrPortfolioScoreDTO> getSfdrScores() {
         return portfolioRepository.findAll().stream()
                 .map(this::scorePortfolio)
