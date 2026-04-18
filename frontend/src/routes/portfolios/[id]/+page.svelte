@@ -107,7 +107,9 @@
                 <td>
                   <div class="tbl-acts">
                     <a href={`/portfolios/${id}/holdings/${h.id}`} class="xb xb-blue">View Evidence →</a>
-                    <button class="xb xb-red" onclick={() => deleteHoldingTarget = h}>Delete</button>
+                    {#if isFundManager}
+                      <button class="xb xb-red" onclick={() => deleteHoldingTarget = h}>Delete</button>
+                    {/if}
                   </div>
                 </td>
               </tr>
