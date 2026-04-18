@@ -11,7 +11,7 @@ public class AuditReportAggregationDTO {
 
     private String id;
 
-    private String count;
+    private long count;
 
     private List<String> itemIds;
 }
