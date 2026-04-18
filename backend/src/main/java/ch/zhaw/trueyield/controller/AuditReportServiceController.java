@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/service/auditreport")
@@ -33,68 +32,44 @@ public class AuditReportServiceController {
     @PostMapping
     @PreAuthorize("hasRole('fund-manager')")
     public ResponseEntity<AuditReportResponseDTO> createAuditReport(@Valid @RequestBody AuditReportCreateDTO dto) {
-        try {
-            AuditReport created = auditReportService.createAuditReport(dto);
-            return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(created), HttpStatus.CREATED);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getStatusCode());
-        }
+        AuditReport created = auditReportService.createAuditReport(dto);
+        return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(created), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('fund-manager','auditor','compliance-officer')")
     public ResponseEntity<AuditReportResponseDTO> getAuditReportById(@PathVariable String id) {
-        try {
-            AuditReport report = auditReportService.getAuditReportById(id);
-            return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(report), HttpStatus.OK);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getStatusCode());
-        }
+        AuditReport report = auditReportService.getAuditReportById(id);
+        return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(report), HttpStatus.OK);
     }
 
     @PutMapping("/reject")
     @PreAuthorize("hasRole('auditor')")
     public ResponseEntity<AuditReportResponseDTO> rejectAuditReport(@Valid @RequestBody StateChangeDTO dto) {
-        try {
-            AuditReport updated = auditReportService.rejectAuditReport(dto);
-            return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(updated), HttpStatus.OK);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getStatusCode());
-        }
+        AuditReport updated = auditReportService.rejectAuditReport(dto);
+        return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(updated), HttpStatus.OK);
     }
 
     @PutMapping("/assign")
     @PreAuthorize("hasRole('auditor')")
     public ResponseEntity<AuditReportResponseDTO> assignAuditReport(@Valid @RequestBody StateChangeDTO dto) {
-        try {
-            AuditReport updated = auditReportService.assignAuditReport(dto);
-            return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(updated), HttpStatus.OK);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getStatusCode());
-        }
+        AuditReport updated = auditReportService.assignAuditReport(dto);
+        return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(updated), HttpStatus.OK);
     }
 
     @PutMapping("/complete")
     @PreAuthorize("hasRole('auditor')")
     public ResponseEntity<AuditReportResponseDTO> completeAuditReport(@Valid @RequestBody StateChangeDTO dto) {
-        try {
-            AuditReport updated = auditReportService.completeAuditReport(dto);
-            return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(updated), HttpStatus.OK);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getStatusCode());
-        }
+        AuditReport updated = auditReportService.completeAuditReport(dto);
+        return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(updated), HttpStatus.OK);
     }
 
     @GetMapping("/dashboard")
     @PreAuthorize("hasAnyRole('fund-manager','auditor','compliance-officer')")
     public ResponseEntity<List<AuditReportAggregationDTO>> getDashboard(
             @RequestParam String portfolioId) {
-        try {
-            List<AuditReportAggregationDTO> result =
-                    auditReportService.getAuditReportDashboard(portfolioId);
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getStatusCode());
-        }
+        List<AuditReportAggregationDTO> result =
+                auditReportService.getAuditReportDashboard(portfolioId);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

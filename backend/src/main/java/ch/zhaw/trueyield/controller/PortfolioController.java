@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/portfolio")
@@ -37,13 +36,9 @@ public class PortfolioController {
     @PostMapping
     @PreAuthorize("hasRole('fund-manager')")
     public ResponseEntity<PortfolioResponseDTO> createPortfolio(@Valid @RequestBody PortfolioCreateDTO dto) {
-        try {
-            String fundManagerId = userService.getCurrentUserId();
-            Portfolio created = portfolioService.createPortfolio(dto, fundManagerId);
-            return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(created), HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        String fundManagerId = userService.getCurrentUserId();
+        Portfolio created = portfolioService.createPortfolio(dto, fundManagerId);
+        return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(created), HttpStatus.CREATED);
     }
 
     @GetMapping
@@ -63,15 +58,11 @@ public class PortfolioController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PortfolioResponseDTO> getPortfolioById(@PathVariable String id) {
-        try {
-            Portfolio portfolio =
-                    (userService.userHasRole("auditor") || userService.userHasRole("compliance-officer"))
-                    ? portfolioService.getPortfolioByIdForAuditor(id)
-                    : portfolioService.getPortfolioById(id, userService.getCurrentUserId());
-            return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(portfolio), HttpStatus.OK);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getStatusCode());
-        }
+        Portfolio portfolio =
+                (userService.userHasRole("auditor") || userService.userHasRole("compliance-officer"))
+                ? portfolioService.getPortfolioByIdForAuditor(id)
+                : portfolioService.getPortfolioById(id, userService.getCurrentUserId());
+        return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(portfolio), HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
@@ -79,24 +70,16 @@ public class PortfolioController {
     public ResponseEntity<PortfolioResponseDTO> updatePortfolio(
             @PathVariable String id,
             @RequestBody PortfolioUpdateDTO dto) {
-        try {
-            String fundManagerId = userService.getCurrentUserId();
-            Portfolio updated = portfolioService.updatePortfolio(id, dto, fundManagerId);
-            return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(updated), HttpStatus.OK);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getStatusCode());
-        }
+        String fundManagerId = userService.getCurrentUserId();
+        Portfolio updated = portfolioService.updatePortfolio(id, dto, fundManagerId);
+        return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(updated), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('fund-manager')")
     public ResponseEntity<Void> deletePortfolio(@PathVariable String id) {
-        try {
-            String fundManagerId = userService.getCurrentUserId();
-            portfolioService.deletePortfolio(id, fundManagerId);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getStatusCode());
-        }
+        String fundManagerId = userService.getCurrentUserId();
+        portfolioService.deletePortfolio(id, fundManagerId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

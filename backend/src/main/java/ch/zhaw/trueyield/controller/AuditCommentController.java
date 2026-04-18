@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,12 +43,8 @@ public class AuditCommentController {
     @PostMapping
     @PreAuthorize("hasRole('auditor')")
     public ResponseEntity<AuditCommentResponseDTO> createComment(@Valid @RequestBody AuditCommentCreateDTO dto) {
-        try {
-            String auditorId = userService.getCurrentUserId();
-            AuditComment created = auditCommentService.createComment(dto, auditorId);
-            return new ResponseEntity<>(AuditCommentResponseDTO.fromEntity(created), HttpStatus.CREATED);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getStatusCode());
-        }
+        String auditorId = userService.getCurrentUserId();
+        AuditComment created = auditCommentService.createComment(dto, auditorId);
+        return new ResponseEntity<>(AuditCommentResponseDTO.fromEntity(created), HttpStatus.CREATED);
     }
 }

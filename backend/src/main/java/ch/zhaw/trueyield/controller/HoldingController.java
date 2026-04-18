@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,22 +40,14 @@ public class HoldingController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('fund-manager')")
     public ResponseEntity<Void> deleteHolding(@PathVariable String id) {
-        try {
-            holdingService.deleteHolding(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getStatusCode());
-        }
+        holdingService.deleteHolding(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('fund-manager')")
     public ResponseEntity<HoldingResponseDTO> createHolding(@Valid @RequestBody HoldingCreateDTO dto) {
-        try {
-            Holding created = holdingService.createHolding(dto);
-            return new ResponseEntity<>(HoldingResponseDTO.fromEntity(created), HttpStatus.CREATED);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getStatusCode());
-        }
+        Holding created = holdingService.createHolding(dto);
+        return new ResponseEntity<>(HoldingResponseDTO.fromEntity(created), HttpStatus.CREATED);
     }
 }
