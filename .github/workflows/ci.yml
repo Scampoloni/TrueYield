@@ -25,7 +25,7 @@ jobs:
       API_BASE_URL: "http://localhost:8080"
       AUTH0_DOMAIN: "example.auth0.com"
       AUTH0_CLIENT_ID: "ci-placeholder-client-id"
-      AUTH0_AUDIENCE: "https://trueyield-api"
+      AUTH0_AUDIENCE: "https://trueyield.api"
 
     steps:
       - name: Checkout
