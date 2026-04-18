@@ -34,6 +34,9 @@ public class AccessControlService {
     private EvidenceRepository evidenceRepository;
 
     public void requirePortfolioAccess(String portfolioId) {
+        if (userService.userHasRole("compliance-officer")) {
+            return;
+        }
         if (userService.userHasRole("auditor")) {
             String auditorId = userService.getCurrentUserId();
             if (!auditorCanAccessPortfolio(portfolioId, auditorId)) {
@@ -45,7 +48,7 @@ public class AccessControlService {
     }
 
     public void requireFundManagerPortfolioAccess(String portfolioId) {
-        if (userService.userHasRole("auditor")) {
+        if (userService.userHasRole("auditor") || userService.userHasRole("compliance-officer")) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
         portfolioService.getPortfolioById(portfolioId, userService.getCurrentUserId());
@@ -66,6 +69,9 @@ public class AccessControlService {
     }
 
     public void requireAuditReportAccess(AuditReport report) {
+        if (userService.userHasRole("compliance-officer")) {
+            return;
+        }
         if (userService.userHasRole("auditor")) {
             String auditorId = userService.getCurrentUserId();
             if (report.getAuditStatus() == AuditStatus.PENDING_REVIEW) {

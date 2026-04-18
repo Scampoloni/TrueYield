@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 // ── Redirect: all protected routes → /login ──────────────────────────────────
 
-const PROTECTED_ROUTES = ['/', '/portfolios', '/holdings', '/audit', '/account'];
+const PROTECTED_ROUTES = ['/', '/portfolios', '/holdings', '/audit', '/account', '/compliance'];
 
 for (const route of PROTECTED_ROUTES) {
   test(`unauthenticated: ${route} redirects to /login`, async ({ page }) => {
