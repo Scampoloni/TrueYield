@@ -875,15 +875,17 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 
 ---
 
-### End-to-End Tests (Playwright)
+### End-to-End Tests (Cypress)
 
-Im Frontend liegen minimale E2E-Tests unter `frontend/tests/e2e`, die Login- und Redirect-Flows prüfen.
+Im Frontend liegen minimale E2E-Tests unter `frontend/cypress/e2e`, die Login- und Redirect-Flows prüfen.
 
 Ausführung:
 - `cd frontend`
+- `npm run dev` (separates Terminal)
 - `npm run test:e2e`
 
-Standardmässig erwartet Playwright die App unter `http://localhost:5173`. Alternativ kann `E2E_BASE_URL` gesetzt werden.
+Standardmaessig erwartet Cypress die App unter `http://localhost:5173`. Alternativ kann `E2E_BASE_URL` gesetzt werden.
+Authentifizierte Tests nutzen optional `E2E_TEST_EMAIL` und `E2E_TEST_PASSWORD`.
 
 ### KI-Integration (Spring AI)
 
