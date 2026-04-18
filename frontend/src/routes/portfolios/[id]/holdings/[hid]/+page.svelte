@@ -8,6 +8,7 @@
 
   let evidence: any[] = $state([]);
   let loading = $state(true);
+  let deleting = $state<string | null>(null);
 
   onMount(async () => {
     try {
@@ -20,6 +21,19 @@
       loading = false;
     }
   });
+
+  async function deleteEvidence(id: string) {
+    if (!confirm('Delete this evidence entry?')) return;
+    deleting = id;
+    try {
+      const res = await fetch(`/api/evidence/${id}`, { method: 'DELETE' });
+      if (res.ok || res.status === 204) {
+        evidence = evidence.filter(e => e.id !== id);
+      }
+    } finally {
+      deleting = null;
+    }
+  }
 
   function riskClass(score: number): string {
     if (score > 0.3) return 'low';
@@ -83,7 +97,19 @@
           <div class="risk-bar">
             <div class="risk-fill {riskClass((5 - e.riskScore) / 5)}" style="width:{Math.round((e.riskScore / 10) * 100)}%"></div>
           </div>
-          <span class="badge {e.sentiment === 'POSITIVE' ? 'badge-approved' : e.sentiment === 'NEUTRAL' ? 'badge-pending' : 'badge-rejected'}">{e.sentiment}</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+            <span class="badge {e.sentiment === 'POSITIVE' ? 'badge-approved' : e.sentiment === 'NEUTRAL' ? 'badge-pending' : 'badge-rejected'}">{e.sentiment}</span>
+            {#if isFundManager}
+              <button
+                class="btn-delete"
+                disabled={deleting === e.id}
+                onclick={() => deleteEvidence(e.id)}
+                aria-label="Delete evidence"
+              >
+                {deleting === e.id ? '…' : '🗑'}
+              </button>
+            {/if}
+          </div>
         </div>
       {/each}
     </div>
@@ -109,5 +135,22 @@
   }
   .evidence-link:hover {
     background: rgba(59,130,246,0.22);
+  }
+  .btn-delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    opacity: 0.6;
+    transition: opacity 0.15s, background 0.15s;
+  }
+  .btn-delete:hover:not(:disabled) {
+    opacity: 1;
+    background: rgba(239,68,68,0.15);
+  }
+  .btn-delete:disabled {
+    cursor: not-allowed;
   }
 </style>
