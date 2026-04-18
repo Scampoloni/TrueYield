@@ -201,8 +201,8 @@ class AiAnalysisServiceTest {
     // ── Helper ───────────────────────────────────────────────────────────────
 
     private ChatResponse mockChatResponse(String text) {
-        AssistantMessage message = mock(AssistantMessage.class);
-        when(message.getText()).thenReturn(text);
+        // AssistantMessage.getText() is final in Spring AI — use a real instance
+        AssistantMessage message = new AssistantMessage(text);
         Generation generation = mock(Generation.class);
         when(generation.getOutput()).thenReturn(message);
         ChatResponse response = mock(ChatResponse.class);
