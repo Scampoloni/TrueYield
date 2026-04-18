@@ -1,5 +1,6 @@
 package ch.zhaw.trueyield.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import ch.zhaw.trueyield.model.AuditReport;
@@ -47,6 +48,7 @@ public class AuditReportService {
     public AuditReport createAuditReport(AuditReportCreateDTO dto) {
         accessControlService.requireFundManagerPortfolioAccess(dto.getPortfolioId());
         AuditReport report = new AuditReport(dto.getPortfolioId(), AuditStatus.AI_ANALYZING);
+        report.setCreatedAt(LocalDateTime.now());
         report = auditReportRepository.save(report);
 
         List<Holding> holdings;
