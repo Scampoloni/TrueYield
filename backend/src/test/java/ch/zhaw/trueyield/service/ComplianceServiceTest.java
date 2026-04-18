@@ -1,13 +1,21 @@
 package ch.zhaw.trueyield.service;
 
 import ch.zhaw.trueyield.model.AuditReport;
+import ch.zhaw.trueyield.model.Evidence;
+import ch.zhaw.trueyield.model.Holding;
+import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.ComplianceOverviewDTO;
+import ch.zhaw.trueyield.model.dto.SfdrPortfolioScoreDTO;
 import ch.zhaw.trueyield.model.enums.AuditStatus;
+import ch.zhaw.trueyield.model.enums.SfdrClassification;
 import ch.zhaw.trueyield.repository.AuditReportRepository;
+import ch.zhaw.trueyield.repository.EvidenceRepository;
 import ch.zhaw.trueyield.repository.HoldingRepository;
 import ch.zhaw.trueyield.repository.PortfolioRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,6 +36,9 @@ class ComplianceServiceTest {
 
     @Mock
     private AuditReportRepository auditReportRepository;
+
+    @Mock
+    private EvidenceRepository evidenceRepository;
 
     @InjectMocks
     private ComplianceService complianceService;
@@ -107,9 +118,94 @@ class ComplianceServiceTest {
         verify(auditReportRepository, times(1)).findAll();
     }
 
+    // ── getSfdrScores ────────────────────────────────────────────────────────
+
+    @Test
+    void getSfdrScores_returnsInsufficientData_whenNoEvidence() {
+        Portfolio p = makePortfolio("p1", "Green Fund");
+        Holding h = makeHolding("h1", "p1");
+        when(portfolioRepository.findAll()).thenReturn(List.of(p));
+        when(holdingRepository.findByPortfolioId("p1")).thenReturn(List.of(h));
+        when(evidenceRepository.findByHoldingId("h1")).thenReturn(List.of());
+
+        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+
+        assertEquals(1, scores.size());
+        assertEquals(SfdrClassification.INSUFFICIENT_DATA, scores.get(0).classification());
+        assertEquals(0, scores.get(0).evidenceCount());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "0.5,  ARTICLE_9",
+        "0.31, ARTICLE_9",
+        "0.1,  ARTICLE_8",
+        "-0.09, ARTICLE_8",
+        "-0.2,  NON_SFDR",
+        "-1.0,  NON_SFDR"
+    })
+    void getSfdrScores_classifiesCorrectly(double sentiment, SfdrClassification expected) {
+        Portfolio p = makePortfolio("p1", "Test Fund");
+        Holding h = makeHolding("h1", "p1");
+        Evidence e = makeEvidence("h1", sentiment);
+        when(portfolioRepository.findAll()).thenReturn(List.of(p));
+        when(holdingRepository.findByPortfolioId("p1")).thenReturn(List.of(h));
+        when(evidenceRepository.findByHoldingId("h1")).thenReturn(List.of(e));
+
+        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+
+        assertEquals(expected, scores.get(0).classification());
+        assertEquals(1, scores.get(0).evidenceCount());
+    }
+
+    @Test
+    void getSfdrScores_aggregatesAcrossMultipleHoldings() {
+        Portfolio p = makePortfolio("p1", "Multi Fund");
+        Holding h1 = makeHolding("h1", "p1");
+        Holding h2 = makeHolding("h2", "p1");
+        when(portfolioRepository.findAll()).thenReturn(List.of(p));
+        when(holdingRepository.findByPortfolioId("p1")).thenReturn(List.of(h1, h2));
+        when(evidenceRepository.findByHoldingId("h1")).thenReturn(List.of(makeEvidence("h1", 0.4)));
+        when(evidenceRepository.findByHoldingId("h2")).thenReturn(List.of(makeEvidence("h2", -0.2)));
+
+        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+
+        assertEquals(2, scores.get(0).evidenceCount());
+        assertEquals(SfdrClassification.ARTICLE_8, scores.get(0).classification()); // avg = 0.1
+    }
+
+    @Test
+    void getSfdrScores_returnsEmptyList_whenNoPortfolios() {
+        when(portfolioRepository.findAll()).thenReturn(List.of());
+
+        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+
+        assertTrue(scores.isEmpty());
+    }
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
     private AuditReport makeReport(AuditStatus status) {
         AuditReport report = new AuditReport("portfolio-001", status);
         report.setId("report-" + status.name().toLowerCase());
         return report;
+    }
+
+    private Portfolio makePortfolio(String id, String name) {
+        Portfolio p = new Portfolio(name, "fm-1");
+        p.setId(id);
+        return p;
+    }
+
+    private Holding makeHolding(String id, String portfolioId) {
+        Holding h = new Holding(portfolioId, "SYM");
+        h.setId(id);
+        return h;
+    }
+
+    private Evidence makeEvidence(String holdingId, double sentiment) {
+        Evidence e = new Evidence(holdingId);
+        e.setAiSentimentScore(sentiment);
+        return e;
     }
 }
