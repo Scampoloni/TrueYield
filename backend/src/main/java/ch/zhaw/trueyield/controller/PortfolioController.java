@@ -50,7 +50,8 @@ public class PortfolioController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PortfolioResponseDTO>> getAllPortfolios() {
         String userId = userService.getCurrentUserId();
-        List<Portfolio> portfolios = userService.userHasRole("auditor")
+        List<Portfolio> portfolios =
+                (userService.userHasRole("auditor") || userService.userHasRole("compliance-officer"))
                 ? portfolioService.getAllPortfolios()
                 : portfolioService.getAllPortfoliosByFundManager(userId);
         List<PortfolioResponseDTO> response = portfolios.stream()
@@ -63,7 +64,8 @@ public class PortfolioController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PortfolioResponseDTO> getPortfolioById(@PathVariable String id) {
         try {
-            Portfolio portfolio = userService.userHasRole("auditor")
+            Portfolio portfolio =
+                    (userService.userHasRole("auditor") || userService.userHasRole("compliance-officer"))
                     ? portfolioService.getPortfolioByIdForAuditor(id)
                     : portfolioService.getPortfolioById(id, userService.getCurrentUserId());
             return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(portfolio), HttpStatus.OK);
