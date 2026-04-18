@@ -1,12 +1,15 @@
 package ch.zhaw.trueyield.controller;
 
 import ch.zhaw.trueyield.model.dto.ComplianceOverviewDTO;
+import ch.zhaw.trueyield.model.dto.SfdrPortfolioScoreDTO;
 import ch.zhaw.trueyield.service.ComplianceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/compliance")
@@ -22,5 +25,11 @@ public class ComplianceController {
     @PreAuthorize("hasRole('compliance-officer')")
     public ResponseEntity<ComplianceOverviewDTO> getOverview() {
         return ResponseEntity.ok(complianceService.getOverview());
+    }
+
+    @GetMapping("/sfdr")
+    @PreAuthorize("hasRole('compliance-officer')")
+    public ResponseEntity<List<SfdrPortfolioScoreDTO>> getSfdrScores() {
+        return ResponseEntity.ok(complianceService.getSfdrScores());
     }
 }

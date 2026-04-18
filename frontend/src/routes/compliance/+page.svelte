@@ -13,7 +13,16 @@
     reportsByStatus: Record<string, number>;
   }
 
+  interface SfdrScore {
+    portfolioId: string;
+    portfolioName: string;
+    classification: 'ARTICLE_9' | 'ARTICLE_8' | 'NON_SFDR' | 'INSUFFICIENT_DATA';
+    averageSentiment: number;
+    evidenceCount: number;
+  }
+
   let overview: ComplianceOverview | null = $state(null);
+  let sfdrScores: SfdrScore[] = $state([]);
   let loading = $state(true);
   let error = $state('');
 
@@ -33,6 +42,20 @@
     REJECTED: 'badge-rejected'
   };
 
+  const SFDR_LABELS: Record<string, string> = {
+    ARTICLE_9: 'Art. 9',
+    ARTICLE_8: 'Art. 8',
+    NON_SFDR: 'Non-SFDR',
+    INSUFFICIENT_DATA: 'No Data'
+  };
+
+  const SFDR_COLORS: Record<string, string> = {
+    ARTICLE_9: 'badge-approved',
+    ARTICLE_8: 'badge-under-review',
+    NON_SFDR: 'badge-rejected',
+    INSUFFICIENT_DATA: 'badge-pending'
+  };
+
   onMount(async () => {
     if (!isComplianceOfficer) {
       error = 'Access denied. This page requires the compliance-officer role.';
@@ -40,9 +63,13 @@
       return;
     }
     try {
-      const res = await fetch('/api/compliance/overview', { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      overview = await res.json();
+      const [overviewRes, sfdrRes] = await Promise.all([
+        fetch('/api/compliance/overview', { cache: 'no-store' }),
+        fetch('/api/compliance/sfdr', { cache: 'no-store' })
+      ]);
+      if (!overviewRes.ok) throw new Error(`HTTP ${overviewRes.status}`);
+      overview = await overviewRes.json();
+      if (sfdrRes.ok) sfdrScores = await sfdrRes.json();
     } catch (e) {
       error = 'Could not load compliance overview. Make sure the backend is running.';
     } finally {
@@ -149,5 +176,61 @@
         </tbody>
       </table>
     </div>
+
+    {#if sfdrScores.length > 0}
+      <div class="sec-head" style="margin-top:2rem;">
+        <span class="sec-name">SFDR Classification by Portfolio</span>
+        <span class="sec-meta" style="font-size:11px;color:var(--text-muted);">Based on AI sentiment scores across Evidence entries</span>
+      </div>
+      <div class="glass-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Portfolio</th>
+              <th>SFDR Class</th>
+              <th class="text-right">Avg Sentiment</th>
+              <th class="text-right">Evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each sfdrScores as s}
+              <tr>
+                <td><strong>{s.portfolioName}</strong></td>
+                <td>
+                  <span class="badge {SFDR_COLORS[s.classification]}">
+                    {SFDR_LABELS[s.classification]}
+                  </span>
+                </td>
+                <td class="text-right" style="font-variant-numeric:tabular-nums;">
+                  {s.classification === 'INSUFFICIENT_DATA' ? '—' : s.averageSentiment.toFixed(3)}
+                </td>
+                <td class="text-right">{s.evidenceCount}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+      <div class="sfdr-legend">
+        <span><span class="badge badge-approved">Art. 9</span> avg &gt; 0.3 — sustainable investment objective</span>
+        <span><span class="badge badge-under-review">Art. 8</span> avg &gt; −0.1 — promotes ESG characteristics</span>
+        <span><span class="badge badge-rejected">Non-SFDR</span> avg ≤ −0.1 — predominant ESG risk signal</span>
+      </div>
+    {/if}
   {/if}
 </div>
+
+<style>
+  .sfdr-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    font-size: 11px;
+    color: var(--text-muted, #94a3b8);
+  }
+  .sfdr-legend span {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+</style>
