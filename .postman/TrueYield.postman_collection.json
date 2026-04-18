@@ -1,0 +1,417 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "TrueYield API",
+    "description": "Complete API documentation for TrueYield — KI-gestützte ESG-Verifikationsplattform.\n\n**Setup:**\n1. Set the `baseUrl` variable to your backend URL (default: http://localhost:8080)\n2. Log in via your frontend and copy the JWT from the `jwt_token` cookie into `bearerToken`\n\n**Roles:**\n- `fund-manager`: can manage portfolios, holdings, evidence, create audit reports\n- `auditor`: can assign, complete and reject audit reports, add audit comments",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "description": "Backend base URL. For production: https://trueyield-backend.azurewebsites.net"
+    },
+    {
+      "key": "bearerToken",
+      "value": "<your-jwt-token>",
+      "description": "Auth0 JWT access token. Obtain by logging in via the frontend and copying the jwt_token cookie."
+    }
+  ],
+  "item": [
+    {
+      "name": "Portfolio",
+      "description": "Manage investment portfolios. Fund Managers can create, update, and delete their own portfolios. Auditors have read-only access to all portfolios.",
+      "item": [
+        {
+          "name": "Create Portfolio",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Clean Energy Europe 2026\",\n  \"description\": \"Diversified ESG fund focused on renewable energy companies in the EU.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolio",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolio"]
+            },
+            "description": "Creates a new portfolio owned by the authenticated Fund Manager.\n\n**Role required:** `fund-manager`\n\n**Returns:** 201 Created with the created portfolio object."
+          }
+        },
+        {
+          "name": "Get All Portfolios",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolio",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolio"]
+            },
+            "description": "Returns portfolios scoped to the caller's role:\n- `fund-manager`: only their own portfolios\n- `auditor`: all portfolios\n\n**Role required:** any authenticated user"
+          }
+        },
+        {
+          "name": "Get Portfolio by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolio/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolio", ":id"],
+              "variable": [{ "key": "id", "value": "<portfolio-id>" }]
+            },
+            "description": "Returns a single portfolio.\n\n**Role required:** any authenticated user\n\n**Returns:** 200 OK, 403 Forbidden (wrong owner), 404 Not Found"
+          }
+        },
+        {
+          "name": "Update Portfolio",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Clean Energy Europe 2027\",\n  \"description\": \"Updated strategy focusing on hydrogen and offshore wind.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolio/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolio", ":id"],
+              "variable": [{ "key": "id", "value": "<portfolio-id>" }]
+            },
+            "description": "Updates name and description. Only the owning Fund Manager may update.\n\n**Role required:** `fund-manager`\n\n**Returns:** 200 OK, 403 Forbidden, 404 Not Found"
+          }
+        },
+        {
+          "name": "Delete Portfolio",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolio/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "portfolio", ":id"],
+              "variable": [{ "key": "id", "value": "<portfolio-id>" }]
+            },
+            "description": "Deletes a portfolio. Only the owning Fund Manager may delete.\n\n**Role required:** `fund-manager`\n\n**Returns:** 204 No Content, 403 Forbidden, 404 Not Found"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Holding",
+      "description": "Manage holdings (individual securities) within a portfolio.",
+      "item": [
+        {
+          "name": "Add Holding",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioId\": \"<portfolio-id>\",\n  \"symbol\": \"AAPL\",\n  \"name\": \"Apple Inc.\",\n  \"isin\": \"US0378331005\",\n  \"weight\": 5.5\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/holding",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "holding"]
+            },
+            "description": "Adds a holding to a portfolio. The caller must own the portfolio.\n\n**Role required:** `fund-manager`\n\n**Returns:** 201 Created, 400 Bad Request, 403 Forbidden"
+          }
+        },
+        {
+          "name": "Get Holdings by Portfolio",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/holding?portfolioId=<portfolio-id>",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "holding"],
+              "query": [{ "key": "portfolioId", "value": "<portfolio-id>" }]
+            },
+            "description": "Returns all holdings for a given portfolio.\n\n**Role required:** any authenticated user\n\n**Returns:** 200 OK with array of holdings"
+          }
+        },
+        {
+          "name": "Delete Holding",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/holding/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "holding", ":id"],
+              "variable": [{ "key": "id", "value": "<holding-id>" }]
+            },
+            "description": "Deletes a holding. Caller must own the parent portfolio.\n\n**Role required:** `fund-manager`\n\n**Returns:** 204 No Content, 403 Forbidden, 404 Not Found"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Evidence",
+      "description": "Manage evidence items (news articles) linked to holdings. AI-generated sentiment score is computed on creation.",
+      "item": [
+        {
+          "name": "Create Evidence",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"holdingId\": \"<holding-id>\",\n  \"sourceUrl\": \"https://theguardian.com/article/example\",\n  \"contentSnippet\": \"Apple Inc. pledges carbon neutrality across entire supply chain by 2030, exceeding SFDR Article 9 requirements.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/evidence",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "evidence"]
+            },
+            "description": "Creates an evidence entry. Claude Haiku analyses the `contentSnippet` and stores an `aiSentimentScore` between -1.0 (negative ESG) and +1.0 (positive ESG).\n\n**Role required:** any authenticated user with access to the holding's portfolio\n\n**Returns:** 201 Created with sentiment score"
+          }
+        },
+        {
+          "name": "Get Evidence by Holding",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/evidence?holdingId=<holding-id>",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "evidence"],
+              "query": [{ "key": "holdingId", "value": "<holding-id>" }]
+            },
+            "description": "Returns all evidence items for a given holding.\n\n**Role required:** any authenticated user\n\n**Returns:** 200 OK with array of evidence items including aiSentimentScore"
+          }
+        },
+        {
+          "name": "Get Evidence by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/evidence/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "evidence", ":id"],
+              "variable": [{ "key": "id", "value": "<evidence-id>" }]
+            },
+            "description": "Returns a single evidence item.\n\n**Role required:** any authenticated user\n\n**Returns:** 200 OK, 404 Not Found"
+          }
+        },
+        {
+          "name": "Delete Evidence",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/evidence/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "evidence", ":id"],
+              "variable": [{ "key": "id", "value": "<evidence-id>" }]
+            },
+            "description": "Deletes an evidence item. Caller must have access to the holding's portfolio.\n\n**Role required:** `fund-manager`\n\n**Returns:** 204 No Content, 403 Forbidden, 404 Not Found"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit Report",
+      "description": "Manage the ESG audit workflow. State machine: AI_ANALYZING → PENDING_REVIEW → UNDER_REVIEW → APPROVED | REJECTED",
+      "item": [
+        {
+          "name": "Create Audit Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioId\": \"<portfolio-id>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/service/auditreport",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "service", "auditreport"]
+            },
+            "description": "Creates an audit report for a portfolio.\n\n1. Status starts as `AI_ANALYZING`\n2. The Guardian API fetches news for all holdings\n3. Claude Haiku generates an ESG risk summary\n4. Status transitions to `PENDING_REVIEW`\n\n**Role required:** `fund-manager`\n\n**Returns:** 201 Created, 400 Bad Request (portfolio not found or wrong owner)"
+          }
+        },
+        {
+          "name": "Get Audit Report by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/service/auditreport/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "service", "auditreport", ":id"],
+              "variable": [{ "key": "id", "value": "<audit-report-id>" }]
+            },
+            "description": "Returns a single audit report including `aiRiskSummary`, `auditStatus`, and `auditorId`.\n\n**Role required:** `fund-manager` (own portfolio) or `auditor`\n\n**Returns:** 200 OK, 403 Forbidden, 404 Not Found"
+          }
+        },
+        {
+          "name": "Assign Audit Report (PENDING → UNDER_REVIEW)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auditReportId\": \"<audit-report-id>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/service/auditreport/assign",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "service", "auditreport", "assign"]
+            },
+            "description": "Assigns the audit report to the calling auditor. Transitions status from `PENDING_REVIEW` to `UNDER_REVIEW`.\n\n**Role required:** `auditor`\n\n**Returns:** 200 OK, 400 Bad Request (wrong status)"
+          }
+        },
+        {
+          "name": "Complete Audit Report (UNDER_REVIEW → APPROVED)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auditReportId\": \"<audit-report-id>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/service/auditreport/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "service", "auditreport", "complete"]
+            },
+            "description": "Approves the audit. Only the assigned auditor can complete the report. Transitions from `UNDER_REVIEW` to `APPROVED`.\n\n**Role required:** `auditor` (must be assigned auditor)\n\n**Returns:** 200 OK, 400 Bad Request (wrong status or wrong auditor)"
+          }
+        },
+        {
+          "name": "Reject Audit Report (UNDER_REVIEW → REJECTED)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auditReportId\": \"<audit-report-id>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/service/auditreport/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "service", "auditreport", "reject"]
+            },
+            "description": "Rejects the audit. Only the assigned auditor can reject the report. Transitions from `UNDER_REVIEW` to `REJECTED`.\n\n**Role required:** `auditor` (must be assigned auditor)\n\n**Returns:** 200 OK, 400 Bad Request (wrong status or wrong auditor)"
+          }
+        },
+        {
+          "name": "Get Audit Dashboard (Aggregation)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/service/auditreport/dashboard?portfolioId=<portfolio-id>",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "service", "auditreport", "dashboard"],
+              "query": [{ "key": "portfolioId", "value": "<portfolio-id>" }]
+            },
+            "description": "Returns aggregated audit report counts grouped by status for a given portfolio. Uses a MongoDB aggregation pipeline.\n\nExample response:\n```json\n[\n  { \"id\": \"PENDING_REVIEW\", \"count\": 2, \"itemIds\": [\"...\"] },\n  { \"id\": \"APPROVED\", \"count\": 1, \"itemIds\": [\"...\"] }\n]\n```\n\n**Role required:** `fund-manager` or `auditor`\n\n**Returns:** 200 OK, 400 Bad Request (portfolio not found)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit Comment",
+      "description": "Auditor comments on audit reports. Comments are immutable after creation.",
+      "item": [
+        {
+          "name": "Add Audit Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auditReportId\": \"<audit-report-id>\",\n  \"comment\": \"Reviewed all 5 holdings. Tesla and Shell show elevated ESG risk based on recent Guardian articles. Recommend rejection pending remediation plan from fund manager.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/service/auditcomment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "service", "auditcomment"]
+            },
+            "description": "Adds a comment to an audit report. Only the assigned auditor may comment.\n\n**Role required:** `auditor`\n\n**Returns:** 201 Created, 400 Bad Request (report not found), 403 Forbidden"
+          }
+        },
+        {
+          "name": "Get Comments by Audit Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/service/auditcomment?auditReportId=<audit-report-id>",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "service", "auditcomment"],
+              "query": [{ "key": "auditReportId", "value": "<audit-report-id>" }]
+            },
+            "description": "Returns all comments for a given audit report.\n\n**Role required:** any authenticated user with access to the report\n\n**Returns:** 200 OK with array of comments"
+          }
+        }
+      ]
+    }
+  ]
+}
