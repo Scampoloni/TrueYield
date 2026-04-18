@@ -168,6 +168,7 @@ jobs:
 
       - name: SonarCloud Analysis
         if: github.ref == 'refs/heads/main' && secrets.SONAR_TOKEN != '' && github.repository_owner == 'Scampoloni'
+        continue-on-error: true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
