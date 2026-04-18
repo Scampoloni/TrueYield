@@ -344,6 +344,10 @@
 </div>
 
 <style>
+  /* Ensure right-aligned columns work on both th and td */
+  :global(th.text-right) {
+    text-align: right;
+  }
   .tab-bar {
     display: flex;
     gap: 4px;

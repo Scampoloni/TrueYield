@@ -165,11 +165,13 @@
       <div class="page-subtitle">{portfolioName || report.portfolioId}</div>
     </div>
     <div class="topbar-actions">
-      {#if report.auditStatus === 'PENDING_REVIEW'}
-        <button class="btn btn-primary" onclick={assignReport}>Assign to me</button>
-      {:else if report.auditStatus === 'UNDER_REVIEW'}
-        <button class="btn btn-success" onclick={() => showApproveModal = true}>Approve</button>
-        <button class="btn btn-danger"  onclick={() => showRejectModal = true}>Reject</button>
+      {#if isAuditor}
+        {#if report.auditStatus === 'PENDING_REVIEW'}
+          <button class="btn btn-primary" onclick={assignReport}>Assign to me</button>
+        {:else if report.auditStatus === 'UNDER_REVIEW'}
+          <button class="btn btn-success" onclick={() => showApproveModal = true}>Approve</button>
+          <button class="btn btn-danger"  onclick={() => showRejectModal = true}>Reject</button>
+        {/if}
       {/if}
     </div>
   </div>

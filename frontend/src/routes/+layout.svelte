@@ -51,15 +51,27 @@
     <nav class="nav">
       <div class="nav-group">
         <div class="nav-cat">Overview</div>
-        <a href="/" class="nav-a" class:on={page.url.pathname === '/'}>
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="1" y="1" width="6" height="6" rx="1.5"/>
-            <rect x="9" y="1" width="6" height="6" rx="1.5"/>
-            <rect x="1" y="9" width="6" height="6" rx="1.5"/>
-            <rect x="9" y="9" width="6" height="6" rx="1.5"/>
-          </svg>
-          Dashboard
-        </a>
+        {#if isComplianceOfficer}
+          <a href="/compliance" class="nav-a" class:on={isActive('/compliance')}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="1" y="1" width="6" height="6" rx="1.5"/>
+              <rect x="9" y="1" width="6" height="6" rx="1.5"/>
+              <rect x="1" y="9" width="6" height="6" rx="1.5"/>
+              <rect x="9" y="9" width="6" height="6" rx="1.5"/>
+            </svg>
+            Dashboard
+          </a>
+        {:else}
+          <a href="/" class="nav-a" class:on={page.url.pathname === '/'}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="1" y="1" width="6" height="6" rx="1.5"/>
+              <rect x="9" y="1" width="6" height="6" rx="1.5"/>
+              <rect x="1" y="9" width="6" height="6" rx="1.5"/>
+              <rect x="9" y="9" width="6" height="6" rx="1.5"/>
+            </svg>
+            Dashboard
+          </a>
+        {/if}
       </div>
 
       {#if isFundManager}
@@ -93,18 +105,6 @@
       </div>
       {/if}
 
-      {#if isComplianceOfficer}
-      <div class="nav-group">
-        <div class="nav-cat">Compliance</div>
-        <a href="/compliance" class="nav-a" class:on={isActive('/compliance')}>
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="2" y="1.5" width="12" height="13" rx="1.5"/>
-            <path d="M5 5.5h6M5 8h6M5 10.5h4"/>
-          </svg>
-          Overview
-        </a>
-      </div>
-      {/if}
 
       <div class="nav-group">
         <div class="nav-cat">Settings</div>
