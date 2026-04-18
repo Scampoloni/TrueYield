@@ -14,7 +14,14 @@ Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch ge
 
 ## Deployment
 
-Deployment ist vorbereitet (Docker + GitHub Actions). Die untenstehenden URLs sind Ziel-Endpoints; Verfügbarkeit und erfolgreiche Runs sind in diesem Repo nicht als Log-/Screenshot-Artefakte abgelegt.
+Deployment ist vorbereitet (Docker + GitHub Actions). Erfolgreiche Runs sind als GitHub Actions Screenshots dokumentiert.
+
+**Deployment-Logs (GitHub Actions, 2026-04-18):**
+- Run Overview: ![CD Run Overview](doc/deployment/deploy-2026-04-18-gh-actions-run-overview.png)
+- Backend Build & Push: ![Backend Build](doc/deployment/deploy-2026-04-18-gh-actions-backend-build.png)
+- Backend Deploy: ![Backend Deploy](doc/deployment/deploy-2026-04-18-gh-actions-backend-deploy.png)
+- Frontend Build & Push: ![Frontend Build](doc/deployment/deploy-2026-04-18-gh-actions-frontend-build.png)
+- Frontend Deploy: ![Frontend Deploy](doc/deployment/deploy-2026-04-18-gh-actions-frontend-deploy.png)
 
 | Service | URL |
 |---------|-----|
@@ -655,7 +662,7 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | Fund Manager |
 | **Vorbedingung** | Fund Manager ist eingeloggt (UC-01). Mindestens ein Portfolio mit Holdings existiert. |
-| **Normalablauf** | 1. Fund Manager wählt ein Portfolio aus. 2. Fund Manager löst die ESG-Prüfung aus. 3. System erstellt einen `AuditReport` mit Status `PENDING_REVIEW`. 4. System (KI/API) ruft automatisch Marktdaten und News zu den Holdings ab (UC-07). 5. System generiert Risiko-Score und KI-Zusammenfassung (UC-08). 6. System speichert Evidence-Einträge pro Holding (UC-09). 7. AuditReport ist in der globalen Audit-Queue sichtbar. |
+| **Normalablauf** | 1. Fund Manager wählt ein Portfolio aus. 2. Fund Manager löst die ESG-Prüfung aus. 3. System erstellt einen `AuditReport` mit Status `AI_ANALYZING`. 4. System (KI/API) ruft automatisch Marktdaten und News zu den Holdings ab (UC-07). 5. System generiert Risiko-Score und KI-Zusammenfassung (UC-08). 6. System speichert Evidence-Einträge pro Holding (UC-09). 7. System setzt den Status auf `PENDING_REVIEW` und der Report ist in der globalen Audit-Queue sichtbar. |
 | **Ausnahmen** | News-API nicht erreichbar → Audit-Report wird ohne Evidence erstellt, Fehlermeldung im Log. |
 | **Nachbedingung** | `AuditReport` hat Status `PENDING_REVIEW` und liegt in der Audit-Queue für ESG Auditoren bereit. |
 
@@ -703,9 +710,9 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | System (KI/API) |
 | **Vorbedingung** | ESG Audit wurde angefordert (UC-03). Holdings mit Symbolen/ISINs sind vorhanden. |
-| **Normalablauf** | 1. System liest die Holdings des Portfolios. 2. System ruft pro Holding aktuelle ESG-relevante News über externe News-API (NewsAPI/GNews) ab. 3. System filtert Artikel nach Relevanz (ESG-Keywords: Umwelt, Soziales, Governance). 4. System übergibt die Artikel an die KI (UC-08). |
+| **Normalablauf** | 1. System liest die Holdings des Portfolios. 2. System ruft pro Holding aktuelle ESG-relevante News über die Guardian API ab. 3. System filtert Artikel nach Relevanz (ESG-Keywords: Umwelt, Soziales, Governance). 4. System übergibt die Artikel an die KI (UC-08). |
 | **Ausnahmen** | News-API Rate Limit erreicht → Wartezeit oder Fallback auf gecachte Daten. Keine Artikel gefunden → Evidence-Liste bleibt leer. |
-| **Nachbedingung** | Rohde News-Daten liegen vor und sind zur KI-Analyse bereit. |
+| **Nachbedingung** | Rohdaten der News liegen vor und sind zur KI-Analyse bereit. |
 
 ---
 
@@ -805,7 +812,7 @@ Repository → **Settings → Secrets and variables → Actions → New reposito
 |---|---|
 | `SONAR_TOKEN` | Token aus SonarCloud (Account → Security → Generate Token) |
 
-> Ohne dieses Secret schlägt der SonarCloud-Step in CI fehl (seit Prio 3 ist `continue-on-error: false`).
+> Ohne dieses Secret wird der SonarCloud-Step in CI uebersprungen.
 
 ---
 
