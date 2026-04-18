@@ -29,6 +29,9 @@ class HoldingServiceTest {
     @Mock
     private AccessControlService accessControlService;
 
+    @Mock
+    private NewsIngestionService newsIngestionService;
+
     @InjectMocks
     private HoldingService holdingService;
 
@@ -38,12 +41,11 @@ class HoldingServiceTest {
     @BeforeEach
     void setUp() {
         sampleHolding = new Holding("portfolio-001", "AAPL");
+        sampleHolding.setId("holding-001");
         sampleHolding.setIsin("US0378331005");
         sampleHolding.setName("Apple Inc.");
         sampleHolding.setWeightPercent(10.0);
 
-        // DTO hat keine Setter (Lombok @Getter only) → via Mockito simulieren
-        // lenient: nicht jeder Test braucht das DTO
         createDTO = mock(HoldingCreateDTO.class);
         lenient().when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
         lenient().when(createDTO.getSymbol()).thenReturn("AAPL");
@@ -77,7 +79,6 @@ class HoldingServiceTest {
         assertTrue(result.isEmpty());
     }
 
-    // Parametrisiert: verschiedene Portfolio-IDs → jedes Portfolio bekommt nur eigene Holdings
     @ParameterizedTest
     @ValueSource(strings = {"portfolio-001", "portfolio-002", "portfolio-003"})
     void getHoldingsByPortfolioId_isolatesPerPortfolio(String portfolioId) {
@@ -133,6 +134,48 @@ class HoldingServiceTest {
         assertEquals("Apple Inc.", result.getName());
         assertEquals(10.0, result.getWeightPercent());
         verify(holdingRepository, times(1)).save(any(Holding.class));
+    }
+
+    @Test
+    void createHolding_triggersNewsIngestion_withCompanyName() {
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        when(holdingRepository.save(any(Holding.class))).thenReturn(sampleHolding);
+
+        holdingService.createHolding(createDTO);
+
+        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-001", "Apple Inc.");
+    }
+
+    @Test
+    void createHolding_usesSymbolAsCompanyName_whenNameIsNull() {
+        HoldingCreateDTO dtoNoName = mock(HoldingCreateDTO.class);
+        when(dtoNoName.getPortfolioId()).thenReturn("portfolio-001");
+        when(dtoNoName.getSymbol()).thenReturn("MSFT");
+        when(dtoNoName.getName()).thenReturn(null);
+        Holding savedHolding = new Holding("portfolio-001", "MSFT");
+        savedHolding.setId("holding-002");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        when(holdingRepository.save(any(Holding.class))).thenReturn(savedHolding);
+
+        holdingService.createHolding(dtoNoName);
+
+        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-002", "MSFT");
+    }
+
+    @Test
+    void createHolding_usesSymbolAsCompanyName_whenNameIsBlank() {
+        HoldingCreateDTO dtoBlankName = mock(HoldingCreateDTO.class);
+        when(dtoBlankName.getPortfolioId()).thenReturn("portfolio-001");
+        when(dtoBlankName.getSymbol()).thenReturn("GOOGL");
+        when(dtoBlankName.getName()).thenReturn("   ");
+        Holding savedHolding = new Holding("portfolio-001", "GOOGL");
+        savedHolding.setId("holding-003");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        when(holdingRepository.save(any(Holding.class))).thenReturn(savedHolding);
+
+        holdingService.createHolding(dtoBlankName);
+
+        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-003", "GOOGL");
     }
 
     @Test
