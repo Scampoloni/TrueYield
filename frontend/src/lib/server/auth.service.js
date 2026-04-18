@@ -38,10 +38,13 @@ export async function signIn(email, password, cookies) {
     const { access_token, id_token } = response.data;
     const userInfo = await getUserInfo(access_token);
 
-    // Merge user_roles from the access token JWT (not available via /userinfo)
+    // Merge user_roles from the access token JWT (not available via /userinfo).
+    // Normalize to lowercase with hyphens so "compliance officer" == "compliance-officer".
     const jwtPayload = JSON.parse(atob(access_token.split('.')[1]));
     if (jwtPayload.user_roles) {
-        userInfo.user_roles = jwtPayload.user_roles;
+        userInfo.user_roles = jwtPayload.user_roles.map(
+            /** @param {string} r */ (r) => r.trim().toLowerCase().replace(/\s+/g, '-')
+        );
     }
 
     if (cookies) {
