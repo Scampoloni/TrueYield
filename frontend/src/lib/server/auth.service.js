@@ -39,10 +39,15 @@ export async function signIn(email, password, cookies) {
     const userInfo = await getUserInfo(access_token);
 
     // Merge user_roles from the access token JWT (not available via /userinfo).
-    // Normalize to lowercase with hyphens so "compliance officer" == "compliance-officer".
+    // Auth0 may namespace custom claims (e.g. "https://example.com/user_roles").
+    // Try direct key first, then any namespaced key ending in /user_roles, then 'roles'.
     const jwtPayload = JSON.parse(atob(access_token.split('.')[1]));
-    if (jwtPayload.user_roles) {
-        userInfo.user_roles = jwtPayload.user_roles.map(
+    const rawRoles = jwtPayload.user_roles
+        ?? Object.entries(jwtPayload).find(([k]) => /\/user_roles$/.test(k))?.[1]
+        ?? jwtPayload.roles
+        ?? null;
+    if (Array.isArray(rawRoles)) {
+        userInfo.user_roles = rawRoles.map(
             /** @param {string} r */ (r) => r.trim().toLowerCase().replace(/\s+/g, '-')
         );
     }
