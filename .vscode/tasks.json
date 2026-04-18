@@ -1,0 +1,33 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "backend: verify",
+			"type": "shell",
+			"command": "cd backend; ./mvnw --batch-mode verify",
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "frontend: sync",
+			"type": "shell",
+			"command": "cd frontend; npx svelte-kit sync",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "frontend: check",
+			"type": "shell",
+			"command": "cd frontend; npm run check",
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "frontend: test:e2e",
+			"type": "shell",
+			"command": "cd frontend; npm run test:e2e",
+			"isBackground": false,
+			"group": "test"
+		}
+	]
+}
