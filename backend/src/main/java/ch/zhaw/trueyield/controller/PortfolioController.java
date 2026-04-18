@@ -69,7 +69,7 @@ public class PortfolioController {
     @PreAuthorize("hasRole('fund-manager')")
     public ResponseEntity<PortfolioResponseDTO> updatePortfolio(
             @PathVariable String id,
-            @RequestBody PortfolioUpdateDTO dto) {
+            @Valid @RequestBody PortfolioUpdateDTO dto) {
         String fundManagerId = userService.getCurrentUserId();
         Portfolio updated = portfolioService.updatePortfolio(id, dto, fundManagerId);
         return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(updated), HttpStatus.OK);
