@@ -531,57 +531,55 @@ Wenn ein Fonds später als "Greenwashing" entlarvt wird, muss die Bank beweisen 
 
 ## Feedback aus Pitch und Board-Beurteilung
 
-Dieses Kapitel dokumentiert zusammengefasstes Peer-Feedback (anonymisiert) und leitet daraus konkrete Konsequenzen für TrueYield ab.
-
-Hinweis für die Endfassung: Diese Sektion wird vor Abgabe nochmals kürzer, straffer und visuell sauberer in die Storyline integriert (Problem -> Lösung -> Umsetzung -> Evidenz).
+Dieses Kapitel dokumentiert zusammengefasstes Peer-Feedback (anonymisiert) und leitet daraus konkrete Konsequenzen für TrueYield ab.
 
 ### Wichtigste Punkte aus dem Pitch-Feedback
 
-1. Unklarheit bei Datenbeschaffung für KI (API vs. Scraping, Datenpipeline).
-  Konsequenz für TrueYield:
+1. Unklarheit bei Datenbeschaffung für KI (API vs. Scraping, Datenpipeline).
+  Konsequenz für TrueYield:
   Wir priorisieren eine klar dokumentierte Datenarchitektur mit API-first Ansatz (News-APIs als Primärquelle, kein ungeklärtes Scraping im MVP) und beschreiben den Datenfluss Ende-zu-Ende im Implementation-Kapitel.
 
 2. Unklarheit, was die KI konkret macht und was nicht.
-  Konsequenz für TrueYield:
+  Konsequenz für TrueYield:
   Wir trennen explizit zwischen KI-Aufgaben (News-Klassifikation, Risiko-Hinweise, Zusammenfassung) und menschlichen Aufgaben (Audit-Entscheid, Freigabe/Ablehnung). Damit wird Human-in-the-Loop als Kernprinzip sichtbarer.
 
-3. Frage nach MVP-Fokus (zu breiter Scope für Start).
-  Konsequenz für TrueYield:
-  MVP-Fokus bleibt auf einem klaren Kernflow: Portfolio -> Holdings -> AuditReport -> Evidence-gestützte Entscheidung durch Auditor. Erweiterungen (z.B. tiefere Multilingualität, erweitertes Partnernetzwerk) kommen iterativ.
+3. Frage nach MVP-Fokus (zu breiter Scope für Start).
+  Konsequenz für TrueYield:
+  MVP-Fokus bleibt auf einem klaren Kernflow: Portfolio -> Holdings -> AuditReport -> Evidence-gestützte Entscheidung durch Auditor. Erweiterungen (z.B. tiefere Multilingualität, erweitertes Partnernetzwerk) kommen iterativ.
 
 4. Frage nach Abdeckung kleiner/lokaler und nicht-englischer Quellen.
-  Konsequenz für TrueYield:
+  Konsequenz für TrueYield:
   Wir definieren das als explizites Folgeziel mit priorisierten Quellenklassen und dokumentieren bekannte Coverage-Limits transparent im MVP.
 
 5. Frage nach Differenzierung zu allgemeiner Deep-Research-KI.
-  Konsequenz für TrueYield:
+  Konsequenz für TrueYield:
   Das Value-Proposition-Narrativ wird geschärft: TrueYield ist kein allgemeiner Prompt-Output, sondern ein revisionssicherer Workflow mit Rollen, Ownership-Regeln, State Machine und nachvollziehbarer Evidence-Kette.
 
 6. Frage nach Quellenvertrauen und Qualitätssicherung.
-  Konsequenz für TrueYield:
-  Wir ergänzen Qualitätskriterien für Quellen (Reputation, Aktualität, Duplikatkontrolle, Nachvollziehbarkeit) und machen diese Regeln als Governance-Baustein sichtbar.
+  Konsequenz für TrueYield:
+  Wir ergänzen Qualitätskriterien für Quellen (Reputation, Aktualität, Duplikatkontrolle, Nachvollziehbarkeit) und machen diese Regeln als Governance-Baustein sichtbar.
 
 7. Frage nach Preislogik und Go-to-Market (insb. großer Sprung zwischen Tiers).
-  Konsequenz für TrueYield:
-  Das Pricing wird mit nachvollziehbaren Annahmen (Volumen, SLA, Integrationsaufwand, Risiko-Exposure) begründet und in der Dokumentation klarer vom Pilot- in den Enterprise-Modus überführt.
+  Konsequenz für TrueYield:
+  Das Pricing wird mit nachvollziehbaren Annahmen (Volumen, SLA, Integrationsaufwand, Risiko-Exposure) begründet und in der Dokumentation klarer vom Pilot- in den Enterprise-Modus überführt.
 
 8. Frage nach Betriebsmodell und Update-Frequenz.
-  Konsequenz für TrueYield:
-  Wir ergänzen ein einfaches Operating-Modell (Release-Zyklus, Monitoring, Kosten-/Leistungsgrenzen), damit Skalierungs- und Wartungsaspekte früh adressiert sind.
+  Konsequenz für TrueYield:
+  Wir ergänzen ein einfaches Operating-Modell (Release-Zyklus, Monitoring, Kosten-/Leistungsgrenzen), damit Skalierungs- und Wartungsaspekte früh adressiert sind.
 
 ### Wichtigste Punkte aus der Board-Beurteilung
 
 1. Sehr starke Marktrecherche, kohärente Boards, überzeugender regulatorischer Moat.
-  Konsequenz für TrueYield:
+  Konsequenz für TrueYield:
   Diese Stärken bleiben Kern der Projekterzählung und werden in der Schlusspräsentation als Primärargumente priorisiert.
 
 2. Board ist teilweise zu umfangreich, Kernaussage geht stellenweise unter.
-  Konsequenz für TrueYield:
+  Konsequenz für TrueYield:
   Wir komprimieren die Kommunikation auf wenige Leitbotschaften: Problemgröße, differenzierender Mechanismus (Human-in-the-Loop + Evidence), messbare Wirkung (Zeit/Risiko).
 
 3. Nutzergruppen sind gut differenziert, aber in der WKW-Frage zu stark zusammengefasst.
-  Konsequenz für TrueYield:
-  Die WKW-Frage wird in der Endfassung präzisiert, sodass Fund Manager und Auditor mit ihren unterschiedlichen Jobs-to-be-done klarer getrennt adressiert werden.
+  Konsequenz für TrueYield:
+  Die WKW-Frage wurde präzisiert, sodass Fund Manager und Auditor mit ihren unterschiedlichen Jobs-to-be-done klarer getrennt adressiert werden.
 
 ---
 
@@ -872,6 +870,9 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 | Methode | Endpoint | Beschreibung | Zugriff |
 |---|---|---|---|
 | GET | `/api/compliance/overview` | Systemweite KPIs (Portfolios, Holdings, AuditReports nach Status) | `compliance-officer` |
+| GET | `/api/compliance/sfdr` | SFDR Article 8/9 Klassifizierung pro Portfolio (Sentiment-Aggregation) | `compliance-officer` |
+| GET | `/api/compliance/portfolios` | Alle Portfolios (Lesezugriff, ohne Einschränkung auf Fund-Manager-ID) | `compliance-officer` |
+| GET | `/api/compliance/reports` | Alle Audit-Reports (systemweit, inkl. Statusinformation) | `compliance-officer` |
 
 ---
 
@@ -1012,7 +1013,7 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 | Detaillierte Dokumentation auf GitHub | Branches und PR-Workflow im Repo; Issues/Boards/Iterations sind extern und nicht als Artefakt im Repo versioniert |
 | Mehrere Branches sinnvoll verwendet | Jedes Feature in eigenem `feature/issue-<nr>-<titel>`-Branch entwickelt und via Pull Request gemerged |
 | **MCP Server (Anforderung 22)** | Spring AI MCP Server exponiert drei ESG-Analyse-Tools (`generateEsgRiskSummary`, `analyseEsgSentiment`, `fetchEsgNews`) via SSE — verbindbar mit Claude Desktop oder jedem MCP-Client |
-| **Dritte Rolle: Compliance Officer (Anforderung 23)** | Neue RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff auf alle Portfolios, Holdings, Audit-Reports und eigenem Dashboard-Endpoint `GET /api/compliance/overview` |
+| **Dritte Rolle: Compliance Officer (Anforderung 23)** | RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff. Eigene Endpoints: `/api/compliance/overview`, `/sfdr`, `/portfolios`, `/reports`. Frontend-Dashboard unter `/compliance` mit Tabs (Overview / Portfolios / Audit Reports). Rollenbasierte Sidebar-Navigation. |
 
 ---
 
@@ -1034,7 +1035,7 @@ ESG-Nachrichten pro Holding über die The Guardian API ab und speichert sie als 
 
 **MCP Server (Anforderung 22):** Spring AI 1.0.0 MCP Server (`spring-ai-starter-mcp-server-webmvc`) exponiert drei ESG-Analyse-Tools via SSE-Endpoint `/sse`. MCP-kompatible Clients (Claude Desktop) können sich verbinden und `generateEsgRiskSummary`, `analyseEsgSentiment` und `fetchEsgNews` direkt aufrufen. Konfiguration: `spring.ai.mcp.server.name=trueyield-esg`, `type=SYNC`.
 
-**Compliance Officer (Anforderung 23):** Dritte RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff. Eigener Endpoint `GET /api/compliance/overview` liefert Gesamtstatistik (Portfolios, Holdings, AuditReports nach Status). Alle schreibenden Operationen sind blockiert (403). Frontend-Dashboard unter `/compliance`. Auth0-Rolle `compliance-officer` muss über Post-Login Action in den JWT-Claim `user_roles` injiziert werden (siehe Auth0-Konfiguration).
+**Compliance Officer (Anforderung 23):** Dritte RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff. Vier dedizierte Endpoints: `GET /api/compliance/overview` (KPI-Übersicht), `/sfdr` (SFDR Article 8/9 Klassifizierung per Portfolio), `/portfolios` (alle Portfolios), `/reports` (alle Audit-Reports). Alle schreibenden Operationen sind blockiert (403 per `@PreAuthorize`). Frontend-Dashboard unter `/compliance` mit drei Tabs (Overview / Portfolios / Audit Reports); Audit-Reports verlinken direkt auf die Detailseite. Sidebar zeigt rollenspezifisch "Dashboard → /compliance" für Compliance Officers. JWT-Claim-Extraktion ist resilient gegenüber Auth0-Namespace-Varianten.
 
 **Code-Qualität (Prio 3):** `DRAFT`-Status existiert nicht im `AuditStatus`-Enum (nie erreichbar); die Frontend-Audit-Timeline wurde entsprechend bereinigt. SonarCloud konfiguriert und aktiv auf `main` (Token via Secret `SONAR_TOKEN`); Analyse läuft non-blocking (`continue-on-error: true`), damit fehlende Token den Build nicht brechen.
 
