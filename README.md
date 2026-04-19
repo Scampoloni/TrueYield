@@ -818,6 +818,8 @@ Repository → **Settings → Secrets and variables → Actions → New reposito
 
 Vollständige Postman-Dokumentation (veröffentlicht): [https://documenter.getpostman.com/view/52455816/2sBXihpXqi](https://documenter.getpostman.com/view/52455816/2sBXihpXqi)
 
+Swagger UI (OpenAPI 3): [https://trueyield-backend.azurewebsites.net/swagger-ui.html](https://trueyield-backend.azurewebsites.net/swagger-ui.html) — lokal unter [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
 Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 
 #### Portfolio (`/api/portfolio`)
@@ -1003,6 +1005,22 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 
 ---
 
+#### Rolle: Compliance Officer
+
+**Compliance Dashboard — Overview** — Systemweite KPIs, Reports nach Status, SFDR-Klassifizierung
+![Compliance Overview](doc/screenshots/compliance-dashboard-overview.png)
+
+**Compliance Dashboard — Portfolios** — Alle Portfolios mit SFDR-Badge
+![Compliance Portfolios](doc/screenshots/compliance-dashboard-portfolios.png)
+
+**Compliance Dashboard — Audit Reports** — Alle Reports mit Statusbadge und Link zum Audit-Detail
+![Compliance Reports](doc/screenshots/compliance-dashboard-reports.png)
+
+**Account** — Benutzerprofil mit Rolle (compliance-officer)
+![Account Compliance Officer](doc/screenshots/account-compliance.png)
+
+---
+
 ### Umgesetzte optionale Anforderungen
 
 | Anforderung | Beschreibung |
@@ -1041,7 +1059,7 @@ ESG-Nachrichten pro Holding über die The Guardian API ab und speichert sie als 
 
 **Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf
 PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService.
-269+ Testmethoden in 21 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
+277+ Testmethoden in 21 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
 und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
 
 **Deployment:** CI/CD Workflow über GitHub Actions ist vorhanden; Docker-Deployment auf Azure App Service ist vorgesehen (Details im Deployment-Abschnitt).
