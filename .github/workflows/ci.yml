@@ -158,19 +158,11 @@ jobs:
         if: github.ref == 'refs/heads/main'
 
       - name: Commit and push coverage badge
+        uses: stefanzweifel/git-auto-commit-action@v5
         continue-on-error: true
-        working-directory: ${{ github.workspace }}
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          cp .github/badges/jacoco.svg /tmp/jacoco.svg
-          git checkout --orphan badges
-          git rm -rf . --quiet
-          mkdir -p .github/badges
-          cp /tmp/jacoco.svg .github/badges/jacoco.svg
-          git add .github/badges/jacoco.svg
-          git commit -m "ci: update coverage badge [skip ci]"
-          git push -u origin badges --force
+        with:
+          commit_message: "ci: update coverage badge [skip ci]"
+          file_pattern: .github/badges/*.svg
         if: github.ref == 'refs/heads/main'
 
       - name: SonarCloud Analysis
