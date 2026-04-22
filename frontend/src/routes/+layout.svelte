@@ -107,6 +107,16 @@
 
 
       <div class="nav-group">
+        <div class="nav-cat">Assistant</div>
+        <a href="/chat" class="nav-a" class:on={isActive('/chat')}>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M2 3.5a1.5 1.5 0 011.5-1.5h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H8l-3 2v-2H3.5A1.5 1.5 0 012 9.5z"/>
+          </svg>
+          Chat
+        </a>
+      </div>
+
+      <div class="nav-group">
         <div class="nav-cat">Settings</div>
         <a href="/account" class="nav-a" class:on={isActive('/account')}>
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
