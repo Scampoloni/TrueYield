@@ -19,7 +19,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -140,9 +139,7 @@ public class EsgChatTools {
             return "No results found";
         }
 
-        PortfolioCreateDTO dto = new PortfolioCreateDTO();
-        setField(dto, "name", normalizedName);
-        setField(dto, "description", trimToNull(description));
+        PortfolioCreateDTO dto = new PortfolioCreateDTO(normalizedName, trimToNull(description));
 
         Portfolio created = portfolioService.createPortfolio(dto, currentUsername());
         return "Created portfolio '" + safe(created.getName()) + "' (id: " + safe(created.getId()) + ")";
@@ -169,10 +166,13 @@ public class EsgChatTools {
             return "Portfolio '" + safe(trimToEmpty(portfolioName)) + "' not found";
         }
 
-        HoldingCreateDTO dto = new HoldingCreateDTO();
-        setField(dto, "portfolioId", portfolio.getId());
-        setField(dto, "name", normalizedHoldingName);
-        setField(dto, "symbol", normalizedTicker);
+        HoldingCreateDTO dto = new HoldingCreateDTO(
+            portfolio.getId(),
+            normalizedTicker,
+            null,
+            normalizedHoldingName,
+            null
+        );
 
         Holding created = holdingService.createHolding(dto);
         return "Created holding '" + safe(created.getName()) + "' (symbol: " + safe(created.getSymbol())
@@ -262,15 +262,5 @@ public class EsgChatTools {
             return "n/a";
         }
         return String.format(Locale.ROOT, "%.2f", score);
-    }
-
-    private void setField(Object target, String fieldName, Object value) {
-        try {
-            Field field = target.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(target, value);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new IllegalStateException("Could not map chat tool input to DTO field: " + fieldName, e);
-        }
     }
 }
