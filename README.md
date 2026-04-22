@@ -1,7 +1,7 @@
 ﻿# TrueYield – KI-gestützte ESG-Verifikation gegen Greenwashing
 
 ![Backend CI](https://github.com/Scampoloni/trueyield/actions/workflows/ci.yml/badge.svg?branch=main)
-![Coverage](https://raw.githubusercontent.com/Scampoloni/trueyield/main/.github/badges/jacoco.svg?sanitize=true)
+![Coverage](https://raw.githubusercontent.com/Scampoloni/trueyield/badges/.github/badges/jacoco.svg?sanitize=true)
 
 Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch geforderte Prüfung auf Greenwashing ist manuell, langsam und fehleranfällig. TrueYield löst das: Eine KI-gestützte Plattform analysiert automatisiert globale Nachrichtenquellen, bewertet ESG-Risiken und liefert Auditoren eine revisionssichere Entscheidungsgrundlage. Der Zeitpunkt ist jetzt, weil EU-Regulierungen (SFDR, EU-Taxonomie) seit 2021 scharfe Nachweispflichten fordern und Greenwashing-Bussen in Milliardenhöhe drohen.
 
