@@ -1,7 +1,7 @@
 ﻿# TrueYield – KI-gestützte ESG-Verifikation gegen Greenwashing
 
 ![Backend CI](https://github.com/Scampoloni/trueyield/actions/workflows/ci.yml/badge.svg?branch=main)
-![Coverage](https://raw.githubusercontent.com/Scampoloni/trueyield/main/.github/badges/jacoco.svg)
+![Coverage](https://raw.githubusercontent.com/Scampoloni/trueyield/main/.github/badges/jacoco.svg?sanitize=true)
 
 Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch geforderte Prüfung auf Greenwashing ist manuell, langsam und fehleranfällig. TrueYield löst das: Eine KI-gestützte Plattform analysiert automatisiert globale Nachrichtenquellen, bewertet ESG-Risiken und liefert Auditoren eine revisionssichere Entscheidungsgrundlage. Der Zeitpunkt ist jetzt, weil EU-Regulierungen (SFDR, EU-Taxonomie) seit 2021 scharfe Nachweispflichten fordern und Greenwashing-Bussen in Milliardenhöhe drohen.
 
@@ -37,9 +37,20 @@ Deployment ist vorbereitet (Docker + GitHub Actions). Erfolgreiche Runs sind als
     - [Feedback aus Pitch und Board-Beurteilung](#feedback-aus-pitch-und-board-beurteilung)
 - [Anforderungen](#anforderungen)
     - [Use Case Diagram](#use-case-diagram)
+    - [AuditStatus State Machine](#auditstatus-state-machine)
+    - [Use-Case Beschreibungen](#use-case-beschreibungen)
+    - [UI-Mockup](#ui-mockup)
     - [Entity-Relations Diagram](#entity-relations-diagram)
 - [Implementation](#implementation)
+    - [Auth0-Konfiguration](#auth0-konfiguration)
+    - [API-Dokumentation](#api-dokumentation)
+    - [End-to-End Tests (Cypress)](#end-to-end-tests-cypress)
+    - [KI-Integration (Spring AI)](#ki-integration-spring-ai)
+    - [MCP Server — ESG Tools](#mcp-server--esg-tools-anforderung-22)
+    - [Frontend](#frontend)
+    - [Umgesetzte optionale Anforderungen](#umgesetzte-optionale-anforderungen)
 - [Fazit](#fazit)
+- [Backlog & Nächste Schritte](#backlog--nächste-schritte)
 
 ---
 
@@ -161,21 +172,24 @@ Schnelle, kostengünstige und regulatorisch akzeptable ESG-Verifikation von Inve
 - **Integration:** Muss in bestehende Workflows passen (nicht weiteres Silo-Tool)
 
 ### TOUCHPOINTS
+
+> **Hinweis:** Dieser Abschnitt beschreibt den angestrebten Produktzustand (Zielzustand MVP+). Im aktuell implementierten MVP sind die Kern-Touchpoints 1–5 und 8 umgesetzt. Touchpoints 6 (E-Mail-Benachrichtigungen), 7 (Audit-PDF-Export), 9 (Admin Panel) und 10 (Support-Integrationen) sind als Backlog-Items vorgemerkt.
+
 **1. Authentifizierung & Onboarding**
-- Login-Screen mit SSO-Integration (Azure AD / Okta)
-- Rollen-Auswahl beim ersten Login: "Fund Manager" vs. "Auditor" vs. "Read-Only"
-- Onboarding-Tutorial erklärt Workflow in 3 Minuten
+- Login über Auth0 (Universal Login) — *implementiert*
+- Rolle wird automatisch aus dem JWT-Token gelesen (`fund-manager`, `auditor`, `compliance-officer`); Rollen werden in Auth0 zugewiesen, nicht vom Nutzer selbst gewählt
+- SSO-Integration (Azure AD / Okta) sowie Onboarding-Tutorial *(geplant, noch nicht implementiert)*
 
 **2. Portfolio-Dashboard (Fund Manager)**
 - Übersicht aller Portfolios mit Status-Badge (Pending / Under Review / Approved / Rejected)
-- "Create New Portfolio"-Button → Upload von Holdings-Liste (CSV / Excel)
-- KPI-Cards: "Portfolios Pending Approval: 3", "Average Approval Time: 2.4 days"
+- "Create New Portfolio"-Button → Holdings manuell per Formular erfassen
+- KPI-Cards: "Portfolios Pending Approval: 3", "Average Approval Time: 2.4 days" *(geplant, noch nicht implementiert — siehe Backlog B-10)*
 
 **3. Portfolio-Submission-Flow (Fund Manager)**
-- Upload-Screen: Drag & Drop CSV mit ISINs
-- Auto-Validierung: "15 Holdings erkannt, 2 ISINs unbekannt (bitte prüfen)"
+- Holdings werden manuell per Formular (Symbol, ISIN, Name, Gewichtung) hinzugefügt
+- CSV/Excel-Upload mit Drag & Drop *(geplant, noch nicht implementiert — siehe Backlog B-07)*
 - Beschreibungs-Felder: Portfolio-Name, ESG-Zielsetzung, Ziel-Artikel (8 oder 9)
-- Submit → Status wechselt zu "Pending"
+- Audit-Trigger → Status wechselt zu `AI_ANALYZING`
 
 **4. Audit-Dashboard (Auditor)**
 - Queue-View: Liste aller Portfolios die auf Review warten, sortiert nach Priorität/Deadline
@@ -195,21 +209,20 @@ Schnelle, kostengünstige und regulatorisch akzeptable ESG-Verifikation von Inve
   - "AI suggests: REJECT — 3 holdings show high ESG risk"
   - Begründung in Stichworten: "Company X: Labor violations (Bloomberg, 2024-02-15)"
 - **Final Decision Buttons:**
-  - "Approve Portfolio" (grün)
-  - "Request Revision" (gelb) → Opens comment field
-  - "Reject Portfolio" (rot) → Opens rejection reason field (mandatory)
+  - "Approve Portfolio" (grün) → `PUT /api/service/auditreport/complete` → `APPROVED`
+  - "Reject Portfolio" (rot) → `PUT /api/service/auditreport/reject` → `REJECTED`
+  - "Request Revision" *(geplant, noch nicht implementiert — kein REVISION-Status in der State Machine; siehe Backlog B-11)*
 - **Audit Trail Sidebar (collapsible):**
   - Zeigt alle Actions: "2024-03-01 10:32: Portfolio submitted by John Doe", "2024-03-01 14:15: AI analysis completed", etc.
 
-**6. E-Mail-Benachrichtigungen**
+**6. E-Mail-Benachrichtigungen** *(geplant, noch nicht implementiert — siehe Backlog B-08)*
 - Fund Manager erhält E-Mail bei Statuswechsel:
   - "Portfolio XY wurde approved" (mit PDF-Attachment des Audit-Reports)
-  - "Portfolio XY needs revision" (mit Auditor-Kommentaren)
   - "Portfolio XY wurde rejected" (mit detaillierter Begründung + News-Links)
 - Auditor erhält E-Mail bei neuer Submission:
   - "New portfolio awaiting your review: ABC Sustainable Fund"
 
-**7. Audit-PDF-Export**
+**7. Audit-PDF-Export** *(geplant, noch nicht implementiert — siehe Backlog B-09)*
 - Download-Button generiert PDF-Report mit:
   - Portfolio-Übersicht
   - Risk-Scores pro Holding
@@ -219,18 +232,17 @@ Schnelle, kostengünstige und regulatorisch akzeptable ESG-Verifikation von Inve
   - Digital signiert (optional, für behördliche Vorlage)
 
 **8. API-Endpoints (für Integration)**
-- POST /api/portfolios → Programmatisches Einreichen
-- GET /api/portfolios/{id}/status → Status-Abfrage
-- GET /api/portfolios/{id}/audit-report → Download als JSON
-- Dokumentiert in Swagger/OpenAPI
-- Rate Limits: 1000 requests/day (Enterprise: unlimitiert)
+- Vollständige REST-API dokumentiert in Swagger/OpenAPI und Postman (siehe Abschnitt [API-Dokumentation](#api-dokumentation))
+- Kernendpoints: Portfolios, Holdings, Evidence, AuditReport, AuditComment, Compliance — alle implementiert
+- Rate Limits *(geplant, noch nicht implementiert)*
 
-**9. Admin-Panel (Compliance Head)**
-- KPI-Dashboard: Approval-Rate, Average Processing Time, Rejection-Reasons-Distribution
-- User-Management: Add/Remove Auditoren, Assign Portfolios
-- Settings: KI-Threshold-Anpassungen (Risk Score Cutoffs)
+**9. Compliance Dashboard (Compliance Officer)**
+- Systemweite KPIs: Portfolios / Holdings / Audit-Reports nach Status — *implementiert unter `/compliance`*
+- SFDR Article 8/9 Klassifizierung pro Portfolio — *implementiert*
+- Lesezugriff auf alle Portfolios und Audit-Reports — *implementiert*
+- User-Management, KI-Threshold-Anpassungen *(geplant für Admin Panel, noch nicht implementiert)*
 
-**10. Support-Touchpoints**
+**10. Support-Touchpoints** *(geplant, noch nicht implementiert)*
 - In-App Chat-Widget (Live-Support während Business Hours)
 - Knowledge Base / FAQ (Self-Service für häufige Fragen)
 - Dedicated Slack-Channel für Enterprise-Kunden
@@ -588,6 +600,8 @@ Dieses Kapitel dokumentiert zusammengefasstes Peer-Feedback (anonymisiert) und l
 ### Use Case Diagram
 ![Use Case Diagram](doc/uc-diagram.drawio.svg)
 
+> **Hinweis:** Das UC-Diagramm und das ER-Diagramm dokumentieren den ursprünglichen Projektscope mit zwei Primärrollen (Fund Manager, ESG Auditor). Die Rolle **Compliance Officer** wurde nachträglich als optionale Anforderung (Anforderung 23) ergänzt und ist in den Diagrammen nicht enthalten — sie gilt als spätere Erweiterung des Produkts und ist im Abschnitt [Umgesetzte optionale Anforderungen](#umgesetzte-optionale-anforderungen) beschrieben.
+
 ### AuditStatus State Machine
 
 Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmaschine. Ungültige Übergänge werden mit `400 Bad Request` abgewiesen.
@@ -634,9 +648,9 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 
 | Attribut | Beschreibung |
 |---|---|
-| **Akteur** | Fund Manager, ESG Auditor |
+| **Akteur** | Fund Manager, ESG Auditor, Compliance Officer |
 | **Vorbedingung** | Benutzer hat ein gültiges Auth0-Konto mit zugewiesener Rolle |
-| **Normalablauf** | 1. Benutzer öffnet die Applikation im Browser. 2. System leitet auf Auth0-Login-Seite weiter. 3. Benutzer gibt E-Mail und Passwort ein. 4. Auth0 authentifiziert den Benutzer und gibt ein JWT-Token zurück. 5. System liest die Rolle aus dem Token (`Fund Manager` oder `ESG Auditor`). 6. Benutzer wird auf die rollenspezifische Startseite weitergeleitet. |
+| **Normalablauf** | 1. Benutzer öffnet die Applikation im Browser. 2. System leitet auf Auth0-Login-Seite weiter. 3. Benutzer gibt E-Mail und Passwort ein. 4. Auth0 authentifiziert den Benutzer und gibt ein JWT-Token zurück. 5. System liest die Rolle aus dem Token (`fund-manager`, `auditor` oder `compliance-officer`). 6. Benutzer wird auf die rollenspezifische Startseite weitergeleitet. |
 | **Ausnahmen** | Falsches Passwort → Auth0 zeigt Fehlermeldung. Kein Konto vorhanden → Weiterleitung zur Registrierung. |
 | **Nachbedingung** | Benutzer ist authentifiziert und kann auf die ihm zugewiesenen Funktionen zugreifen. |
 
@@ -696,9 +710,9 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | ESG Auditor |
 | **Vorbedingung** | ESG Auditor ist eingeloggt (UC-01). AuditReport hat Status `PENDING_REVIEW`. |
-| **Normalablauf** | 1. ESG Auditor öffnet einen AuditReport aus der Queue (UC-04). 2. ESG Auditor prüft die KI-Zusammenfassung, Risiko-Scores und Evidence-Einträge. 3. ESG Auditor übernimmt den Report: `PUT /api/service/auditreport/assign` → Status wechselt auf `UNDER_REVIEW`. 4. ESG Auditor erfasst eine Begründung (AuditComment) mit Entscheidung. 5. ESG Auditor schliesst den Report ab: `PUT /api/service/auditreport/complete` → Status wechselt auf `APPROVED` oder `REJECTED`. |
+| **Normalablauf** | 1. ESG Auditor öffnet einen AuditReport aus der Queue (UC-04). 2. ESG Auditor prüft die KI-Zusammenfassung, Risiko-Scores und Evidence-Einträge. 3. ESG Auditor übernimmt den Report: `PUT /api/service/auditreport/assign` → Status wechselt auf `UNDER_REVIEW`. 4. ESG Auditor erfasst optional eine Begründung (AuditComment). 5a. ESG Auditor genehmigt den Report: `PUT /api/service/auditreport/complete` → Status wechselt auf `APPROVED`. 5b. ESG Auditor lehnt den Report ab: `PUT /api/service/auditreport/reject` → Status wechselt auf `REJECTED`. |
 | **Ausnahmen** | Report nicht mehr im Status `PENDING_REVIEW` → 400 Bad Request. Falscher Auditor versucht abzuschliessen → 400 (auditorId mismatch). |
-| **Nachbedingung** | AuditReport hat finalen Status (`APPROVED` oder `REJECTED`). Begründung ist als AuditComment gespeichert und für den Fund Manager einsehbar. |
+| **Nachbedingung** | AuditReport hat finalen Status (`APPROVED` oder `REJECTED`). Optionaler AuditComment ist gespeichert und für den Fund Manager einsehbar. |
 
 ---
 
@@ -913,6 +927,25 @@ dargestellt. Dies ermöglicht dem Auditor eine schnelle visuelle Einschätzung d
 
 ---
 
+### News-Datenqualität & Quellenvertrauen (Pitch-Feedback 6)
+
+TrueYield implementiert folgende Qualitätskriterien für News-Quellen, um die Nachvollziehbarkeit der Evidence-Kette sicherzustellen:
+
+| Kriterium | Umsetzung |
+|---|---|
+| **Quellenreputation** | Ausschliesslich The Guardian API — redaktionell geprüfte, international anerkannte Nachrichtenquelle |
+| **ESG-Relevanz** | Suchanfrage enthält immer `ESG` als Pflicht-Keyword; Fallback auf `<Firmenname> ESG sustainability` bei keinen Treffern |
+| **Firmennamen-Normalisierung** | Rechtliche Suffixe (`Inc.`, `PLC`, `Ltd.`, `AG`, `SE`, etc.) werden vor der Suche entfernt für bessere Trefferqualität |
+| **Duplikatkontrolle** | URL-basierter Check vor dem Speichern (`existsByHoldingIdAndSourceUrl`) — gleiche Artikel werden nicht mehrfach gespeichert |
+| **Mengenbegrenzung** | Maximal 5 Artikel pro Holding-Abfrage (`MAX_ARTICLES = 5`) — verhindert Übersättigung mit gleichartigen Quellen |
+| **Nachvollziehbarkeit** | Jeder Evidence-Eintrag speichert Quellenname, URL und Publikationsdatum |
+
+**Bekannte Einschränkungen (Coverage Limits):**
+- Nur englischsprachige Artikel (Guardian-Einschränkung); mehrsprachige Quellen sind als Backlog-Item vorgesehen (B-04)
+- Kein expliziter Aktualitätsfilter auf Artikeldatum — ältere Artikel können in den Resultaten erscheinen
+
+---
+
 ### MCP Server — ESG Tools (Anforderung 22)
 
 TrueYield exponiert drei ESG-Analyse-Tools über das **Model Context Protocol (MCP)** via Spring AI 1.0.0 (`spring-ai-starter-mcp-server-webmvc`). MCP-kompatible AI-Clients (z. B. Claude Desktop) können sich mit dem Backend verbinden und die Tools direkt aufrufen.
@@ -1068,16 +1101,41 @@ und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffspr
 
 ## Backlog & Nächste Schritte
 
-Die folgenden Erweiterungen sind konzeptuell ausgearbeitet und bilden mögliche Anknüpfungspunkte für eine Bachelorarbeit oder einen produktiven Piloten:
+Die folgenden Erweiterungen sind konzeptuell ausgearbeitet und bilden mögliche Anknüpfungspunkte für eine Bachelorarbeit oder einen produktiven Piloten.
 
+### Bereits umgesetzt
+| # | Feature | Beschreibung |
+|---|---------|-------------|
+| B-01 | **Automatisches News-Monitoring** | Guardian API liefert bei Holding-Erstellung automatisch ESG-News als Evidence |
+| B-02 | **SFDR Article 8/9 Scoring** | Sentiment-Aggregation klassifiziert Portfolios regulatorisch |
+
+### Kurzfristig (< 1 Woche)
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
-| B-01 | **Automatisches News-Monitoring** (bereits implementiert) | Guardian API liefert bei Holding-Erstellung automatisch ESG-News als Evidence | ✅ Done |
-| B-02 | **SFDR Article 8/9 Scoring** (bereits implementiert) | Sentiment-Aggregation klassifiziert Portfolios regulatorisch | ✅ Done |
-| B-03 | Longitudinales Risk Tracking | Sentiment-Zeitreihe pro Holding → Recharts-Timeseries im Frontend | 1–2 Tage |
-| B-04 | Premium-Datensource (Bloomberg/Reuters) | Bessere Datenqualität für Enterprise-Kunden | Extern/Kosten |
-| B-05 | Greenwashing Early-Warning | Negativer Sentiment-Trend 30d vor Scandal als Frühindikator | 2–3 Tage |
+| B-14 | Duplicate-Detection für Evidence | Gleiche News-URL taucht mehrfach auf wenn mehrere Holdings denselben Artikel triggern — Deduplizierung per URL-Hash vor dem Speichern | 0.5 Tage |
+| B-10 | KPI-Karten im Fund Manager Dashboard | "Portfolios Pending Approval", "Average Approval Time" sichtbar auf Portfolio-Übersicht | 0.5 Tage |
 | B-06 | Cypress E2E für neue Flows | Evidence-Delete + SFDR-Seite automatisiert testen | 1 Tag |
+| B-08 | E-Mail-Benachrichtigungen | Fund Manager / Auditor bei Statuswechsel automatisch benachrichtigen (Spring Mail / SendGrid) | 1 Tag |
+| B-15 | Risk-Score Threshold konfigurierbar | Compliance Officer kann per UI festlegen ab welchem Score ein Holding als "High Risk" gilt — statt hardcodiertem Wert im Backend | 1 Tag |
+| B-07 | CSV/Excel-Upload für Holdings | Drag & Drop Import von ISINs statt manueller Einzelerfassung | 1–2 Tage |
+| B-11 | „Request Revision"-Flow | Neuer `REVISION_REQUESTED`-Status in der State Machine + Revisions-Kommentar-Pflichtfeld | 1–2 Tage |
+| B-12 | Breitere News-Quellen (GDELT / NewsAPI.org) | Guardian deckt nur englische Qualitätspresse — GDELT bietet kostenlos globales, mehrsprachiges Monitoring; direkte Verbesserung der Risk-Score-Qualität | 1–2 Tage |
+| B-16 | Realtime-Updates via SSE/WebSocket | Auditor sieht AI_ANALYZING → PENDING_REVIEW ohne Page-Reload | 1–2 Tage |
+
+### Mittelfristig (1–4 Wochen)
+| # | Feature | Mehrwert | Aufwand |
+|---|---------|----------|---------|
+| B-09 | Audit-PDF-Export | Revisionssicherer PDF-Report mit Evidence-Bibliografie und Auditor-Entscheidung | 2–3 Tage |
+| B-03 | Longitudinales Risk Tracking | Sentiment-Zeitreihe pro Holding → Timeseries-Chart im Frontend | 1–2 Tage |
+| B-05 | Greenwashing Early-Warning | Negativer Sentiment-Trend 30d vor Scandal als Frühindikator | 2–3 Tage |
+| B-17 | Multi-Language Evidence (DE/FR) | Integration deutschsprachiger Quellen (NZZ, Handelsblatt) für DACH-Markt | 2–3 Tage |
+| B-13 | Agentic ESG Research (Spring AI Tool Calling) | KI-Agent durchsucht aktiv mehrere Quellen, bewertet Relevanz und generiert Begründung mit Quellenangaben — deutlich präzisere `aiRiskSummary` | 3–5 Tage |
+
+### Langfristig / Bachelorarbeit
+| # | Feature | Mehrwert | Aufwand |
+|---|---------|----------|---------|
+| B-04 | Premium-Datensource (Bloomberg/Reuters) | Deutlich bessere Datenqualität für Enterprise-Kunden | Extern/Kosten |
+| B-18 | Backtesting gegen historische Skandale | Bekannte Greenwashing-Fälle (DWS, Wirecard) rückwirkend durch TrueYield laufen lassen und messen wie früh der Risk-Score erhöht worden wäre — wissenschaftlich messbar | BA-Projekt |
 
 **Bachelorarbeit-Anknüpfungspunkte:**
 - *AI-Assisted ESG Risk Assessment unter SFDR: Evaluation einer Human-in-the-Loop Architektur für Greenwashing-Erkennung* (direkt auf TrueYield aufbaubar)
