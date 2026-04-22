@@ -45,6 +45,7 @@ public class SecurityConfig {
         }
 
         http.authorizeHttpRequests(authorize -> authorize
+            .requestMatchers("/api/chat").authenticated()
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
         )
