@@ -163,9 +163,13 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git checkout -b badges
-          git add .github/badges/*.svg
-          git commit -m "ci: update coverage badge [skip ci]" || exit 0
+          cp .github/badges/jacoco.svg /tmp/jacoco.svg
+          git checkout --orphan badges
+          git rm -rf . --quiet
+          mkdir -p .github/badges
+          cp /tmp/jacoco.svg .github/badges/jacoco.svg
+          git add .github/badges/jacoco.svg
+          git commit -m "ci: update coverage badge [skip ci]"
           git push -u origin badges --force
         if: github.ref == 'refs/heads/main'
 
