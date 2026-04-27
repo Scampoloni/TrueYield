@@ -125,6 +125,7 @@ public class AuditReportService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "AuditorId does not match assigned auditor");
         }
+        log.info("AuditReport [{}] rejected by auditor [{}] — status: UNDER_REVIEW → REJECTED", dto.getAuditReportId(), auditorId);
         report.setAuditStatus(AuditStatus.REJECTED);
         return auditReportRepository.save(report);
     }
@@ -138,6 +139,7 @@ public class AuditReportService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "AuditReport must be in PENDING_REVIEW state");
         }
+        log.info("AuditReport [{}] assigned to auditor [{}] — status: PENDING_REVIEW → UNDER_REVIEW", dto.getAuditReportId(), auditorId);
         report.setAuditStatus(AuditStatus.UNDER_REVIEW);
         report.setAuditorId(auditorId);
         return auditReportRepository.save(report);
@@ -156,6 +158,7 @@ public class AuditReportService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "AuditorId does not match assigned auditor");
         }
+        log.info("AuditReport [{}] approved by auditor [{}] — status: UNDER_REVIEW → APPROVED", dto.getAuditReportId(), auditorId);
         report.setAuditStatus(AuditStatus.APPROVED);
         return auditReportRepository.save(report);
     }
