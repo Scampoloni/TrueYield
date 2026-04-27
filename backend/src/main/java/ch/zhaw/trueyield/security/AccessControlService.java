@@ -68,6 +68,8 @@ public class AccessControlService {
         return evidence;
     }
 
+    // Intentional: auditors can read any PENDING_REVIEW report (shared assignment queue).
+    // Once assigned (UNDER_REVIEW), only the assigned auditor retains full write access.
     public void requireAuditReportAccess(AuditReport report) {
         if (userService.userHasRole("compliance-officer")) {
             return;
