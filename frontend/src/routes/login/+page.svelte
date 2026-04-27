@@ -141,6 +141,7 @@
 
         <button
           class="btn btn-primary btn-block"
+          data-testid="sign-in-button"
           style="margin-top:8px;"
           disabled={loading}
           onclick={async () => {
@@ -447,6 +448,7 @@
 
   .login-card-compact {
     min-height: 100%;
+    overflow: visible;
   }
 
   .demo-card-wide {
@@ -457,6 +459,10 @@
   .demo-card {
     width: 100%;
     max-width: none;
+  }
+
+  .login-card {
+    overflow: visible;
   }
 
   .card-header {

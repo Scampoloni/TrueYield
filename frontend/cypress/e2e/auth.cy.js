@@ -28,12 +28,12 @@ describe('login page', () => {
 
   it('renders Sign In button', () => {
     cy.visit('/login');
-    cy.contains('button', 'Sign In').should('be.visible');
+    cy.get('[data-testid="sign-in-button"]').should('be.visible');
   });
 
   it('Sign In button is enabled when page loads', () => {
     cy.visit('/login');
-    cy.contains('button', 'Sign In').should('be.enabled');
+    cy.get('[data-testid="sign-in-button"]').should('be.enabled');
   });
 
   it('has link to signup page', () => {
@@ -68,7 +68,7 @@ function loginAs(userEmail, userPassword) {
   cy.visit('/login');
   cy.get('#email').type(userEmail);
   cy.get('#password').type(userPassword);
-  cy.contains('button', 'Sign In').click();
+  cy.get('[data-testid="sign-in-button"]').click();
   cy.location('pathname').should('not.include', '/login');
 }
 
