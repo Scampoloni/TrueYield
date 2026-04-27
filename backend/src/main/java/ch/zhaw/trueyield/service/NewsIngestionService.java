@@ -54,6 +54,11 @@ public class NewsIngestionService {
             evidenceRepository.save(evidence);
             saved++;
         }
-        log.info("NewsIngestion: saved {} evidence entries for holding '{}' ({})", saved, holdingId, companyName);
+        log.info("NewsIngestion: saved {} evidence entries for holding '{}' ({})", saved, sanitize(holdingId), sanitize(companyName));
+    }
+
+    private String sanitize(String value) {
+        if (value == null) return "null";
+        return value.replaceAll("[\r\n\t]", "_");
     }
 }
