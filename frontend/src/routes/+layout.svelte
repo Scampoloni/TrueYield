@@ -19,19 +19,25 @@
     : 'Viewer'
   );
   const initials = $derived(displayName[0].toUpperCase());
+  const isAuthPage = $derived(page.url.pathname === '/login' || page.url.pathname === '/signup');
 
   function isActive(path: string) {
     return page.url.pathname === path || page.url.pathname.startsWith(path + '/');
   }
 </script>
 
-<!-- Background canvas with ambient orbs -->
-<div class="canvas"></div>
-<!-- Subtle grid overlay -->
-<div class="grid-lines"></div>
+{#if isAuthPage}
+  <div class="auth-shell">
+    {@render children()}
+  </div>
+{:else}
+  <!-- Background canvas with ambient orbs -->
+  <div class="canvas"></div>
+  <!-- Subtle grid overlay -->
+  <div class="grid-lines"></div>
 
-<div class="layout">
-  <aside class="sidebar">
+  <div class="layout">
+    <aside class="sidebar">
     <!-- Logo zone -->
     <div class="logo-zone">
       <div class="logo-icon">
@@ -138,11 +144,12 @@
         </div>
       </div>
     </div>
-  </aside>
+    </aside>
 
-  <main class="main">
-    {@render children()}
-  </main>
-</div>
+    <main class="main">
+      {@render children()}
+    </main>
+  </div>
+{/if}
 
 <Toast />
