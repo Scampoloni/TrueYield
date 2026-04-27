@@ -1,5 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { page } from '$app/state';
+
+  const roles = $derived(page.data.user?.user_roles ?? []);
+  const isAuditor = $derived(roles.includes('auditor'));
 
   let reports: any[] = $state([]);
   let loading = $state(true);
@@ -7,6 +11,10 @@
   let search = $state('');
 
   onMount(async () => {
+    if (isAuditor) {
+      loading = false;
+      return;
+    }
     try {
       const portfolioRes = await fetch('/api/portfolio');
       const portfolios: any[] = portfolioRes.ok ? await portfolioRes.json() : [];
@@ -134,6 +142,16 @@
         <div class="skeleton" style="height:20px;"></div>
         <div class="skeleton" style="height:20px;"></div>
         <div class="skeleton" style="height:20px;"></div>
+      </div>
+    {:else if isAuditor}
+      <div class="empty">
+        <div class="e-icon">
+          <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="e-ttl">Assignment queue</div>
+        <div class="e-sub">Audit reports are assigned to you directly. Open a report link to begin your review.</div>
       </div>
     {:else if filtered.length === 0}
       <div class="empty">

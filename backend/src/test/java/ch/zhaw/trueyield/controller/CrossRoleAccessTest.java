@@ -135,17 +135,25 @@ class CrossRoleAccessTest {
                 .andExpect(status().isForbidden());
     }
 
-    // ── Both roles can access the shared dashboard endpoint ──────────────────
+    // ── Dashboard endpoint: fund-manager and compliance-officer only ─────────
 
     @ParameterizedTest
-    @ValueSource(strings = {"fund-manager", "auditor"})
-    void getDashboard_anyAuthenticatedRole_returnsOk(String role) throws Exception {
+    @ValueSource(strings = {"fund-manager", "compliance-officer"})
+    void getDashboard_allowedRole_returnsOk(String role) throws Exception {
         when(auditReportService.getAuditReportDashboard(anyString())).thenReturn(List.of());
 
         mockMvc.perform(get("/api/service/auditreport/dashboard")
                         .param("portfolioId", "portfolio-001")
                         .with(user("testuser").roles(role)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void getDashboard_asAuditor_returnsForbidden() throws Exception {
+        mockMvc.perform(get("/api/service/auditreport/dashboard")
+                        .param("portfolioId", "portfolio-001")
+                        .with(user("testuser").roles("auditor")))
+                .andExpect(status().isForbidden());
     }
 
         // ── Unauthenticated requests are rejected with 401 ───────────────────────

@@ -5,6 +5,7 @@ import ch.zhaw.trueyield.model.Holding;
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.HoldingCreateDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
+import ch.zhaw.trueyield.security.AccessControlService;
 import ch.zhaw.trueyield.service.EvidenceService;
 import ch.zhaw.trueyield.service.HoldingService;
 import ch.zhaw.trueyield.service.PortfolioService;
@@ -31,17 +32,19 @@ public class EsgChatTools {
     private final PortfolioService portfolioService;
     private final HoldingService holdingService;
     private final EvidenceService evidenceService;
+    private final AccessControlService accessControlService;
 
-    public EsgChatTools(PortfolioService portfolioService, HoldingService holdingService, EvidenceService evidenceService) {
+    public EsgChatTools(PortfolioService portfolioService, HoldingService holdingService, EvidenceService evidenceService, AccessControlService accessControlService) {
         this.portfolioService = portfolioService;
         this.holdingService = holdingService;
         this.evidenceService = evidenceService;
+        this.accessControlService = accessControlService;
     }
 
     @Tool(description = "List all portfolios in the system.")
     public String getAllPortfolios() {
         logToolCall("getAllPortfolios");
-        List<Portfolio> portfolios = portfolioService.getAllPortfolios();
+        List<Portfolio> portfolios = getVisiblePortfolios();
         if (portfolios == null || portfolios.isEmpty()) {
             return "No results found";
         }
@@ -179,8 +182,15 @@ public class EsgChatTools {
                 + ", id: " + safe(created.getId()) + ") in portfolio '" + safe(portfolio.getName()) + "'";
     }
 
+    private List<Portfolio> getVisiblePortfolios() {
+        if (hasRole("ROLE_fund-manager")) {
+            return portfolioService.getAllPortfoliosByFundManager(currentUsername());
+        }
+        return portfolioService.getAllPortfolios();
+    }
+
     private Portfolio findPortfolioByName(String normalizedName) {
-        return portfolioService.getAllPortfolios().stream()
+        return getVisiblePortfolios().stream()
                 .filter(Objects::nonNull)
                 .filter(p -> normalize(p.getName()).equals(normalizedName))
                 .findFirst()
@@ -188,7 +198,7 @@ public class EsgChatTools {
     }
 
     private Holding findHoldingByName(String normalizedHoldingName) {
-        List<Portfolio> portfolios = portfolioService.getAllPortfolios();
+        List<Portfolio> portfolios = getVisiblePortfolios();
         for (Portfolio portfolio : portfolios) {
             List<Holding> holdings = holdingService.getHoldingsByPortfolioId(portfolio.getId());
             for (Holding holding : holdings) {
@@ -216,6 +226,9 @@ public class EsgChatTools {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getAuthorities() == null) {
             return false;
+        }
+        if (authentication.getAuthorities().isEmpty()) {
+            log.warn("Authenticated user '{}' has no granted authorities", authentication.getName());
         }
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)

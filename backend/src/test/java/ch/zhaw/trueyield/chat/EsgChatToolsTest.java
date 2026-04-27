@@ -2,6 +2,7 @@ package ch.zhaw.trueyield.chat;
 
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
+import ch.zhaw.trueyield.security.AccessControlService;
 import ch.zhaw.trueyield.service.EvidenceService;
 import ch.zhaw.trueyield.service.HoldingService;
 import ch.zhaw.trueyield.service.PortfolioService;
@@ -37,6 +38,9 @@ class EsgChatToolsTest {
 
     @Mock
     private EvidenceService evidenceService;
+
+    @Mock
+    private AccessControlService accessControlService;
 
     @InjectMocks
     private EsgChatTools esgChatTools;
@@ -106,11 +110,26 @@ class EsgChatToolsTest {
     @Test
     void createHolding_withUnknownPortfolio_returnsNotFound() {
         setAuthentication("fund-manager-user", "ROLE_fund-manager");
-        when(portfolioService.getAllPortfolios()).thenReturn(List.of());
+        when(portfolioService.getAllPortfoliosByFundManager(anyString())).thenReturn(List.of());
 
         String result = esgChatTools.createHolding("Unknown", "New Holding", "abc");
 
         assertEquals("Portfolio 'Unknown' not found", result);
+    }
+
+    @Test
+    void getAllPortfolios_asFundManager_returnsOnlyOwnPortfolios() {
+        setAuthentication("fm-user", "ROLE_fund-manager");
+
+        Portfolio own = new Portfolio("My Fund", "fm-user");
+        own.setId("p-own");
+
+        when(portfolioService.getAllPortfoliosByFundManager("fm-user")).thenReturn(List.of(own));
+
+        String result = esgChatTools.getAllPortfolios();
+
+        assertTrue(result.startsWith("Portfolios:"));
+        assertTrue(result.contains("My Fund (id: p-own)"));
     }
 
     private void setAuthentication(String username, String role) {
