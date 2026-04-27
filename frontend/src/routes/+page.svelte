@@ -5,6 +5,7 @@
 
   const roles = $derived(page.data.user?.user_roles ?? []);
   const isFundManager = $derived(roles.includes('fund-manager'));
+  const isAuditor = $derived(roles.includes('auditor'));
   const isComplianceOfficer = $derived(roles.includes('compliance-officer'));
 
   let portfolios: any[] = $state([]);
@@ -14,6 +15,10 @@
   let error = $state('');
 
   onMount(async () => {
+    if (isAuditor) {
+      goto('/audit');
+      return;
+    }
     if (isComplianceOfficer) {
       goto('/compliance');
       return;
