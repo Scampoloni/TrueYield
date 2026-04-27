@@ -65,7 +65,7 @@ public class AuditReportServiceController {
     }
 
     @GetMapping("/dashboard")
-    @PreAuthorize("hasAnyRole('fund-manager','auditor','compliance-officer')")
+    @PreAuthorize("hasAnyRole('fund-manager','compliance-officer')")
     public ResponseEntity<List<AuditReportAggregationDTO>> getDashboard(
             @RequestParam String portfolioId) {
         List<AuditReportAggregationDTO> result =
