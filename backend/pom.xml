@@ -31,6 +31,8 @@
 		<testcontainers.version>1.20.1</testcontainers.version>
 		<!-- Override Mockito to 5.16.0+ for Java 25 compatibility (Spring Boot 3.4.x ships 5.14.x) -->
 		<mockito.version>5.16.0</mockito.version>
+		<sonar.organization>scampoloni</sonar.organization>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
