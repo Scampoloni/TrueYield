@@ -227,6 +227,9 @@ public class EsgChatTools {
         if (authentication == null || authentication.getAuthorities() == null) {
             return false;
         }
+        if (authentication.getAuthorities().isEmpty()) {
+            log.warn("Authenticated user '{}' has no granted authorities", authentication.getName());
+        }
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(role::equals);
