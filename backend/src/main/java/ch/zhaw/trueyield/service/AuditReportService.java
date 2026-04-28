@@ -7,6 +7,7 @@ import ch.zhaw.trueyield.model.AuditReport;
 import ch.zhaw.trueyield.model.Holding;
 import ch.zhaw.trueyield.model.dto.AuditReportAggregationDTO;
 import ch.zhaw.trueyield.model.dto.AuditReportCreateDTO;
+import ch.zhaw.trueyield.model.dto.AuditReportResponseDTO;
 import ch.zhaw.trueyield.model.dto.EvidenceCreateDTO;
 import ch.zhaw.trueyield.model.dto.StateChangeDTO;
 import ch.zhaw.trueyield.model.enums.AuditStatus;
@@ -161,6 +162,14 @@ public class AuditReportService {
         log.info("AuditReport [{}] approved by auditor [{}] — status: UNDER_REVIEW → APPROVED", sanitize(dto.getAuditReportId()), sanitize(auditorId));
         report.setAuditStatus(AuditStatus.APPROVED);
         return auditReportRepository.save(report);
+    }
+
+    public List<AuditReportResponseDTO> getAuditorQueue(String auditorId) {
+        return auditReportRepository
+                .findByAuditStatusOrAuditorId(AuditStatus.PENDING_REVIEW, auditorId)
+                .stream()
+                .map(AuditReportResponseDTO::fromEntity)
+                .toList();
     }
 
     public List<AuditReportAggregationDTO> getAuditReportDashboard(String portfolioId) {
