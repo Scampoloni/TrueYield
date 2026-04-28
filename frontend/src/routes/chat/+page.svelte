@@ -1,10 +1,40 @@
 <script lang="ts">
+  import { page } from '$app/state';
+
   type ChatMessage = {
     role: 'user' | 'assistant';
     text: string;
   };
 
-  let messages = $state<ChatMessage[]>([]);
+  const roles = $derived(page.data.roles ?? []);
+
+  function buildWelcomeMessage(): string {
+    if (roles.includes('fund-manager')) {
+      return `👋 Hello! I'm your ESG analyst assistant. As a **Fund Manager** you can ask me:
+- *"List all my portfolios"*
+- *"What holdings are in portfolio X?"*
+- *"Show me the ESG evidence for holding Y"*
+- *"Create a new portfolio called Green Alpha"*
+- *"Add holding AAPL to portfolio Green Alpha"*`;
+    }
+    if (roles.includes('auditor')) {
+      return `👋 Hello! I'm your ESG analyst assistant. As an **Auditor** you can ask me:
+- *"List all portfolios in the system"*
+- *"What are the holdings in portfolio X?"*
+- *"Show me the ESG evidence and risk scores for holding Y"*
+- *"Which holdings have the highest ESG risk?"*`;
+    }
+    if (roles.includes('compliance-officer')) {
+      return `👋 Hello! I'm your ESG analyst assistant. As a **Compliance Officer** you can ask me:
+- *"List all portfolios in the system"*
+- *"What is the ESG risk profile of portfolio X?"*
+- *"Which holdings have negative ESG sentiment?"*
+- *"Show me evidence for holding Y"*`;
+    }
+    return `👋 Hello! I'm your ESG analyst assistant. Ask me anything about portfolios, holdings, or ESG evidence.`;
+  }
+
+  let messages = $state<ChatMessage[]>([{ role: 'assistant', text: buildWelcomeMessage() }]);
   let input = $state('');
   let loading = $state(false);
   let inlineError = $state('');
@@ -74,14 +104,6 @@
 <div class="content">
   <section class="glass-table chat-wrap">
     <div class="chat-log" role="log" aria-live="polite">
-      {#if messages.length === 0}
-        <div class="empty" style="padding:24px;">
-          <div class="e-icon">AI</div>
-          <div class="e-ttl">Start a conversation</div>
-          <div class="e-sub">The assistant is stateless. Reloading this page clears history.</div>
-        </div>
-      {/if}
-
       {#each messages as message}
         <div class="row" class:user={message.role === 'user'}>
           <div class="bubble" class:user={message.role === 'user'}>
