@@ -7,6 +7,7 @@ import ch.zhaw.trueyield.model.dto.AuditReportAggregationDTO;
 import ch.zhaw.trueyield.model.dto.AuditReportCreateDTO;
 import ch.zhaw.trueyield.model.dto.AuditReportResponseDTO;
 import ch.zhaw.trueyield.model.dto.StateChangeDTO;
+import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.AuditReportService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,9 @@ public class AuditReportServiceController {
 
     @Autowired
     private AuditReportService auditReportService;
+
+    @Autowired
+    private UserService userService;
 
     @PostMapping
     @PreAuthorize("hasRole('fund-manager')")
@@ -62,6 +66,13 @@ public class AuditReportServiceController {
     public ResponseEntity<AuditReportResponseDTO> completeAuditReport(@Valid @RequestBody StateChangeDTO dto) {
         AuditReport updated = auditReportService.completeAuditReport(dto);
         return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(updated), HttpStatus.OK);
+    }
+
+    @GetMapping("/auditor-queue")
+    @PreAuthorize("hasRole('auditor')")
+    public ResponseEntity<List<AuditReportResponseDTO>> getAuditorQueue() {
+        String auditorId = userService.getCurrentUserId();
+        return new ResponseEntity<>(auditReportService.getAuditorQueue(auditorId), HttpStatus.OK);
     }
 
     @GetMapping("/dashboard")
