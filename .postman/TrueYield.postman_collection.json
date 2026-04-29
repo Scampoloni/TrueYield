@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "name": "TrueYield API",
-    "description": "Complete API documentation for TrueYield — KI-gestützte ESG-Verifikationsplattform.\n\n**Setup:**\n1. Set the `baseUrl` variable to your backend URL (default: http://localhost:8080)\n2. Log in via your frontend and copy the JWT from the `jwt_token` cookie into `bearerToken`\n\n**Roles:**\n- `fund-manager`: can manage portfolios, holdings, evidence, create audit reports\n- `auditor`: can assign, complete and reject audit reports, add audit comments",
+    "description": "Complete API documentation for TrueYield — KI-gestützte ESG-Verifikationsplattform.\n\n**Setup:**\n1. Set the `baseUrl` variable to your backend URL (default: http://localhost:8080)\n2. Log in via your frontend and copy the JWT from the `jwt_token` cookie into `bearerToken`\n\n**Roles:**\n- `fund-manager`: manage portfolios, holdings, evidence, create audit reports, use AI chat\n- `auditor`: view auditor queue, assign/complete/reject audit reports, add audit comments, use AI chat\n- `compliance-officer`: system-wide compliance overview, SFDR scores, all portfolios & reports, use AI chat",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -366,6 +366,120 @@
               "query": [{ "key": "portfolioId", "value": "<portfolio-id>" }]
             },
             "description": "Returns aggregated audit report counts grouped by status for a given portfolio. Uses a MongoDB aggregation pipeline.\n\nExample response:\n```json\n[\n  { \"id\": \"PENDING_REVIEW\", \"count\": 2, \"itemIds\": [\"...\"] },\n  { \"id\": \"APPROVED\", \"count\": 1, \"itemIds\": [\"...\"] }\n]\n```\n\n**Role required:** `fund-manager` or `auditor`\n\n**Returns:** 200 OK, 400 Bad Request (portfolio not found)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auditor Queue",
+      "description": "Auditor-specific endpoint returning all unassigned (PENDING_REVIEW) reports plus reports already assigned to the calling auditor.",
+      "item": [
+        {
+          "name": "Get Auditor Queue",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/service/auditreport/auditor-queue",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "service", "auditreport", "auditor-queue"]
+            },
+            "description": "Returns all audit reports visible to the calling auditor:\n- Status `PENDING_REVIEW` (available to pick up)\n- Reports already assigned to this auditor (any status)\n\n**Role required:** `auditor`\n\n**Returns:** 200 OK with array of AuditReportResponseDTO, 403 Forbidden (non-auditor)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Compliance",
+      "description": "Compliance Officer dashboard endpoints. All require the `compliance-officer` role.",
+      "item": [
+        {
+          "name": "Get Compliance Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/compliance/overview",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "compliance", "overview"]
+            },
+            "description": "Returns a system-wide compliance summary.\n\nExample response:\n```json\n{\n  \"totalPortfolios\": 5,\n  \"totalHoldings\": 23,\n  \"totalAuditReports\": 12,\n  \"reportsByStatus\": {\n    \"APPROVED\": 4,\n    \"PENDING_REVIEW\": 3,\n    \"UNDER_REVIEW\": 2,\n    \"REJECTED\": 1,\n    \"AI_ANALYZING\": 2\n  }\n}\n```\n\n**Role required:** `compliance-officer`\n\n**Returns:** 200 OK"
+          }
+        },
+        {
+          "name": "Get SFDR Scores",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/compliance/sfdr",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "compliance", "sfdr"]
+            },
+            "description": "Returns SFDR Article classification and average ESG sentiment per portfolio.\n\nExample response:\n```json\n[\n  {\n    \"portfolioId\": \"abc123\",\n    \"portfolioName\": \"Clean Energy Europe\",\n    \"classification\": \"ARTICLE_9\",\n    \"averageSentiment\": 0.72,\n    \"evidenceCount\": 14\n  }\n]\n```\n\n**Classification logic:** ARTICLE_9 (avg ≥ 0.5), ARTICLE_8 (avg ≥ 0.0), ARTICLE_6 (avg < 0.0)\n\n**Role required:** `compliance-officer`\n\n**Returns:** 200 OK with array of SfdrPortfolioScoreDTO"
+          }
+        },
+        {
+          "name": "Get All Portfolios (Compliance View)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/compliance/portfolios",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "compliance", "portfolios"]
+            },
+            "description": "Returns all portfolios across all fund managers for compliance review.\n\n**Role required:** `compliance-officer`\n\n**Returns:** 200 OK with array of PortfolioResponseDTO"
+          }
+        },
+        {
+          "name": "Get All Audit Reports (Compliance View)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/compliance/reports",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "compliance", "reports"]
+            },
+            "description": "Returns all audit reports across the entire system for compliance oversight.\n\n**Role required:** `compliance-officer`\n\n**Returns:** 200 OK with array of AuditReportResponseDTO"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "description": "AI-powered ESG assistant backed by Claude via Spring AI. Stateless — each request is independent. Accessible to fund-managers, auditors, and compliance officers.",
+      "item": [
+        {
+          "name": "Chat with ESG Assistant",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"List all my portfolios and their ESG risk summary.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat"]
+            },
+            "description": "Sends a message to the ESG AI assistant. The assistant has access to tools:\n- `listPortfolios` — lists portfolios visible to the caller (scoped by role)\n- `getHoldings` — returns holdings for a portfolio\n- `getEvidence` — returns evidence items for a holding\n- `createPortfolio` — creates a new portfolio (fund-manager only)\n- `addHolding` — adds a holding to a portfolio (fund-manager only)\n\nExample messages:\n- *\"List all my portfolios\"*\n- *\"What holdings are in portfolio X?\"*\n- *\"Show me the ESG evidence for holding Y\"*\n- *\"What is the average sentiment score for Clean Energy Europe?\"*\n\n**Role required:** `fund-manager`, `auditor`, or `compliance-officer`\n\n**Returns:** 200 OK `{ \"answer\": \"...\" }`"
           }
         }
       ]
