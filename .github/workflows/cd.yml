@@ -38,11 +38,32 @@ jobs:
 
       - name: Force backend container restart via Kudu
         run: |
-          USERNAME=$(echo '${{ secrets.AZURE_PUBLISH_PROFILE_BACKEND }}' | grep -oP '(?<=userName=")[^"]+' | head -1)
-          PASSWORD=$(echo '${{ secrets.AZURE_PUBLISH_PROFILE_BACKEND }}' | grep -oP '(?<=userPWD=")[^"]+' | head -1)
-          curl -s -o /dev/null -w "%{http_code}" -X POST \
-            "https://${{ secrets.AZURE_WEBAPP_NAME_BACKEND }}.scm.azurewebsites.net/api/restart" \
-            -u "$USERNAME:$PASSWORD"
+          python3 - <<'EOF'
+          import xml.etree.ElementTree as ET, subprocess, sys, os
+
+          profile = os.environ["PUBLISH_PROFILE"]
+          root = ET.fromstring(profile)
+          cred = next(
+              p for p in root.findall(".//publishProfile")
+              if p.get("publishMethod") == "MSDeploy"
+          )
+          username = cred.get("userName")
+          password = cred.get("userPWD")
+          app = os.environ["APP_NAME"]
+
+          result = subprocess.run([
+              "curl", "--fail", "--silent", "--show-error",
+              "-X", "POST",
+              f"https://{app}.scm.azurewebsites.net/api/restart",
+              "-u", f"{username}:{password}"
+          ], capture_output=True, text=True)
+
+          print(result.stdout or result.stderr or "Restart triggered")
+          sys.exit(result.returncode)
+          EOF
+        env:
+          PUBLISH_PROFILE: ${{ secrets.AZURE_PUBLISH_PROFILE_BACKEND }}
+          APP_NAME: ${{ secrets.AZURE_WEBAPP_NAME_BACKEND }}
 
   deploy-frontend:
     name: Deploy Frontend
@@ -81,8 +102,29 @@ jobs:
 
       - name: Force frontend container restart via Kudu
         run: |
-          USERNAME=$(echo '${{ secrets.AZURE_PUBLISH_PROFILE_FRONTEND }}' | grep -oP '(?<=userName=")[^"]+' | head -1)
-          PASSWORD=$(echo '${{ secrets.AZURE_PUBLISH_PROFILE_FRONTEND }}' | grep -oP '(?<=userPWD=")[^"]+' | head -1)
-          curl -s -o /dev/null -w "%{http_code}" -X POST \
-            "https://${{ secrets.AZURE_WEBAPP_NAME_FRONTEND }}.scm.azurewebsites.net/api/restart" \
-            -u "$USERNAME:$PASSWORD"
+          python3 - <<'EOF'
+          import xml.etree.ElementTree as ET, subprocess, sys, os
+
+          profile = os.environ["PUBLISH_PROFILE"]
+          root = ET.fromstring(profile)
+          cred = next(
+              p for p in root.findall(".//publishProfile")
+              if p.get("publishMethod") == "MSDeploy"
+          )
+          username = cred.get("userName")
+          password = cred.get("userPWD")
+          app = os.environ["APP_NAME"]
+
+          result = subprocess.run([
+              "curl", "--fail", "--silent", "--show-error",
+              "-X", "POST",
+              f"https://{app}.scm.azurewebsites.net/api/restart",
+              "-u", f"{username}:{password}"
+          ], capture_output=True, text=True)
+
+          print(result.stdout or result.stderr or "Restart triggered")
+          sys.exit(result.returncode)
+          EOF
+        env:
+          PUBLISH_PROFILE: ${{ secrets.AZURE_PUBLISH_PROFILE_FRONTEND }}
+          APP_NAME: ${{ secrets.AZURE_WEBAPP_NAME_FRONTEND }}
