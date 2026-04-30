@@ -37,8 +37,9 @@ jobs:
           images: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-backend:${{ github.sha }}
 
       - name: Trigger backend CD webhook
-        run: |
-          curl --fail --silent --show-error -X POST "${{ secrets.AZURE_CD_WEBHOOK_BACKEND }}"
+        run: curl --fail --silent --show-error -X POST "$WEBHOOK_URL"
+        env:
+          WEBHOOK_URL: ${{ secrets.AZURE_CD_WEBHOOK_BACKEND }}
 
   deploy-frontend:
     name: Deploy Frontend
@@ -76,5 +77,6 @@ jobs:
           images: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-frontend:${{ github.sha }}
 
       - name: Trigger frontend CD webhook
-        run: |
-          curl --fail --silent --show-error -X POST "${{ secrets.AZURE_CD_WEBHOOK_FRONTEND }}"
+        run: curl --fail --silent --show-error -X POST "$WEBHOOK_URL"
+        env:
+          WEBHOOK_URL: ${{ secrets.AZURE_CD_WEBHOOK_FRONTEND }}
