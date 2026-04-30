@@ -66,7 +66,13 @@ public class AuditReportService {
 
         fetchAndStoreNewsEvidence(dto.getPortfolioId(), holdings);
 
-        String summary = aiAnalysisService.generateRiskSummary(holdingNames);
+        String summary;
+        try {
+            summary = aiAnalysisService.generateRiskSummary(holdingNames);
+        } catch (Exception e) {
+            log.warn("AI risk summary failed for portfolio '{}': {}", dto.getPortfolioId(), e.getMessage());
+            summary = "AI analysis unavailable.";
+        }
         report.setAiRiskSummary(summary);
 
         report.setAuditStatus(AuditStatus.PENDING_REVIEW);
