@@ -26,30 +26,30 @@
             date: r.createdAt ? r.createdAt.slice(0, 10) : '—'
           }));
         }
-        return;
-      }
-      const portfolioRes = await fetch('/api/portfolio');
-      const portfolios: any[] = portfolioRes.ok ? await portfolioRes.json() : [];
-      const rows: any[] = [];
-      for (const p of portfolios) {
-        const dashRes = await fetch(`/api/service/auditreport/dashboard?portfolioId=${p.id}`);
-        if (!dashRes.ok) continue;
-        const agg: any[] = await dashRes.json();
-        for (const a of agg) {
-          for (const itemId of (a.itemIds || [])) {
-            rows.push({
-              id: itemId,
-              reportId: itemId.slice(-8).toUpperCase(),
-              portfolio: p.name,
-              auditor: '—',
-              status: a.id,
-              score: null,
-              date: '—'
-            });
+      } else {
+        const portfolioRes = await fetch('/api/portfolio');
+        const portfolios: any[] = portfolioRes.ok ? await portfolioRes.json() : [];
+        const rows: any[] = [];
+        for (const p of portfolios) {
+          const dashRes = await fetch(`/api/service/auditreport/dashboard?portfolioId=${p.id}`);
+          if (!dashRes.ok) continue;
+          const agg: any[] = await dashRes.json();
+          for (const a of agg) {
+            for (const itemId of (a.itemIds || [])) {
+              rows.push({
+                id: itemId,
+                reportId: itemId.slice(-8).toUpperCase(),
+                portfolio: p.name,
+                auditor: '—',
+                status: a.id,
+                score: null,
+                date: '—'
+              });
+            }
           }
         }
+        reports = rows;
       }
-      reports = rows;
     } finally {
       loading = false;
     }
