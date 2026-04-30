@@ -36,34 +36,9 @@ jobs:
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_BACKEND }}
           images: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-backend:${{ github.sha }}
 
-      - name: Force backend container restart via Kudu
+      - name: Trigger backend CD webhook
         run: |
-          python3 - <<'EOF'
-          import xml.etree.ElementTree as ET, subprocess, sys, os
-
-          profile = os.environ["PUBLISH_PROFILE"]
-          root = ET.fromstring(profile)
-          cred = next(
-              p for p in root.findall(".//publishProfile")
-              if p.get("publishMethod") == "MSDeploy"
-          )
-          username = cred.get("userName")
-          password = cred.get("userPWD")
-          app = os.environ["APP_NAME"]
-
-          result = subprocess.run([
-              "curl", "--fail", "--silent", "--show-error",
-              "-X", "POST",
-              f"https://{app}.scm.azurewebsites.net/docker/restart",
-              "-u", f"{username}:{password}"
-          ], capture_output=True, text=True)
-
-          print(result.stdout or result.stderr or "Restart triggered")
-          sys.exit(result.returncode)
-          EOF
-        env:
-          PUBLISH_PROFILE: ${{ secrets.AZURE_PUBLISH_PROFILE_BACKEND }}
-          APP_NAME: ${{ secrets.AZURE_WEBAPP_NAME_BACKEND }}
+          curl --fail --silent --show-error -X POST "${{ secrets.AZURE_CD_WEBHOOK_BACKEND }}"
 
   deploy-frontend:
     name: Deploy Frontend
@@ -100,31 +75,6 @@ jobs:
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_FRONTEND }}
           images: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-frontend:${{ github.sha }}
 
-      - name: Force frontend container restart via Kudu
+      - name: Trigger frontend CD webhook
         run: |
-          python3 - <<'EOF'
-          import xml.etree.ElementTree as ET, subprocess, sys, os
-
-          profile = os.environ["PUBLISH_PROFILE"]
-          root = ET.fromstring(profile)
-          cred = next(
-              p for p in root.findall(".//publishProfile")
-              if p.get("publishMethod") == "MSDeploy"
-          )
-          username = cred.get("userName")
-          password = cred.get("userPWD")
-          app = os.environ["APP_NAME"]
-
-          result = subprocess.run([
-              "curl", "--fail", "--silent", "--show-error",
-              "-X", "POST",
-              f"https://{app}.scm.azurewebsites.net/docker/restart",
-              "-u", f"{username}:{password}"
-          ], capture_output=True, text=True)
-
-          print(result.stdout or result.stderr or "Restart triggered")
-          sys.exit(result.returncode)
-          EOF
-        env:
-          PUBLISH_PROFILE: ${{ secrets.AZURE_PUBLISH_PROFILE_FRONTEND }}
-          APP_NAME: ${{ secrets.AZURE_WEBAPP_NAME_FRONTEND }}
+          curl --fail --silent --show-error -X POST "${{ secrets.AZURE_CD_WEBHOOK_FRONTEND }}"
