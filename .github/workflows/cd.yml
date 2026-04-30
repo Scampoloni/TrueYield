@@ -27,14 +27,22 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-backend:latest
+          tags: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-backend:${{ github.sha }}
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME_BACKEND }}
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_BACKEND }}
-          images: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-backend:latest
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-backend:${{ github.sha }}
+
+      - name: Force backend container restart via Kudu
+        run: |
+          USERNAME=$(echo '${{ secrets.AZURE_PUBLISH_PROFILE_BACKEND }}' | grep -oP '(?<=userName=")[^"]+' | head -1)
+          PASSWORD=$(echo '${{ secrets.AZURE_PUBLISH_PROFILE_BACKEND }}' | grep -oP '(?<=userPWD=")[^"]+' | head -1)
+          curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "https://${{ secrets.AZURE_WEBAPP_NAME_BACKEND }}.scm.azurewebsites.net/api/restart" \
+            -u "$USERNAME:$PASSWORD"
 
   deploy-frontend:
     name: Deploy Frontend
@@ -70,3 +78,11 @@ jobs:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME_FRONTEND }}
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_FRONTEND }}
           images: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-frontend:${{ github.sha }}
+
+      - name: Force frontend container restart via Kudu
+        run: |
+          USERNAME=$(echo '${{ secrets.AZURE_PUBLISH_PROFILE_FRONTEND }}' | grep -oP '(?<=userName=")[^"]+' | head -1)
+          PASSWORD=$(echo '${{ secrets.AZURE_PUBLISH_PROFILE_FRONTEND }}' | grep -oP '(?<=userPWD=")[^"]+' | head -1)
+          curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "https://${{ secrets.AZURE_WEBAPP_NAME_FRONTEND }}.scm.azurewebsites.net/api/restart" \
+            -u "$USERNAME:$PASSWORD"
