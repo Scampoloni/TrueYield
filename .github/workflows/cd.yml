@@ -57,7 +57,7 @@ jobs:
           context: ./frontend
           file: frontend/Dockerfile
           push: true
-          tags: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-frontend:latest
+          tags: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-frontend:${{ github.sha }}
           build-args: |
             API_BASE_URL=https://trueyield-backend.azurewebsites.net
             AUTH0_DOMAIN=${{ secrets.AUTH0_DOMAIN }}
@@ -69,4 +69,4 @@ jobs:
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME_FRONTEND }}
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_FRONTEND }}
-          images: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-frontend:latest
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/trueyield-frontend:${{ github.sha }}
