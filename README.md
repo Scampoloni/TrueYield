@@ -830,7 +830,7 @@ Repository → **Settings → Secrets and variables → Actions → New reposito
 
 ### API-Dokumentation
 
-Vollständige Postman-Dokumentation (veröffentlicht): [https://documenter.getpostman.com/view/52455816/2sBXihpXqi](https://documenter.getpostman.com/view/52455816/2sBXihpXqi)
+Vollständige Postman-Dokumentation (veröffentlicht): [https://documenter.getpostman.com/view/52455816/2sBXqJMMCz](https://documenter.getpostman.com/view/52455816/2sBXqJMMCz)
 
 Swagger UI (OpenAPI 3): [https://trueyield-backend.azurewebsites.net/swagger-ui.html](https://trueyield-backend.azurewebsites.net/swagger-ui.html) — lokal unter [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
