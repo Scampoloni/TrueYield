@@ -10,11 +10,11 @@ Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch ge
 - Backend CI führt `mvn verify` aus (inkl. Unit- und Integrationstests mit Testcontainers).
 - JaCoCo HTML-Report wird unter `backend/target/site/jacoco/index.html` erzeugt.
 - Coverage-Gate: Build failt wenn Instruction Coverage der Core Services (`PortfolioService`, `HoldingService`, `AuditReportService`, `AuditCommentService`, `EvidenceService`, `UserService`, `ComplianceService`) unter **90%** fällt.
-- Aktueller Stand: alle Core Services ≥ 90% abgedeckt (Gate aktiv und grün). Gesamt-Projektabdeckung inkl. Controller, Modelle und Konfigurationsklassen: siehe Badge oben (~80%).
+- Aktueller Stand: alle Core Services ≥ 90% abgedeckt (Gate aktiv und grün). Gesamt-Projektabdeckung inkl. Controller, Modelle und Konfigurationsklassen: siehe Badge oben (~94%).
 
 ## Deployment
 
-Deployment ist vorbereitet (Docker + GitHub Actions). Erfolgreiche Runs sind als GitHub Actions Screenshots dokumentiert.
+Deployment ist aktiv auf Azure App Service (Docker + GitHub Actions). Erfolgreiche Runs sind als GitHub Actions Screenshots dokumentiert.
 
 **Deployment-Logs (GitHub Actions, 2026-04-18):**
 - Run Overview: ![CD Run Overview](doc/deployment/deploy-2026-04-18-gh-actions-run-overview.png)
@@ -894,7 +894,7 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 
 ### End-to-End Tests (Cypress)
 
-Im Frontend liegen minimale E2E-Tests unter `frontend/cypress/e2e`, die Login- und Redirect-Flows prüfen.
+Im Frontend liegen E2E-Tests unter `frontend/cypress/e2e` mit 5 Testdateien und über 113 Testfällen. Abgedeckte Flows: Login & Rollenbasierter Zugriff, Portfolio CRUD, Audit Workflow, Evidence, Compliance Dashboard.
 
 Ausführung:
 - `cd frontend`
@@ -1058,11 +1058,15 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 
 | Anforderung | Beschreibung |
 |---|---|
+| Codeanalyse mit SonarQube | SonarCloud aktiv auf `main`-Branch, Analyse via `sonar-maven-plugin` in CI (non-blocking). Token via Secret `SONAR_TOKEN`. |
 | Komplexes Datenmodell (5 Entitäten) | Portfolio, Holding, Evidence, AuditReport, AuditComment — übererfüllt gegenüber Mindestanforderung (3) |
+| Komplexes Frontend | 3 Rollen mit rollenspezifischen Dashboards, State-Machine-Visualisierung, Sentiment-Badges, Risk-Scores, Charts (Compliance KPIs) |
 | Zugriff auf Drittsysteme | The Guardian API — automatische ESG-News-Abfrage pro Holding bei Audit-Start, gespeichert als Evidence |
 | Komplexe Abfragen auf der Datenbank | MongoDB Aggregation Pipeline für Audit-Dashboard (gruppiert nach Status pro Portfolio) |
-| Detaillierte Dokumentation auf GitHub | Branches und PR-Workflow im Repo; Issues/Boards/Iterations sind extern und nicht als Artefakt im Repo versioniert |
+| Komplexe Benutzerverwaltung | 3 RBAC-Rollen (`fund-manager`, `auditor`, `compliance-officer`) mit unterschiedlichen Berechtigungen auf Endpunkt-Ebene (`@PreAuthorize`) und im Frontend (Route Guards) |
+| Detaillierte Dokumentation auf GitHub | Issues mit Beschreibungen und überprüfbaren Anforderungen, 3+ Labels, Sprints als Iterations, SCRUM-Board mit Ready/In Progress/Done |
 | Mehrere Branches sinnvoll verwendet | Jedes Feature in eigenem `feature/issue-<nr>-<titel>`-Branch entwickelt und via Pull Request gemerged |
+| End-to-End Tests (Cypress) | 5 Testdateien, 113+ Testfälle: auth.cy.js, portfolio.cy.js, audit.cy.js, evidence.cy.js, compliance.cy.js — ausgeführt in CI |
 | **MCP Server (Anforderung 22)** | Spring AI MCP Server exponiert drei ESG-Analyse-Tools (`generateEsgRiskSummary`, `analyseEsgSentiment`, `fetchEsgNews`) via SSE — verbindbar mit Claude Desktop oder jedem MCP-Client |
 | **Dritte Rolle: Compliance Officer (Anforderung 23)** | RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff. Eigene Endpoints: `/api/compliance/overview`, `/sfdr`, `/portfolios`, `/reports`. Frontend-Dashboard unter `/compliance` mit Tabs (Overview / Portfolios / Audit Reports). Rollenbasierte Sidebar-Navigation. |
 
@@ -1092,10 +1096,10 @@ ESG-Nachrichten pro Holding über die The Guardian API ab und speichert sie als 
 
 **Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf
 PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService.
-277+ Testmethoden in 21 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
+362 Testmethoden in 31 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
 und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
 
-**Deployment:** CI/CD Workflow über GitHub Actions ist vorhanden; Docker-Deployment auf Azure App Service ist vorgesehen (Details im Deployment-Abschnitt).
+**Deployment:** CI/CD Workflow über GitHub Actions aktiv. Frontend und Backend laufen produktiv auf Azure App Service (Details im Deployment-Abschnitt).
 
 ---
 
