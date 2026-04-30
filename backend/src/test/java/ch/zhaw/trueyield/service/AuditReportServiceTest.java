@@ -404,6 +404,22 @@ class AuditReportServiceTest {
     }
 
     @Test
+    void createAuditReport_transitionsToPendingReview_whenAiThrowsUnexpectedException() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+        when(aiAnalysisService.generateRiskSummary(anyList()))
+                .thenThrow(new RuntimeException("Anthropic API timeout"));
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+        verify(auditReportRepository, times(2)).save(any(AuditReport.class));
+    }
+
+    @Test
     void createAuditReport_skipsEvidence_whenUrlIsBlank() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
