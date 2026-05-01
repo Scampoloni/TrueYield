@@ -117,7 +117,7 @@ class NewsIngestionServiceTest {
         when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
                 new NewsArticle("Some generic news", "Content", "https://example.com/4", LocalDate.now(), "Mock")
         ));
-        when(aiAnalysisService.analyzeRelevance(eq(COMPANY), anyString())).thenReturn(0.2); // Low relevance
+        when(aiAnalysisService.analyzeRelevance(eq(COMPANY), anyString())).thenReturn(0.1); // Low relevance
 
         newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
 

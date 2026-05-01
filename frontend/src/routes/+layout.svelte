@@ -55,6 +55,7 @@
 
     <!-- Navigation -->
     <nav class="nav">
+      {#if !isAuditor}
       <div class="nav-group">
         <div class="nav-cat">Overview</div>
         {#if isComplianceOfficer}
@@ -79,6 +80,7 @@
           </a>
         {/if}
       </div>
+      {/if}
 
       {#if isFundManager}
       <div class="nav-group">

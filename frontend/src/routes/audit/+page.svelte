@@ -19,7 +19,7 @@
           reports = items.map((r: any) => ({
             id: r.id,
             reportId: (r.id ?? '').slice(-8).toUpperCase(),
-            portfolio: r.portfolioId,
+            portfolio: r.portfolioName || r.portfolioId,
             auditor: r.auditorId ?? '—',
             status: r.auditStatus,
             score: null,

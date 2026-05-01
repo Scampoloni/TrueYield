@@ -69,7 +69,7 @@ public class NewsIngestionService {
             // 3. Relevance Filter
             if (aiAnalysisService != null && aiAnalysisService.isAvailable()) {
                 double relevance = aiAnalysisService.analyzeRelevance(companyName, snippet);
-                if (relevance < 0.5) {
+                if (relevance < 0.2) {
                     log.info("NewsIngestion: skipped article '{}' due to low relevance score ({})", article.title(), relevance);
                     continue;
                 }

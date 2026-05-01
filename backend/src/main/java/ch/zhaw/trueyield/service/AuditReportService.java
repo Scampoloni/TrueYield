@@ -49,6 +49,12 @@ public class AuditReportService {
     public AuditReport createAuditReport(AuditReportCreateDTO dto) {
         accessControlService.requireFundManagerPortfolioAccess(dto.getPortfolioId());
         AuditReport report = new AuditReport(dto.getPortfolioId(), AuditStatus.AI_ANALYZING);
+        try {
+            ch.zhaw.trueyield.model.Portfolio portfolio = portfolioService.getPortfolioByIdForAuditor(dto.getPortfolioId());
+            report.setPortfolioName(portfolio.getName());
+        } catch (Exception e) {
+            log.warn("Could not load portfolio name for '{}': {}", dto.getPortfolioId(), e.getMessage());
+        }
         report.setCreatedAt(LocalDateTime.now());
         report = auditReportRepository.save(report);
 

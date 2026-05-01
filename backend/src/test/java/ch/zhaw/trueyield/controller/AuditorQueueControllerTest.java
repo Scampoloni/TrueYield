@@ -37,7 +37,7 @@ class AuditorQueueControllerTest {
     void auditor_canSeeQueue_returns200() throws Exception {
         when(userService.getCurrentUserId()).thenReturn("auditor-001");
         AuditReportResponseDTO dto = new AuditReportResponseDTO(
-                "report-001", "portfolio-001", AuditStatus.PENDING_REVIEW, null, null, null);
+                "report-001", "portfolio-001", "Global ESG Leaders Fund", AuditStatus.PENDING_REVIEW, null, null, null);
         when(auditReportService.getAuditorQueue(anyString())).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/api/service/auditreport/auditor-queue")
