@@ -81,7 +81,10 @@
     <div class="evidence-grid">
       {#each evidence as e}
         <div class="evidence-card">
-          <div class="evidence-headline">{e.headline}</div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap: 8px;">
+            <div class="evidence-headline">{e.headline}</div>
+            <span class="badge-source">{e.sourceName || 'Web'}</span>
+          </div>
           <div class="evidence-source">{e.summary}</div>
           <div class="evidence-date">{e.createdAt}</div>
           {#if e.sourceUrl}
