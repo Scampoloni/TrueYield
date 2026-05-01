@@ -310,6 +310,62 @@ class AuditReportServiceTest {
     }
 
     @Test
+    void createAuditReport_skipsIngestion_whenHoldingAlreadyAtMaxCapacity() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+
+        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "AAPL");
+        holding.setId("holding-001");
+        holding.setName("Apple Inc.");
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
+        when(evidenceService.countByHoldingId("holding-001")).thenReturn(10L); // MAX_EVIDENCE_PER_HOLDING is 10
+
+        auditReportService.createAuditReport(createDTO);
+
+        verify(newsIngestionService, never()).ingestNewsForHolding(anyString(), anyString());
+    }
+
+    @Test
+    void createAuditReport_usesSymbol_whenNameIsNull() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+
+        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "AAPL");
+        holding.setId("holding-001");
+        holding.setName(null); // Name is null
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
+
+        auditReportService.createAuditReport(createDTO);
+
+        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-001", "AAPL");
+    }
+
+    @Test
+    void createAuditReport_continuesGracefully_whenEvidenceServiceThrows() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+
+        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "AAPL");
+        holding.setId("holding-001");
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
+        when(evidenceService.countByHoldingId(anyString())).thenThrow(new RuntimeException("DB offline"));
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+        verify(newsIngestionService, never()).ingestNewsForHolding(anyString(), anyString());
+    }
+
+    @Test
     void createAuditReport_throwsBadRequest_whenPortfolioNotFound() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("unknown-portfolio");
