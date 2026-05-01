@@ -29,5 +29,7 @@ public class Evidence {
 
     private Double aiSentimentScore;
 
+    private String sourceName;
+
     private LocalDate publishedAt;
 }

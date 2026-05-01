@@ -41,7 +41,7 @@ public class AuditReportService {
     private EvidenceService evidenceService;
 
     @Autowired
-    private NewsService newsService;
+    private NewsIngestionService newsIngestionService;
 
     @Autowired
     private AiAnalysisService aiAnalysisService;
@@ -82,29 +82,14 @@ public class AuditReportService {
     private static final int MAX_EVIDENCE_PER_HOLDING = 10;
 
     private void fetchAndStoreNewsEvidence(String portfolioId, List<Holding> holdings) {
-        if (!newsService.isConfigured()) {
-            return;
-        }
         try {
             for (Holding holding : holdings) {
                 if (evidenceService.countByHoldingId(holding.getId()) >= MAX_EVIDENCE_PER_HOLDING) {
                     continue;
                 }
                 String query = holding.getName() != null ? holding.getName() : holding.getSymbol();
-                List<NewsService.NewsArticle> articles = newsService.fetchNewsForHolding(query);
-                for (NewsService.NewsArticle article : articles) {
-                    if (article.url().isBlank()) continue;
-                    if (evidenceService.existsByHoldingIdAndSourceUrl(holding.getId(), article.url())) continue;
-                    if (evidenceService.countByHoldingId(holding.getId()) >= MAX_EVIDENCE_PER_HOLDING) break;
-                    EvidenceCreateDTO evidenceDTO = new EvidenceCreateDTO();
-                    evidenceDTO.setHoldingId(holding.getId());
-                    evidenceDTO.setSourceUrl(article.url());
-                    String snippet = !article.title().isBlank()
-                            ? article.title() + (article.content().isBlank() || article.content().equals(article.title()) ? "" : " – " + article.content())
-                            : article.content();
-                    evidenceDTO.setContentSnippet(snippet);
-                    evidenceService.createEvidence(evidenceDTO);
-                }
+                // This is async, so it won't block the report creation
+                newsIngestionService.ingestNewsForHolding(holding.getId(), query);
             }
         } catch (Exception e) {
             log.warn("News evidence fetch failed for portfolio '{}': {}", portfolioId, e.getMessage());

@@ -1,0 +1,94 @@
+package ch.zhaw.trueyield.service.provider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class NewsdataIoProvider implements NewsProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(NewsdataIoProvider.class);
+    private static final int MAX_ARTICLES = 5;
+
+    private final RestClient restClient;
+    private final String apiKey;
+
+    public NewsdataIoProvider(
+            @Value("${news.api.newsdata.base-url:https://newsdata.io/api/1}") String baseUrl,
+            @Value("${news.api.newsdata.key:}") String apiKey) {
+        this.apiKey = apiKey;
+        this.restClient = RestClient.builder()
+                .baseUrl(baseUrl)
+                .build();
+    }
+
+    @Override
+    public boolean isConfigured() {
+        return apiKey != null && !apiKey.isBlank();
+    }
+
+    @Override
+    public String getProviderName() {
+        return "Newsdata.io";
+    }
+
+    @Override
+    public List<NewsArticle> fetchNewsForHolding(String companyName) {
+        if (!isConfigured()) return Collections.emptyList();
+
+        String cleanName = companyName
+                .replaceAll("(?i)\\s+(Inc\\.?|PLC\\.?|Ltd\\.?|Corp\\.?|AG|SE|NV|SA|GmbH)\\s*$", "")
+                .trim();
+
+        try {
+            Map<String, Object> response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/news")
+                            .queryParam("q", "\"" + cleanName + "\" AND (ESG OR sustainability OR greenwashing)")
+                            .queryParam("category", "business")
+                            .queryParam("language", "en")
+                            .queryParam("apikey", apiKey)
+                            .build())
+                    .retrieve()
+                    .body(Map.class);
+
+            if (response == null || !response.containsKey("results")) return Collections.emptyList();
+            
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> results = (List<Map<String, Object>>) response.get("results");
+            if (results == null) return Collections.emptyList();
+            
+            return results.stream().limit(MAX_ARTICLES).map(this::mapArticle).toList();
+        } catch (Exception e) {
+            log.warn("NewsdataIoProvider: failed to fetch news for '{}': {}", companyName, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    private NewsArticle mapArticle(Map<String, Object> raw) {
+        String title = (String) raw.getOrDefault("title", "");
+        String url = (String) raw.getOrDefault("link", "");
+        String content = (String) raw.getOrDefault("description", title);
+        if (content == null || content.isBlank()) {
+            content = title;
+        }
+        
+        String sourceName = getProviderName();
+        if (raw.containsKey("source_id")) {
+             sourceName = (String) raw.get("source_id");
+             // Capitalize first letter
+             if (sourceName != null && !sourceName.isEmpty()) {
+                 sourceName = sourceName.substring(0, 1).toUpperCase() + sourceName.substring(1);
+             }
+        }
+        
+        return new NewsArticle(title, content, url, LocalDate.now(), sourceName != null ? sourceName : getProviderName());
+    }
+}

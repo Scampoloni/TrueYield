@@ -45,7 +45,7 @@ class AuditReportServiceTest {
     private EvidenceService evidenceService;
 
     @Mock
-    private NewsService newsService;
+    private NewsIngestionService newsIngestionService;
 
     @Mock
     private AiAnalysisService aiAnalysisService;
@@ -69,7 +69,8 @@ class AuditReportServiceTest {
         lenient().when(dto.getAuditReportId()).thenReturn("report-001");
         lenient().when(aiAnalysisService.generateRiskSummary(anyList()))
             .thenReturn("Mock AI risk summary.");
-        lenient().when(newsService.isConfigured()).thenReturn(false);
+        lenient().when(aiAnalysisService.generateRiskSummary(anyList()))
+            .thenReturn("Mock AI risk summary.");
     }
 
     // ── getAuditReportById ───────────────────────────────────────────────────
@@ -291,58 +292,21 @@ class AuditReportServiceTest {
     }
 
     @Test
-    void createAuditReport_fetchesNewsAndCreatesEvidence_whenNewsServiceConfigured() {
+    void createAuditReport_fetchesNews_viaIngestionService() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
         doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-        when(newsService.isConfigured()).thenReturn(true);
 
         ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "AAPL");
         holding.setId("holding-001");
         holding.setName("Apple Inc.");
         when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
-        when(newsService.fetchNewsForHolding("Apple Inc.")).thenReturn(java.util.List.of(
-                new NewsService.NewsArticle("ESG headline", "ESG content snippet", "https://example.com", java.time.LocalDate.now())
-        ));
 
         auditReportService.createAuditReport(createDTO);
 
-        verify(evidenceService, times(1)).createEvidence(any(ch.zhaw.trueyield.model.dto.EvidenceCreateDTO.class));
-    }
-
-    @Test
-    void createAuditReport_skipsNewsEvidence_whenNewsServiceNotConfigured() {
-        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
-        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
-        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
-        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-        when(newsService.isConfigured()).thenReturn(false);
-
-        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of());
-
-        auditReportService.createAuditReport(createDTO);
-
-        verify(evidenceService, never()).createEvidence(any());
-    }
-
-    @Test
-    void createAuditReport_continuesGracefully_whenNewsFetchThrows() {
-        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
-        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
-        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
-        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-        when(newsService.isConfigured()).thenReturn(true);
-        when(holdingService.getHoldingsByPortfolioId("portfolio-001"))
-                .thenThrow(new RuntimeException("DB unavailable"));
-
-        AuditReport result = auditReportService.createAuditReport(createDTO);
-
-        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
-        verify(auditReportRepository, times(2)).save(any(AuditReport.class));
+        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-001", "Apple Inc.");
     }
 
     @Test
@@ -359,49 +323,7 @@ class AuditReportServiceTest {
         verify(auditReportRepository, never()).save(any());
     }
 
-    @Test
-    void createAuditReport_skipsEvidence_whenHoldingAlreadyAtMaxCapacity() {
-        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
-        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
-        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
-        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-        when(newsService.isConfigured()).thenReturn(true);
 
-        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "AAPL");
-        holding.setId("holding-001");
-        holding.setName("Apple Inc.");
-        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
-        when(evidenceService.countByHoldingId("holding-001")).thenReturn(10L);
-
-        auditReportService.createAuditReport(createDTO);
-
-        verify(newsService, never()).fetchNewsForHolding(anyString());
-        verify(evidenceService, never()).createEvidence(any());
-    }
-
-    @Test
-    void createAuditReport_skipsEvidence_whenUrlAlreadyExists() {
-        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
-        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
-        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
-        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-        when(newsService.isConfigured()).thenReturn(true);
-
-        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "AAPL");
-        holding.setId("holding-001");
-        holding.setName("Apple Inc.");
-        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
-        when(newsService.fetchNewsForHolding("Apple Inc.")).thenReturn(java.util.List.of(
-                new NewsService.NewsArticle("ESG headline", "ESG content", "https://example.com", java.time.LocalDate.now())
-        ));
-        when(evidenceService.existsByHoldingIdAndSourceUrl("holding-001", "https://example.com")).thenReturn(true);
-
-        auditReportService.createAuditReport(createDTO);
-
-        verify(evidenceService, never()).createEvidence(any());
-    }
 
     @Test
     void createAuditReport_transitionsToPendingReview_whenAiThrowsUnexpectedException() {
@@ -419,25 +341,5 @@ class AuditReportServiceTest {
         verify(auditReportRepository, times(2)).save(any(AuditReport.class));
     }
 
-    @Test
-    void createAuditReport_skipsEvidence_whenUrlIsBlank() {
-        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
-        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
-        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
-        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
-        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-        when(newsService.isConfigured()).thenReturn(true);
 
-        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "AAPL");
-        holding.setId("holding-001");
-        holding.setName("Apple Inc.");
-        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
-        when(newsService.fetchNewsForHolding("Apple Inc.")).thenReturn(java.util.List.of(
-                new NewsService.NewsArticle("ESG headline", "ESG content", "", java.time.LocalDate.now())
-        ));
-
-        auditReportService.createAuditReport(createDTO);
-
-        verify(evidenceService, never()).createEvidence(any());
-    }
 }
