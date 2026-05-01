@@ -740,6 +740,17 @@ textarea.form-input { resize: vertical; min-height: 100px; line-height: 1.6; }
 .evidence-headline { font-size: 13px; font-weight: 500; color: var(--text-1); margin-bottom: 8px; line-height: 1.4; }
 .evidence-source { font-size: 11px; color: var(--blue-light); margin-bottom: 2px; }
 .evidence-date { font-size: 11px; color: var(--text-3); margin-bottom: 14px; }
+.badge-source {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
 .risk-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-bottom: 6px; }
 .risk-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.07); overflow: hidden; margin-bottom: 10px; }
 .risk-fill { height: 100%; border-radius: 2px; transition: width 0.3s ease; }
