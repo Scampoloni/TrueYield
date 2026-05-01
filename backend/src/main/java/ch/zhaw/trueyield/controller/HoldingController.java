@@ -50,4 +50,21 @@ public class HoldingController {
         Holding created = holdingService.createHolding(dto);
         return new ResponseEntity<>(HoldingResponseDTO.fromEntity(created), HttpStatus.CREATED);
     }
+
+    @Autowired
+    private ch.zhaw.trueyield.security.AccessControlService accessControlService;
+
+    @Autowired(required = false)
+    private ch.zhaw.trueyield.service.NewsIngestionService newsIngestionService;
+
+    @PostMapping("/{id}/ingest-news")
+    @PreAuthorize("hasRole('fund-manager')")
+    public ResponseEntity<Void> ingestNews(@PathVariable String id) {
+        Holding holding = accessControlService.requireHoldingAccess(id);
+        if (newsIngestionService != null) {
+            String companyName = holding.getName() != null && !holding.getName().isBlank() ? holding.getName() : holding.getSymbol();
+            newsIngestionService.ingestNewsForHolding(holding.getId(), companyName);
+        }
+        return new ResponseEntity<>(HttpStatus.ACCEPTED);
+    }
 }

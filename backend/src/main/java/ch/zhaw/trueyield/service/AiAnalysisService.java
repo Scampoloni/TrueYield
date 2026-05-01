@@ -73,12 +73,11 @@ public class AiAnalysisService {
             return 1.0; // Assume relevant if AI is down to not block ingestion
         }
         String prompt = """
-                Read the following news article text. Does this text explicitly mention or 
-                primarily concern the company "%s"? Or is it just a generic industry news 
-                where the company is not really involved?
+                Read the following news article snippet. Does it seem related to the company "%s" or its industry?
+                Even if the company is only mentioned briefly or implied by context (like its CEO, products, or sector news where it operates), consider it relevant.
+                Only reject it if it is completely unrelated spam or clearly about a completely different topic.
                 
-                Respond ONLY with a decimal number between 0.0 (completely irrelevant/generic) 
-                and 1.0 (highly relevant to the specific company). No explanation.
+                Respond ONLY with a decimal number between 0.0 (completely irrelevant) and 1.0 (relevant). No explanation.
                 
                 Text: "%s"
                 """.formatted(companyName, articleText);

@@ -13,6 +13,7 @@ public class AuditReportResponseDTO {
 
     private String id;
     private String portfolioId;
+    private String portfolioName;
     private AuditStatus auditStatus;
     private String aiRiskSummary;
     private String auditorId;
@@ -22,6 +23,7 @@ public class AuditReportResponseDTO {
         return new AuditReportResponseDTO(
                 report.getId(),
                 report.getPortfolioId(),
+                report.getPortfolioName(),
                 report.getAuditStatus(),
                 report.getAiRiskSummary(),
                 report.getAuditorId(),

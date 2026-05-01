@@ -40,6 +40,23 @@
     if (score > -0.3) return 'medium';
     return 'high';
   }
+
+  let fetchingNews = $state(false);
+  async function fetchNews() {
+    fetchingNews = true;
+    try {
+      await fetch(`/api/holding/${holdingId}/ingest-news`, { method: 'POST' });
+      // Wait a few seconds for async ingestion
+      await new Promise(r => setTimeout(r, 3000));
+      const res = await fetch(`/api/evidence?holdingId=${holdingId}`, { cache: 'no-store' });
+      if (res.ok) {
+        const items = await res.json();
+        evidence = items.sort((a: any, b: any) => b.riskScore - a.riskScore);
+      }
+    } finally {
+      fetchingNews = false;
+    }
+  }
 </script>
 
 <div class="topbar">
@@ -49,6 +66,9 @@
   </div>
   <div style="display:flex;gap:0.5rem;">
     {#if isFundManager}
+      <button onclick={fetchNews} disabled={fetchingNews} class="btn btn-ghost" style="border: 1px solid rgba(255,255,255,0.1);">
+        {fetchingNews ? 'Fetching...' : 'Fetch AI News'}
+      </button>
       <a href={`/portfolios/${portfolioId}/holdings/${holdingId}/create`} class="btn btn-primary">+ Add Evidence</a>
     {/if}
     <a href={`/portfolios/${portfolioId}`} class="btn btn-ghost">← Back to Portfolio</a>

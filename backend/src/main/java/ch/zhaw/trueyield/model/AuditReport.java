@@ -24,6 +24,8 @@ public class AuditReport {
     @Indexed
     private String portfolioId;
 
+    private String portfolioName;
+
     @NonNull
     private AuditStatus auditStatus;
 
