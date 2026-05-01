@@ -67,4 +67,29 @@ public class AiAnalysisService {
             return 0.0;
         }
     }
+
+    public double analyzeRelevance(String companyName, String articleText) {
+        if (!isAvailable()) {
+            return 1.0; // Assume relevant if AI is down to not block ingestion
+        }
+        String prompt = """
+                Read the following news article text. Does this text explicitly mention or 
+                primarily concern the company "%s"? Or is it just a generic industry news 
+                where the company is not really involved?
+                
+                Respond ONLY with a decimal number between 0.0 (completely irrelevant/generic) 
+                and 1.0 (highly relevant to the specific company). No explanation.
+                
+                Text: "%s"
+                """.formatted(companyName, articleText);
+        try {
+            String text = chatModel.call(new Prompt(prompt))
+                    .getResult().getOutput().getText();
+            double score = Double.parseDouble(text.trim().replace(',', '.'));
+            return Math.max(0.0, Math.min(1.0, score));
+        } catch (Exception e) {
+            log.warn("AiAnalysisService: analyzeRelevance failed for '{}': {}", companyName, e.getMessage());
+            return 1.0; 
+        }
+    }
 }

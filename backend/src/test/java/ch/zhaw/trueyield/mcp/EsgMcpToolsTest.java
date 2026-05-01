@@ -1,7 +1,8 @@
 package ch.zhaw.trueyield.mcp;
 
 import ch.zhaw.trueyield.service.AiAnalysisService;
-import ch.zhaw.trueyield.service.NewsService;
+import ch.zhaw.trueyield.service.provider.NewsArticle;
+import ch.zhaw.trueyield.service.provider.NewsProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,13 +27,13 @@ class EsgMcpToolsTest {
     private AiAnalysisService aiAnalysisService;
 
     @Mock
-    private NewsService newsService;
+    private NewsProvider mockProvider;
 
     private EsgMcpTools esgMcpTools;
 
     @BeforeEach
     void setUp() {
-        esgMcpTools = new EsgMcpTools(aiAnalysisService, newsService);
+        esgMcpTools = new EsgMcpTools(aiAnalysisService, List.of(mockProvider));
     }
 
     // ── generateEsgRiskSummary ───────────────────────────────────────────────
@@ -113,23 +114,26 @@ class EsgMcpToolsTest {
 
     @Test
     void fetchEsgNews_returnsFormattedArticles_whenNewsFound() {
-        NewsService.NewsArticle article = new NewsService.NewsArticle(
+        NewsArticle article = new NewsArticle(
                 "Shell pledges net-zero by 2050",
                 "Shell announced...",
                 "https://theguardian.com/shell-netzero",
-                LocalDate.of(2025, 1, 15));
-        when(newsService.fetchNewsForHolding("Shell")).thenReturn(List.of(article));
+                LocalDate.of(2025, 1, 15),
+                "The Guardian");
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding("Shell")).thenReturn(List.of(article));
 
         String result = esgMcpTools.fetchEsgNews("Shell");
 
         assertTrue(result.contains("Shell pledges net-zero by 2050"));
         assertTrue(result.contains("https://theguardian.com/shell-netzero"));
-        verify(newsService, times(1)).fetchNewsForHolding("Shell");
+        verify(mockProvider, times(1)).fetchNewsForHolding("Shell");
     }
 
     @Test
     void fetchEsgNews_returnsNoNewsMessage_whenEmpty() {
-        when(newsService.fetchNewsForHolding("UnknownCorp")).thenReturn(Collections.emptyList());
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding("UnknownCorp")).thenReturn(Collections.emptyList());
 
         String result = esgMcpTools.fetchEsgNews("UnknownCorp");
 
@@ -139,12 +143,13 @@ class EsgMcpToolsTest {
 
     @Test
     void fetchEsgNews_includesAllArticles_whenMultipleFound() {
-        List<NewsService.NewsArticle> articles = List.of(
-                new NewsService.NewsArticle("Title 1", "Content", "https://url1", LocalDate.now()),
-                new NewsService.NewsArticle("Title 2", "Content", "https://url2", LocalDate.now()),
-                new NewsService.NewsArticle("Title 3", "Content", "https://url3", LocalDate.now())
+        List<NewsArticle> articles = List.of(
+                new NewsArticle("Title 1", "Content", "https://url1", LocalDate.now(), "Source 1"),
+                new NewsArticle("Title 2", "Content", "https://url2", LocalDate.now(), "Source 2"),
+                new NewsArticle("Title 3", "Content", "https://url3", LocalDate.now(), "Source 3")
         );
-        when(newsService.fetchNewsForHolding("Apple")).thenReturn(articles);
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding("Apple")).thenReturn(articles);
 
         String result = esgMcpTools.fetchEsgNews("Apple");
 

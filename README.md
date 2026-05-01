@@ -1,4 +1,4 @@
-﻿# TrueYield – KI-gestützte ESG-Verifikation gegen Greenwashing
+# TrueYield – KI-gestützte ESG-Verifikation gegen Greenwashing
 
 ![Backend CI](https://github.com/Scampoloni/trueyield/actions/workflows/ci.yml/badge.svg?branch=main)
 ![Coverage](https://github.com/Scampoloni/trueyield/raw/main/.github/badges/jacoco.svg)
@@ -1105,7 +1105,7 @@ und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffspr
 
 ## Backlog & Nächste Schritte
 
-Die folgenden Erweiterungen sind konzeptuell ausgearbeitet und bilden mögliche Anknüpfungspunkte für eine Bachelorarbeit oder einen produktiven Piloten.
+Die folgenden Erweiterungen sind priorisiert, um die Lösung von einem funktionalen MVP zu einem "Enterprise-Ready" Produkt aufzuwerten, das reale Geschäftsprobleme löst und visuell überzeugt. Sie bilden zudem mögliche Anknüpfungspunkte für eine Bachelorarbeit oder einen produktiven Piloten.
 
 ### Bereits umgesetzt
 | # | Feature | Beschreibung |
@@ -1113,33 +1113,38 @@ Die folgenden Erweiterungen sind konzeptuell ausgearbeitet und bilden mögliche 
 | B-01 | **Automatisches News-Monitoring** | Guardian API liefert bei Holding-Erstellung automatisch ESG-News als Evidence |
 | B-02 | **SFDR Article 8/9 Scoring** | Sentiment-Aggregation klassifiziert Portfolios regulatorisch |
 
-### Kurzfristig (< 1 Woche)
+### Priorität 1: Datenqualität & KI-Zuverlässigkeit (Core Logic)
+*Der Fokus liegt auf der Vermeidung von False-Positives (Risk-Scores durch irrelevante Sektor-News).*
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
-| B-14 | Duplicate-Detection für Evidence | Gleiche News-URL taucht mehrfach auf wenn mehrere Holdings denselben Artikel triggern — Deduplizierung per URL-Hash vor dem Speichern | 0.5 Tage |
-| B-10 | KPI-Karten im Fund Manager Dashboard | "Portfolios Pending Approval", "Average Approval Time" sichtbar auf Portfolio-Übersicht | 0.5 Tage |
-| B-06 | Cypress E2E für neue Flows | Evidence-Delete + SFDR-Seite automatisiert testen | 1 Tag |
-| B-08 | E-Mail-Benachrichtigungen | Fund Manager / Auditor bei Statuswechsel automatisch benachrichtigen (Spring Mail / SendGrid) | 1 Tag |
-| B-15 | Risk-Score Threshold konfigurierbar | Compliance Officer kann per UI festlegen ab welchem Score ein Holding als "High Risk" gilt — statt hardcodiertem Wert im Backend | 1 Tag |
-| B-07 | CSV/Excel-Upload für Holdings | Drag & Drop Import von ISINs statt manueller Einzelerfassung | 1–2 Tage |
-| B-11 | „Request Revision"-Flow | Neuer `REVISION_REQUESTED`-Status in der State Machine + Revisions-Kommentar-Pflichtfeld | 1–2 Tage |
-| B-12 | Breitere News-Quellen (GDELT / NewsAPI.org) | Guardian deckt nur englische Qualitätspresse — GDELT bietet kostenlos globales, mehrsprachiges Monitoring; direkte Verbesserung der Risk-Score-Qualität | 1–2 Tage |
-| B-16 | Realtime-Updates via SSE/WebSocket | Auditor sieht AI_ANALYZING → PENDING_REVIEW ohne Page-Reload | 1–2 Tage |
+| B-19 | **Dedizierte Finanz-News-API** | Ersetzen der Guardian-API durch eine Ticker-basierte API (z.B. Finnhub, AlphaVantage, NewsAPI.org), um generisches Branchenrauschen zu eliminieren. | 1–2 Tage |
+| B-20 | **Zweistufiger KI-Relevanzfilter** | Bevor ein Risk-Score berechnet wird, prüft die KI zwingend: "Betrifft der Artikel explizit Firma X?". Irrelevante Artikel werden als Evidence verworfen. | 1–2 Tage |
+| B-21 | **Source Reliability Weighting** | Risk-Scores werden anhand der Seriosität der Quelle gewichtet (z.B. Reuters = 1.0, Blog = 0.3), um extrem schwankende Scores zu stabilisieren. | 1 Tag |
 
-### Mittelfristig (1–4 Wochen)
+### Priorität 2: Usability & Enterprise Workflow (UX)
+*Der Fokus liegt auf maximaler Zeitersparnis für Fund Manager bei der Dateneingabe.*
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
-| B-09 | Audit-PDF-Export | Revisionssicherer PDF-Report mit Evidence-Bibliografie und Auditor-Entscheidung | 2–3 Tage |
-| B-03 | Longitudinales Risk Tracking | Sentiment-Zeitreihe pro Holding → Timeseries-Chart im Frontend | 1–2 Tage |
-| B-05 | Greenwashing Early-Warning | Negativer Sentiment-Trend 30d vor Scandal als Frühindikator | 2–3 Tage |
-| B-17 | Multi-Language Evidence (DE/FR) | Integration deutschsprachiger Quellen (NZZ, Handelsblatt) für DACH-Markt | 2–3 Tage |
-| B-13 | Agentic ESG Research (Spring AI Tool Calling) | KI-Agent durchsucht aktiv mehrere Quellen, bewertet Relevanz und generiert Begründung mit Quellenangaben — deutlich präzisere `aiRiskSummary` | 3–5 Tage |
+| B-22 | **Holding Auto-Complete (Ticker)** | User tippt nur den Ticker (z.B. "AAPL"), Name und ISIN werden über eine API (oder interne Historie) sofort per Dropdown auto-ausgefüllt. | 1–2 Tage |
+| B-07 | **CSV/Excel-Upload für Holdings** | Drag & Drop Import ganzer Portfolios statt manueller Einzelerfassung. | 1–2 Tage |
+| B-14 | **Duplicate-Detection für Evidence** | Deduplizierung per URL-Hash, damit dieselbe News nicht mehrfach gelistet wird. | 0.5 Tage |
 
-### Langfristig / Bachelorarbeit
+### Priorität 3: Visualisierung & Dashboards (Wow-Faktor)
+*Der Fokus liegt auf intuitiver Datenvisualisierung für Compliance- und Portfolio-Übersichten.*
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
-| B-04 | Premium-Datensource (Bloomberg/Reuters) | Deutlich bessere Datenqualität für Enterprise-Kunden | Extern/Kosten |
-| B-18 | Backtesting gegen historische Skandale | Bekannte Greenwashing-Fälle (DWS, Wirecard) rückwirkend durch TrueYield laufen lassen und messen wie früh der Risk-Score erhöht worden wäre — wissenschaftlich messbar | BA-Projekt |
+| B-23 | **Portfolio Asset Allocation (Pie-Chart)** | Visuelle Aufschlüsselung des Portfolios nach prozentualer Gewichtung der Holdings im Detail-View (z.B. mit Chart.js / ApexCharts). | 1 Tag |
+| B-03 | **Longitudinales Risk Tracking** | Sentiment-Zeitreihe pro Holding visualisiert als Timeseries-Chart. | 1–2 Tage |
+| B-16 | **Realtime-Updates via SSE/WebSocket** | Auditor und Fund Manager sehen Statuswechsel (`AI_ANALYZING` → `PENDING_REVIEW`) ohne Page-Reload (Live-Statusbalken). | 1–2 Tage |
+| B-10 | **KPI-Karten für Fund Manager** | "Portfolios Pending Approval", "Average Approval Time" im Dashboard. | 0.5 Tage |
+
+### Priorität 4: Polish, Reporting & Tests
+*Der Fokus liegt auf Stabilität und revisionssicheren Abgabe-Artefakten.*
+| # | Feature | Mehrwert | Aufwand |
+|---|---------|----------|---------|
+| B-09 | **Audit-PDF-Export** | Revisionssicherer Export des genehmigten Reports inkl. Evidence-Bibliografie für den Regulator. | 2–3 Tage |
+| B-08 | **E-Mail-Benachrichtigungen** | Automatische Benachrichtigung bei Statuswechsel (Spring Mail). | 1 Tag |
+| B-06 | **Erweiterte Cypress E2E Tests** | Automatisierte Tests für neue Flows (Evidence-Delete, SFDR-Dashboard). | 1 Tag |
 
 **Bachelorarbeit-Anknüpfungspunkte:**
 - *AI-Assisted ESG Risk Assessment unter SFDR: Evaluation einer Human-in-the-Loop Architektur für Greenwashing-Erkennung* (direkt auf TrueYield aufbaubar)

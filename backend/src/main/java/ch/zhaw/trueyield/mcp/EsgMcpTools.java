@@ -1,12 +1,14 @@
 package ch.zhaw.trueyield.mcp;
 
 import ch.zhaw.trueyield.service.AiAnalysisService;
-import ch.zhaw.trueyield.service.NewsService;
+import ch.zhaw.trueyield.service.provider.NewsArticle;
+import ch.zhaw.trueyield.service.provider.NewsProvider;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -18,11 +20,11 @@ import java.util.List;
 public class EsgMcpTools {
 
     private final AiAnalysisService aiAnalysisService;
-    private final NewsService newsService;
+    private final List<NewsProvider> newsProviders;
 
-    public EsgMcpTools(@Lazy AiAnalysisService aiAnalysisService, NewsService newsService) {
+    public EsgMcpTools(@Lazy AiAnalysisService aiAnalysisService, List<NewsProvider> newsProviders) {
         this.aiAnalysisService = aiAnalysisService;
-        this.newsService = newsService;
+        this.newsProviders = newsProviders;
     }
 
     @Tool(description = "Generate a concise ESG risk summary for a portfolio of holdings. "
@@ -47,19 +49,28 @@ public class EsgMcpTools {
         return aiAnalysisService.analyzeSentiment(text);
     }
 
-    @Tool(description = "Fetch recent ESG and sustainability news articles for a company from The Guardian. "
-            + "Returns a formatted list of article titles and publication dates. "
-            + "Returns an empty result if the news API is not configured.")
+    @Tool(description = "Fetch recent ESG and sustainability news articles for a company from multiple financial providers. "
+            + "Returns a formatted list of article titles, sources and publication dates. ")
     public String fetchEsgNews(
             @ToolParam(description = "Company name to search for, e.g. 'Shell', 'Volkswagen'")
             String company) {
-        List<NewsService.NewsArticle> articles = newsService.fetchNewsForHolding(company);
-        if (articles.isEmpty()) {
+        
+        List<NewsArticle> allArticles = new ArrayList<>();
+        for (NewsProvider provider : newsProviders) {
+            if (provider.isConfigured()) {
+                try {
+                    allArticles.addAll(provider.fetchNewsForHolding(company));
+                } catch (Exception ignored) {}
+            }
+        }
+        
+        if (allArticles.isEmpty()) {
             return "No recent ESG news found for \"" + company + "\".";
         }
+        
         StringBuilder sb = new StringBuilder("ESG news for \"").append(company).append("\":\n");
-        articles.forEach(a -> sb.append("- ").append(a.title())
-                .append(" [").append(a.publishedAt()).append("]\n")
+        allArticles.forEach(a -> sb.append("- [").append(a.sourceName()).append("] ").append(a.title())
+                .append(" (").append(a.publishedAt()).append(")\n")
                 .append("  ").append(a.url()).append("\n"));
         return sb.toString();
     }
