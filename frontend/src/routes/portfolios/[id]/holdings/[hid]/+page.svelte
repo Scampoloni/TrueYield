@@ -5,6 +5,7 @@
   const portfolioId = page.params.id;
   const holdingId = page.params.hid;
   const isFundManager = $derived((page.data.user?.user_roles ?? []).includes('fund-manager'));
+  const returnTo = $derived(page.url.searchParams.get('returnTo') ?? `/portfolios/${portfolioId}`);
 
   let evidence: any[] = $state([]);
   let loading = $state(true);
@@ -77,7 +78,7 @@
       </button>
       <a href={`/portfolios/${portfolioId}/holdings/${holdingId}/create`} class="btn btn-primary">+ Add Evidence</a>
     {/if}
-    <a href={`/portfolios/${portfolioId}`} class="btn btn-ghost">← Back to Portfolio</a>
+    <a href={returnTo} class="btn btn-ghost">← Back</a>
   </div>
 </div>
 
