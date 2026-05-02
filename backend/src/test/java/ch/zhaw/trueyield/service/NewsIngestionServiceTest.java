@@ -210,6 +210,59 @@ class NewsIngestionServiceTest {
     }
 
     @Test
+    void ingestNewsForHolding_skipsAll_whenEvidenceCapReached() {
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
+                new NewsArticle("New ESG article", "Content", "https://example.com/new", LocalDate.now(), "Reuters")
+        ));
+        when(evidenceRepository.countByHoldingId(HOLDING_ID))
+                .thenReturn((long) NewsIngestionService.MAX_EVIDENCE_PER_HOLDING);
+
+        newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
+
+        verify(evidenceRepository, never()).save(any());
+    }
+
+    @Test
+    void ingestNewsForHolding_savesOnlyTopNByRelevance_whenCapPartiallyFilled() {
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
+                new NewsArticle("Low relevance",  "Content", "https://example.com/a", LocalDate.now(), "Mock"),
+                new NewsArticle("High relevance", "Content", "https://example.com/b", LocalDate.now(), "Mock"),
+                new NewsArticle("Mid relevance",  "Content", "https://example.com/c", LocalDate.now(), "Mock")
+        ));
+        // 9 existing → only 1 slot remaining
+        when(evidenceRepository.countByHoldingId(HOLDING_ID)).thenReturn(9L);
+        when(aiAnalysisService.analyzeRelevance(eq(COMPANY), anyString()))
+                .thenReturn(0.4)  // a
+                .thenReturn(0.9)  // b
+                .thenReturn(0.6); // c
+        when(evidenceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
+
+        // Only 1 article saved (the highest-relevance one: b)
+        ArgumentCaptor<Evidence> captor = ArgumentCaptor.forClass(Evidence.class);
+        verify(evidenceRepository, times(1)).save(captor.capture());
+        assertEquals("https://example.com/b", captor.getValue().getSourceUrl());
+    }
+
+    @Test
+    void ingestNewsForHolding_returnsEarly_whenNoCandidatesAfterDedup() {
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
+                new NewsArticle("Already saved", "Content", "https://example.com/existing", LocalDate.now(), "Mock")
+        ));
+        when(evidenceRepository.existsByHoldingIdAndSourceUrl(HOLDING_ID, "https://example.com/existing"))
+                .thenReturn(true);
+
+        newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
+
+        verify(aiAnalysisService, never()).analyzeRelevance(any(), any());
+        verify(evidenceRepository, never()).save(any());
+    }
+
+    @Test
     void ingestNewsForHolding_deduplicatesAcrossProviders() {
         NewsProvider secondProvider = mock(NewsProvider.class);
         when(secondProvider.getProviderName()).thenReturn("SecondProvider");
