@@ -20,6 +20,7 @@ public class NewsdataIoProvider implements NewsProvider {
     private final RestClient restClient;
     private final String apiKey;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public NewsdataIoProvider(
             @Value("${news.api.newsdata.base-url:https://newsdata.io/api/1}") String baseUrl,
             @Value("${news.api.newsdata.key:}") String apiKey) {
@@ -27,6 +28,11 @@ public class NewsdataIoProvider implements NewsProvider {
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .build();
+    }
+
+    NewsdataIoProvider(String apiKey, RestClient restClient) {
+        this.apiKey = apiKey;
+        this.restClient = restClient;
     }
 
     @Override

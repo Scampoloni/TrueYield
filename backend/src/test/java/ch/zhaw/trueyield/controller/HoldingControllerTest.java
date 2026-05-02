@@ -2,7 +2,9 @@ package ch.zhaw.trueyield.controller;
 
 import ch.zhaw.trueyield.model.Holding;
 import ch.zhaw.trueyield.model.dto.HoldingCreateDTO;
+import ch.zhaw.trueyield.security.AccessControlService;
 import ch.zhaw.trueyield.service.HoldingService;
+import ch.zhaw.trueyield.service.NewsIngestionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -39,6 +41,12 @@ class HoldingControllerTest {
 
     @MockitoBean
     private HoldingService holdingService;
+
+    @MockitoBean
+    private AccessControlService accessControlService;
+
+    @MockitoBean
+    private NewsIngestionService newsIngestionService;
 
     private Holding sampleHolding;
 
@@ -171,6 +179,40 @@ class HoldingControllerTest {
     void deleteHolding_unauthenticated_returnsForbidden() throws Exception {
         mockMvc.perform(delete("/api/holding/holding-1"))
                                 .andExpect(status().isUnauthorized());
+    }
+
+    // ── POST /api/holding/{id}/ingest-news ───────────────────────────────────
+
+    @Test
+    void ingestNews_asFundManager_returnsAccepted() throws Exception {
+        when(accessControlService.requireHoldingAccess("holding-1")).thenReturn(sampleHolding);
+
+        mockMvc.perform(post("/api/holding/holding-1/ingest-news")
+                        .with(user("manager").roles("fund-manager")))
+                .andExpect(status().isAccepted());
+    }
+
+    @Test
+    void ingestNews_usesSymbol_whenNameIsBlank() throws Exception {
+        Holding noName = new Holding("portfolio-001", "TSLA");
+        when(accessControlService.requireHoldingAccess("holding-2")).thenReturn(noName);
+
+        mockMvc.perform(post("/api/holding/holding-2/ingest-news")
+                        .with(user("manager").roles("fund-manager")))
+                .andExpect(status().isAccepted());
+    }
+
+    @Test
+    void ingestNews_asAuditor_returnsForbidden() throws Exception {
+        mockMvc.perform(post("/api/holding/holding-1/ingest-news")
+                        .with(user("auditor").roles("auditor")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void ingestNews_unauthenticated_returnsUnauthorized() throws Exception {
+        mockMvc.perform(post("/api/holding/holding-1/ingest-news"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
