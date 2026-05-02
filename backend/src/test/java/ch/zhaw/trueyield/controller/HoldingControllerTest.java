@@ -181,6 +181,25 @@ class HoldingControllerTest {
                                 .andExpect(status().isUnauthorized());
     }
 
+    // ── GET /api/holding/news-provider-status ───────────────────────────────
+
+    @Test
+    void getNewsProviderStatus_asFundManager_returnsOkWithProviderMap() throws Exception {
+        mockMvc.perform(get("/api/holding/news-provider-status")
+                        .with(user("manager").roles("fund-manager")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.['The Guardian']").isBoolean())
+                .andExpect(jsonPath("$.['NewsAPI.org']").isBoolean())
+                .andExpect(jsonPath("$.['Newsdata.io']").isBoolean());
+    }
+
+    @Test
+    void getNewsProviderStatus_asAuditor_returnsForbidden() throws Exception {
+        mockMvc.perform(get("/api/holding/news-provider-status")
+                        .with(user("auditor").roles("auditor")))
+                .andExpect(status().isForbidden());
+    }
+
     // ── POST /api/holding/{id}/ingest-news ───────────────────────────────────
 
     @Test
