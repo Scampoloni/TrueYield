@@ -73,14 +73,22 @@ public class AiAnalysisService {
             return 1.0; // Assume relevant if AI is down to not block ingestion
         }
         String prompt = """
-                Read the following news article snippet. Does it seem related to the company "%s" or its industry?
-                Even if the company is only mentioned briefly or implied by context (like its CEO, products, or sector news where it operates), consider it relevant.
-                Only reject it if it is completely unrelated spam or clearly about a completely different topic.
-                
-                Respond ONLY with a decimal number between 0.0 (completely irrelevant) and 1.0 (relevant). No explanation.
-                
-                Text: "%s"
-                """.formatted(companyName, articleText);
+                Rate how relevant this news article is to the ESG (Environmental, Social, Governance) \
+                risk profile of the company "%s".
+
+                Score 0.7–1.0: the article specifically covers this company's environmental impact, \
+                labour practices, governance issues, greenwashing, ESG ratings, sustainability \
+                strategy, regulatory ESG compliance, or supply-chain ethics.
+                Score 0.3–0.6: the article covers this company with a partial ESG angle, or covers \
+                sector-wide ESG issues that directly affect this company.
+                Score 0.0–0.2: only tangentially related, about a different company, generic business \
+                news with no ESG angle, or an unrelated topic entirely.
+
+                Respond ONLY with a single decimal number between 0.0 and 1.0. No explanation.
+
+                Company: "%s"
+                Article: "%s"
+                """.formatted(companyName, companyName, articleText);
         try {
             String text = chatModel.call(new Prompt(prompt))
                     .getResult().getOutput().getText();
