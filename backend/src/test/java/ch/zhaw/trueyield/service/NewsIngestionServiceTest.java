@@ -10,7 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -117,10 +116,117 @@ class NewsIngestionServiceTest {
         when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
                 new NewsArticle("Some generic news", "Content", "https://example.com/4", LocalDate.now(), "Mock")
         ));
-        when(aiAnalysisService.analyzeRelevance(eq(COMPANY), anyString())).thenReturn(0.1); // Low relevance
+        when(aiAnalysisService.analyzeRelevance(eq(COMPANY), anyString())).thenReturn(0.1);
 
         newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
 
         verify(evidenceRepository, never()).save(any());
+    }
+
+    @Test
+    void ingestNewsForHolding_skipsArticleWithNullOrBlankUrl() {
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
+                new NewsArticle("Title", "Content", null, LocalDate.now(), "Mock"),
+                new NewsArticle("Title2", "Content2", "   ", LocalDate.now(), "Mock")
+        ));
+
+        newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
+
+        verify(evidenceRepository, never()).save(any());
+    }
+
+    @Test
+    void ingestNewsForHolding_usesTitleAsSnippet_whenContentIsBlank() {
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
+                new NewsArticle("Headline used as snippet", "", "https://example.com/5", LocalDate.now(), "Reuters")
+        ));
+        when(evidenceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
+
+        ArgumentCaptor<Evidence> captor = ArgumentCaptor.forClass(Evidence.class);
+        verify(evidenceRepository).save(captor.capture());
+        assertEquals("Headline used as snippet", captor.getValue().getContentSnippet());
+    }
+
+    @Test
+    void ingestNewsForHolding_dampensSentiment_forNonPremiumSource() {
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
+                new NewsArticle("Some news", "Content", "https://example.com/6", LocalDate.now(), "SomeBlog")
+        ));
+        when(aiAnalysisService.analyzeSentiment(anyString())).thenReturn(0.8);
+        when(evidenceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
+
+        ArgumentCaptor<Evidence> captor = ArgumentCaptor.forClass(Evidence.class);
+        verify(evidenceRepository).save(captor.capture());
+        assertEquals(0.4, captor.getValue().getAiSentimentScore(), 0.001);
+    }
+
+    @Test
+    void ingestNewsForHolding_doesNotDampenSentiment_forPremiumSource() {
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
+                new NewsArticle("Reuters article", "Content", "https://reuters.com/1", LocalDate.now(), "Reuters")
+        ));
+        when(aiAnalysisService.analyzeSentiment(anyString())).thenReturn(0.8);
+        when(evidenceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
+
+        ArgumentCaptor<Evidence> captor = ArgumentCaptor.forClass(Evidence.class);
+        verify(evidenceRepository).save(captor.capture());
+        assertEquals(0.8, captor.getValue().getAiSentimentScore(), 0.001);
+    }
+
+    @Test
+    void ingestNewsForHolding_continuesGracefully_whenProviderThrows() {
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding(COMPANY)).thenThrow(new RuntimeException("API down"));
+
+        newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
+
+        verify(evidenceRepository, never()).save(any());
+    }
+
+    @Test
+    void ingestNewsForHolding_savesWithZeroSentiment_whenSentimentThrows() {
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
+                new NewsArticle("News", "Content", "https://example.com/7", LocalDate.now(), "Reuters")
+        ));
+        when(aiAnalysisService.analyzeSentiment(anyString())).thenThrow(new RuntimeException("AI error"));
+        when(evidenceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
+
+        ArgumentCaptor<Evidence> captor = ArgumentCaptor.forClass(Evidence.class);
+        verify(evidenceRepository).save(captor.capture());
+        assertEquals(0.0, captor.getValue().getAiSentimentScore(), 0.001);
+    }
+
+    @Test
+    void ingestNewsForHolding_deduplicatesAcrossProviders() {
+        NewsProvider secondProvider = mock(NewsProvider.class);
+        when(secondProvider.getProviderName()).thenReturn("SecondProvider");
+        when(secondProvider.isConfigured()).thenReturn(true);
+        ReflectionTestUtils.setField(newsIngestionService, "newsProviders",
+                List.of(mockProvider, secondProvider));
+
+        String sharedUrl = "https://example.com/shared";
+        when(mockProvider.isConfigured()).thenReturn(true);
+        when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
+                new NewsArticle("Article", "Content", sharedUrl, LocalDate.now(), "Mock")));
+        when(secondProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
+                new NewsArticle("Article", "Content", sharedUrl, LocalDate.now(), "Mock")));
+        when(evidenceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
+
+        verify(evidenceRepository, times(1)).save(any());
     }
 }
