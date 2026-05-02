@@ -382,6 +382,22 @@ class AuditReportServiceTest {
 
 
     @Test
+    void createAuditReport_setsPortfolioName_whenPortfolioFound() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+
+        ch.zhaw.trueyield.model.Portfolio portfolio = new ch.zhaw.trueyield.model.Portfolio("Green Fund", "manager-001");
+        when(portfolioService.getPortfolioByIdForAuditor("portfolio-001")).thenReturn(portfolio);
+
+        auditReportService.createAuditReport(createDTO);
+
+        verify(portfolioService, times(1)).getPortfolioByIdForAuditor("portfolio-001");
+    }
+
+    @Test
     void createAuditReport_transitionsToPendingReview_whenAiThrowsUnexpectedException() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
