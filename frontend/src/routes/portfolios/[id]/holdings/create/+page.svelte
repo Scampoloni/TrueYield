@@ -140,6 +140,7 @@
                   class="dropdown-item"
                   class:selected={i === selectedIndex}
                   role="option"
+                  tabindex="-1"
                   aria-selected={i === selectedIndex}
                   onmousedown={() => selectSuggestion(s)}
                 >

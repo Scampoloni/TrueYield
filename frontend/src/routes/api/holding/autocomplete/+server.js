@@ -14,9 +14,9 @@ export async function GET({ url, locals }) {
         if (!res.ok) return json([]);
 
         const data = await res.json();
-        const quotes = (data.quotes ?? [])
-            .filter(r => r.quoteType === 'EQUITY' || r.quoteType === 'ETF')
-            .map(r => ({
+        const quotes = /** @type {any[]} */ (data.quotes ?? [])
+            .filter((r) => r.quoteType === 'EQUITY' || r.quoteType === 'ETF')
+            .map((r) => ({
                 symbol: r.symbol ?? '',
                 name: r.longname || r.shortname || r.symbol || '',
                 exchange: r.exchange ?? '',
