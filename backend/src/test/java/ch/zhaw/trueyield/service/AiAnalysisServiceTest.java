@@ -207,6 +207,85 @@ class AiAnalysisServiceTest {
         assertEquals(0.5, result, 0.001);
     }
 
+    // ── analyzeRelevance ─────────────────────────────────────────────────────
+
+    @Test
+    void analyzeRelevance_returnsOne_whenNotAvailable() {
+        AiAnalysisService service = new AiAnalysisService();
+        ReflectionTestUtils.setField(service, "chatModel", null);
+        ReflectionTestUtils.setField(service, "apiKey", "");
+
+        double result = service.analyzeRelevance("Apple", "Some article text");
+
+        assertEquals(1.0, result);
+        verifyNoInteractions(chatModel);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "0.0,  0.0",
+        "0.2,  0.2",
+        "0.5,  0.5",
+        "1.0,  1.0"
+    })
+    void analyzeRelevance_returnsCorrectScore_forValidValues(String aiOutput, double expected) {
+        ChatResponse mockResponse = mockChatResponse(aiOutput.trim());
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+
+        double result = aiAnalysisService.analyzeRelevance("Nestlé", "ESG article about Nestlé");
+
+        assertEquals(expected, result, 0.001);
+    }
+
+    @Test
+    void analyzeRelevance_clampsToOne_whenAiReturnsHigherValue() {
+        ChatResponse mockResponse = mockChatResponse("1.5");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+
+        double result = aiAnalysisService.analyzeRelevance("Apple", "Some text");
+
+        assertEquals(1.0, result);
+    }
+
+    @Test
+    void analyzeRelevance_clampsToZero_whenAiReturnsNegativeValue() {
+        ChatResponse mockResponse = mockChatResponse("-0.3");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+
+        double result = aiAnalysisService.analyzeRelevance("Apple", "Some text");
+
+        assertEquals(0.0, result);
+    }
+
+    @Test
+    void analyzeRelevance_returnsOne_whenResponseIsNotParseable() {
+        ChatResponse mockResponse = mockChatResponse("not a number");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+
+        double result = aiAnalysisService.analyzeRelevance("Apple", "Some text");
+
+        assertEquals(1.0, result);
+    }
+
+    @Test
+    void analyzeRelevance_returnsOne_whenChatModelThrows() {
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("timeout"));
+
+        double result = aiAnalysisService.analyzeRelevance("Apple", "Some text");
+
+        assertEquals(1.0, result);
+    }
+
+    @Test
+    void analyzeRelevance_handlesCommaAsDecimalSeparator() {
+        ChatResponse mockResponse = mockChatResponse("0,8");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+
+        double result = aiAnalysisService.analyzeRelevance("Apple", "Some text");
+
+        assertEquals(0.8, result, 0.001);
+    }
+
     // ── Helper ───────────────────────────────────────────────────────────────
 
     private ChatResponse mockChatResponse(String text) {
