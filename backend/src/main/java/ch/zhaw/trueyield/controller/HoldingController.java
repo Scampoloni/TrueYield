@@ -6,6 +6,7 @@ import ch.zhaw.trueyield.model.dto.HoldingResponseDTO;
 import ch.zhaw.trueyield.security.AccessControlService;
 import ch.zhaw.trueyield.service.HoldingService;
 import ch.zhaw.trueyield.service.NewsIngestionService;
+import ch.zhaw.trueyield.service.provider.NewsProvider;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -35,6 +38,9 @@ public class HoldingController {
 
     @Autowired
     private NewsIngestionService newsIngestionService;
+
+    @Autowired
+    private List<NewsProvider> newsProviders;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('fund-manager','auditor','compliance-officer')")
@@ -57,6 +63,16 @@ public class HoldingController {
     public ResponseEntity<HoldingResponseDTO> createHolding(@Valid @RequestBody HoldingCreateDTO dto) {
         Holding created = holdingService.createHolding(dto);
         return new ResponseEntity<>(HoldingResponseDTO.fromEntity(created), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/news-provider-status")
+    @PreAuthorize("hasRole('fund-manager')")
+    public ResponseEntity<Map<String, Boolean>> getNewsProviderStatus() {
+        Map<String, Boolean> status = new LinkedHashMap<>();
+        for (NewsProvider provider : newsProviders) {
+            status.put(provider.getProviderName(), provider.isConfigured());
+        }
+        return ResponseEntity.ok(status);
     }
 
     @PostMapping("/{id}/ingest-news")

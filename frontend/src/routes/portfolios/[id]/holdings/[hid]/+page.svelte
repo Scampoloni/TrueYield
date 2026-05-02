@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { page } from '$app/state';
+  import { showToast } from '$lib/toast';
 
   const portfolioId = page.params.id;
   const holdingId = page.params.hid;
@@ -43,25 +44,57 @@
   }
 
   let fetchingNews = $state(false);
+  let fetchNewsStatus = $state('');
+
   async function fetchNews() {
     fetchingNews = true;
+    fetchNewsStatus = '';
     try {
+      // Check which providers are configured first
+      const statusRes = await fetch('/api/holding/news-provider-status');
+      if (statusRes.ok) {
+        const providerStatus: Record<string, boolean> = await statusRes.json();
+        const configuredProviders = Object.entries(providerStatus)
+          .filter(([, ok]) => ok)
+          .map(([name]) => name);
+        if (configuredProviders.length === 0) {
+          showToast('No news providers configured — add API keys to the backend .env', 'error');
+          return;
+        }
+      }
+
       const initialCount = evidence.length;
-      await fetch(`/api/holding/${holdingId}/ingest-news`, { method: 'POST' });
-      const deadline = Date.now() + 20000;
+      const ingestRes = await fetch(`/api/holding/${holdingId}/ingest-news`, { method: 'POST' });
+      if (!ingestRes.ok) {
+        showToast(`News ingestion failed (HTTP ${ingestRes.status})`, 'error');
+        return;
+      }
+
+      fetchNewsStatus = 'Analysing articles…';
+      const deadline = Date.now() + 25000;
+      let found = false;
       while (Date.now() < deadline) {
         await new Promise(r => setTimeout(r, 2000));
         const res = await fetch(`/api/evidence?holdingId=${holdingId}`, { cache: 'no-store' });
-        if (res.ok) {
-          const items = await res.json();
-          if (items.length > initialCount) {
-            evidence = items.sort((a: any, b: any) => b.riskScore - a.riskScore);
-            break;
-          }
+        if (!res.ok) {
+          showToast(`Evidence fetch failed (HTTP ${res.status})`, 'error');
+          break;
         }
+        const items = await res.json();
+        if (items.length > initialCount) {
+          evidence = items.sort((a: any, b: any) => b.riskScore - a.riskScore);
+          showToast(`${items.length - initialCount} new article(s) added`);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        fetchNewsStatus = '';
+        showToast('No new articles found — providers may be rate-limited or holding name not recognised', 'error');
       }
     } finally {
       fetchingNews = false;
+      fetchNewsStatus = '';
     }
   }
 </script>
@@ -74,7 +107,7 @@
   <div style="display:flex;gap:0.5rem;">
     {#if isFundManager}
       <button onclick={fetchNews} disabled={fetchingNews} class="btn btn-ghost" style="border: 1px solid rgba(255,255,255,0.1);">
-        {fetchingNews ? 'Fetching...' : 'Fetch AI News'}
+        {fetchingNews ? (fetchNewsStatus || 'Fetching…') : 'Fetch AI News'}
       </button>
       <a href={`/portfolios/${portfolioId}/holdings/${holdingId}/create`} class="btn btn-primary">+ Add Evidence</a>
     {/if}

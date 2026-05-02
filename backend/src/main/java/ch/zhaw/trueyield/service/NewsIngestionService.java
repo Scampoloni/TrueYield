@@ -42,12 +42,12 @@ public class NewsIngestionService {
                 try {
                     List<NewsArticle> articles = provider.fetchNewsForHolding(companyName);
                     allArticles.addAll(articles);
-                    log.debug("NewsIngestion: {} returned {} articles for '{}'", provider.getProviderName(), articles.size(), companyName);
+                    log.info("NewsIngestion: {} returned {} articles for '{}'", provider.getProviderName(), articles.size(), companyName);
                 } catch (Exception e) {
-                    log.error("NewsIngestion: provider {} failed for '{}': {}", provider.getProviderName(), companyName, e.getMessage());
+                    log.error("NewsIngestion: provider {} failed for '{}': {}", provider.getProviderName(), companyName, e.getMessage(), e);
                 }
             } else {
-                log.debug("NewsIngestion: provider {} is not configured", provider.getClass().getSimpleName());
+                log.warn("NewsIngestion: provider {} is NOT configured (missing API key)", provider.getClass().getSimpleName());
             }
         }
         
@@ -69,10 +69,11 @@ public class NewsIngestionService {
             // 3. Relevance Filter
             if (aiAnalysisService != null && aiAnalysisService.isAvailable()) {
                 double relevance = aiAnalysisService.analyzeRelevance(companyName, snippet);
-                if (relevance < 0.2) {
-                    log.info("NewsIngestion: skipped article '{}' due to low relevance score ({})", article.title(), relevance);
+                if (relevance < 0.1) {
+                    log.info("NewsIngestion: skipped article '{}' — relevance {}", article.title(), relevance);
                     continue;
                 }
+                log.info("NewsIngestion: article '{}' passed relevance filter ({})", article.title(), relevance);
             }
             
             // 4. Sentiment and Source Weighting
@@ -99,6 +100,7 @@ public class NewsIngestionService {
             evidence.setPublishedAt(article.publishedAt() != null ? article.publishedAt() : LocalDate.now());
             evidenceRepository.save(evidence);
             saved++;
+            log.info("NewsIngestion: saved evidence for holding '{}' — url: {}", sanitize(holdingId), sanitize(url));
         }
         
         log.info("NewsIngestion: saved {} new evidence entries for holding '{}' ({})", saved, sanitize(holdingId), sanitize(companyName));
