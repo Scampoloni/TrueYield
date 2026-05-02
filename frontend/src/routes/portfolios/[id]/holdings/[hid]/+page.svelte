@@ -45,13 +45,19 @@
   async function fetchNews() {
     fetchingNews = true;
     try {
+      const initialCount = evidence.length;
       await fetch(`/api/holding/${holdingId}/ingest-news`, { method: 'POST' });
-      // Wait a few seconds for async ingestion
-      await new Promise(r => setTimeout(r, 3000));
-      const res = await fetch(`/api/evidence?holdingId=${holdingId}`, { cache: 'no-store' });
-      if (res.ok) {
-        const items = await res.json();
-        evidence = items.sort((a: any, b: any) => b.riskScore - a.riskScore);
+      const deadline = Date.now() + 20000;
+      while (Date.now() < deadline) {
+        await new Promise(r => setTimeout(r, 2000));
+        const res = await fetch(`/api/evidence?holdingId=${holdingId}`, { cache: 'no-store' });
+        if (res.ok) {
+          const items = await res.json();
+          if (items.length > initialCount) {
+            evidence = items.sort((a: any, b: any) => b.riskScore - a.riskScore);
+            break;
+          }
+        }
       }
     } finally {
       fetchingNews = false;
