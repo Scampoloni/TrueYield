@@ -16,6 +16,7 @@
   let comments: any[] = $state([]);
   let newComment = $state('');
   let submittingComment = $state(false);
+  let evidenceByHolding: Record<string, any[]> = $state({});
 
   const isAuditor = $derived((page.data.user?.user_roles ?? []).includes('auditor'));
 
@@ -35,8 +36,11 @@
       if (hRes.ok) {
         holdings = await hRes.json();
         const evidencePerHolding = await Promise.all(
-          holdings.map((h: any) => fetch(`/api/evidence?holdingId=${h.id}`).then(r => r.ok ? r.json() : []))
+          holdings.map((h: any) => fetch(`/api/evidence?holdingId=${h.id}`, { cache: 'no-store' }).then(r => r.ok ? r.json() : []))
         );
+        const map: Record<string, any[]> = {};
+        holdings.forEach((h: any, i: number) => { map[h.id] = evidencePerHolding[i]; });
+        evidenceByHolding = map;
         const allEvidence = evidencePerHolding.flat();
         if (allEvidence.length > 0) {
           const avg = allEvidence.reduce((sum: number, e: any) => sum + e.riskScore, 0) / allEvidence.length;
@@ -169,8 +173,11 @@
         {#if report.auditStatus === 'PENDING_REVIEW'}
           <button class="btn btn-primary" onclick={assignReport}>Assign to me</button>
         {:else if report.auditStatus === 'UNDER_REVIEW'}
-          <button class="btn btn-success" onclick={() => showApproveModal = true}>Approve</button>
-          <button class="btn btn-danger"  onclick={() => showRejectModal = true}>Reject</button>
+          {#if comments.length === 0}
+            <span class="comment-required-hint">Add a comment before approving or rejecting</span>
+          {/if}
+          <button class="btn btn-success" onclick={() => showApproveModal = true} disabled={comments.length === 0} title={comments.length === 0 ? 'Add a comment first' : ''}>Approve</button>
+          <button class="btn btn-danger"  onclick={() => showRejectModal = true} disabled={comments.length === 0} title={comments.length === 0 ? 'Add a comment first' : ''}>Reject</button>
         {/if}
       {/if}
     </div>
@@ -250,13 +257,29 @@
                 <div class="accordion-sub">{h.name || '—'}</div>
               </div>
               <div class="accordion-meta">
-                <a href={`/portfolios/${report.portfolioId}/holdings/${h.id}`} class="xb xb-blue" onclick={(e) => e.stopPropagation()}>View Evidence →</a>
+                <a href={`/portfolios/${report.portfolioId}/holdings/${h.id}?returnTo=/audit/${reportId}`} class="xb xb-blue" onclick={(e) => e.stopPropagation()}>View Evidence →</a>
                 <span style="display:inline-block;transition:transform 0.2s;transform:{openAccordions[h.symbol] ? 'rotate(180deg)' : 'rotate(0deg)'}">&#8595;</span>
               </div>
             </div>
             {#if openAccordions[h.symbol]}
               <div class="accordion-body">
-                ISIN: {h.isin || '—'} · Weight: {h.weightPercent != null ? h.weightPercent + '%' : '—'}
+                <div class="accordion-meta-row">ISIN: {h.isin || '—'} · Weight: {h.weightPercent != null ? h.weightPercent + '%' : '—'}</div>
+                {#if (evidenceByHolding[h.id] ?? []).length === 0}
+                  <div class="accordion-empty">No evidence collected for this holding yet.</div>
+                {:else}
+                  <div class="evidence-mini-grid">
+                    {#each (evidenceByHolding[h.id] ?? []) as e}
+                      <div class="evidence-mini-card">
+                        <div class="evidence-mini-headline">{e.headline}</div>
+                        <div class="evidence-mini-row">
+                          <span class="badge {e.sentiment === 'POSITIVE' ? 'badge-approved' : e.sentiment === 'NEUTRAL' ? 'badge-pending' : 'badge-rejected'}">{e.sentiment}</span>
+                          <span class="evidence-mini-risk" style="color:{e.riskScore < 4 ? 'var(--green,#4ade80)' : e.riskScore < 7 ? 'var(--amber,#fbbf24)' : 'var(--red,#f87171)'}">Risk {e.riskScore}/10</span>
+                          {#if e.sourceName}<span class="badge-source-sm">{e.sourceName}</span>{/if}
+                        </div>
+                      </div>
+                    {/each}
+                  </div>
+                {/if}
               </div>
             {/if}
           </div>
@@ -413,5 +436,55 @@
   }
   .comment-input::placeholder {
     color: var(--text-3, #7a90aa);
+  }
+  .comment-required-hint {
+    font-size: 12px;
+    color: var(--amber, #fbbf24);
+    align-self: center;
+  }
+  .accordion-meta-row {
+    font-size: 12px;
+    color: var(--text-3, #7a90aa);
+    margin-bottom: 12px;
+  }
+  .accordion-empty {
+    font-size: 12px;
+    color: var(--text-3, #7a90aa);
+    padding: 8px 0;
+  }
+  .evidence-mini-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .evidence-mini-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .evidence-mini-headline {
+    font-size: 12px;
+    color: var(--text-1, #fff);
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .evidence-mini-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .evidence-mini-risk {
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-source-sm {
+    font-size: 10px;
+    background: rgba(147,197,253,0.1);
+    color: var(--blue-light, #93c5fd);
+    border: 1px solid rgba(147,197,253,0.2);
+    border-radius: 4px;
+    padding: 1px 5px;
   }
 </style>
