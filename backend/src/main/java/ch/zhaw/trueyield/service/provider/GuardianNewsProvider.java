@@ -20,6 +20,7 @@ public class GuardianNewsProvider implements NewsProvider {
     private final RestClient restClient;
     private final String apiKey;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public GuardianNewsProvider(
             @Value("${news.api.guardian.base-url:https://content.guardianapis.com}") String baseUrl,
             @Value("${news.api.guardian.key:}") String apiKey) {
@@ -27,6 +28,11 @@ public class GuardianNewsProvider implements NewsProvider {
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .build();
+    }
+
+    GuardianNewsProvider(String apiKey, RestClient restClient) {
+        this.apiKey = apiKey;
+        this.restClient = restClient;
     }
 
     @Override

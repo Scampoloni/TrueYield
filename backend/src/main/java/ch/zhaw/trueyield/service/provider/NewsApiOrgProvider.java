@@ -20,6 +20,7 @@ public class NewsApiOrgProvider implements NewsProvider {
     private final RestClient restClient;
     private final String apiKey;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public NewsApiOrgProvider(
             @Value("${news.api.newsapiorg.base-url:https://newsapi.org/v2}") String baseUrl,
             @Value("${news.api.newsapiorg.key:}") String apiKey) {
@@ -28,6 +29,11 @@ public class NewsApiOrgProvider implements NewsProvider {
                 .baseUrl(baseUrl)
                 .defaultHeader("User-Agent", "TrueYield/1.0")
                 .build();
+    }
+
+    NewsApiOrgProvider(String apiKey, RestClient restClient) {
+        this.apiKey = apiKey;
+        this.restClient = restClient;
     }
 
     @Override
