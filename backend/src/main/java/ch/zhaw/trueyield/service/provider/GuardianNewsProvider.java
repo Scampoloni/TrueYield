@@ -6,16 +6,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class GuardianNewsProvider implements NewsProvider {
 
     private static final Logger log = LoggerFactory.getLogger(GuardianNewsProvider.class);
     private static final int MAX_ARTICLES = 5;
+    private static final Set<String> ALLOWED_HOSTS = Set.of("content.guardianapis.com");
 
     private final RestClient restClient;
     private final String apiKey;
@@ -25,9 +28,21 @@ public class GuardianNewsProvider implements NewsProvider {
             @Value("${news.api.guardian.base-url:https://content.guardianapis.com}") String baseUrl,
             @Value("${news.api.guardian.key:}") String apiKey) {
         this.apiKey = apiKey;
+        validateBaseUrl(baseUrl, ALLOWED_HOSTS);
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .build();
+    }
+
+    static void validateBaseUrl(String url, Set<String> allowedHosts) {
+        try {
+            String host = URI.create(url).getHost();
+            if (host == null || !allowedHosts.contains(host)) {
+                throw new IllegalArgumentException("Disallowed news API host: " + host);
+            }
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid news API base URL: " + url, e);
+        }
     }
 
     GuardianNewsProvider(String apiKey, RestClient restClient) {

@@ -10,12 +10,14 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class NewsApiOrgProvider implements NewsProvider {
 
     private static final Logger log = LoggerFactory.getLogger(NewsApiOrgProvider.class);
     private static final int MAX_ARTICLES = 5;
+    private static final Set<String> ALLOWED_HOSTS = Set.of("newsapi.org");
 
     private final RestClient restClient;
     private final String apiKey;
@@ -25,6 +27,7 @@ public class NewsApiOrgProvider implements NewsProvider {
             @Value("${news.api.newsapiorg.base-url:https://newsapi.org/v2}") String baseUrl,
             @Value("${news.api.newsapiorg.key:}") String apiKey) {
         this.apiKey = apiKey;
+        GuardianNewsProvider.validateBaseUrl(baseUrl, ALLOWED_HOSTS);
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader("User-Agent", "TrueYield/1.0")
