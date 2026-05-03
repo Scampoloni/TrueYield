@@ -18,6 +18,14 @@
   let searchLoading = $state(false);
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   let selectedIndex = $state(-1);
+  let inputEl: HTMLInputElement | null = $state(null);
+  let dropdownStyle = $state('');
+
+  function updateDropdownPosition() {
+    if (!inputEl) return;
+    const rect = inputEl.getBoundingClientRect();
+    dropdownStyle = `top:${rect.bottom + window.scrollY + 4}px;left:${rect.left + window.scrollX}px;width:${rect.width}px;`;
+  }
 
   function onSymbolInput() {
     selectedIndex = -1;
@@ -34,6 +42,7 @@
       if (res.ok) {
         suggestions = await res.json();
         showDropdown = suggestions.length > 0;
+        if (showDropdown) updateDropdownPosition();
       }
     } catch {
       suggestions = [];
@@ -66,8 +75,8 @@
   }
 
   function onSymbolBlur() {
-    // Small delay so click on dropdown item fires first
-    setTimeout(() => { showDropdown = false; }, 150);
+    // Delay so onmousedown on a dropdown item fires before we hide it
+    setTimeout(() => { showDropdown = false; }, 200);
   }
 
   async function submit() {
@@ -121,6 +130,7 @@
               class="inp"
               type="text"
               bind:value={symbol}
+              bind:this={inputEl}
               oninput={onSymbolInput}
               onkeydown={onSymbolKeydown}
               onblur={onSymbolBlur}
@@ -133,7 +143,7 @@
             {/if}
           </div>
           {#if showDropdown && suggestions.length > 0}
-            <div class="dropdown" role="listbox">
+            <div class="dropdown" role="listbox" style={dropdownStyle}>
               {#each suggestions as s, i}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <div
@@ -209,16 +219,12 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .dropdown {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    background: #1a2332;
-    border: 1px solid rgba(255,255,255,0.12);
+    position: fixed;
+    background: #16202e;
+    border: 1px solid rgba(255,255,255,0.15);
     border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    z-index: 50;
-    overflow: hidden;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+    z-index: 9999;
     max-height: 260px;
     overflow-y: auto;
   }
@@ -229,10 +235,11 @@
     padding: 9px 14px;
     cursor: pointer;
     transition: background 0.1s;
+    user-select: none;
   }
   .dropdown-item:hover,
   .dropdown-item.selected {
-    background: rgba(59,130,246,0.15);
+    background: rgba(59,130,246,0.2);
   }
   .dropdown-symbol {
     font-family: 'JetBrains Mono', monospace;
