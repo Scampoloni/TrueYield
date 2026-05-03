@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Service
 public class NewsApiOrgProvider implements NewsProvider {
@@ -18,6 +19,10 @@ public class NewsApiOrgProvider implements NewsProvider {
     private static final Logger log = LoggerFactory.getLogger(NewsApiOrgProvider.class);
     private static final int MAX_ARTICLES = 5;
     private static final Set<String> ALLOWED_HOSTS = Set.of("newsapi.org");
+    // Possessive quantifier \s*+ prevents backtracking between the suffix and end-of-string anchor
+    private static final Pattern COMPANY_SUFFIX =
+            Pattern.compile("\\s+(?:Inc\\.?|PLC\\.?|Ltd\\.?|Corp\\.?|AG|SE|NV|SA|GmbH)\\s*+$",
+                    Pattern.CASE_INSENSITIVE);
 
     private final RestClient restClient;
     private final String apiKey;
@@ -53,8 +58,7 @@ public class NewsApiOrgProvider implements NewsProvider {
     public List<NewsArticle> fetchNewsForHolding(String companyName) {
         if (!isConfigured()) return Collections.emptyList();
 
-        String cleanName = companyName
-                .replaceAll("(?i)\\s+(Inc\\.?|PLC\\.?|Ltd\\.?|Corp\\.?|AG|SE|NV|SA|GmbH)\\s*$", "")
+        String cleanName = COMPANY_SUFFIX.matcher(companyName).replaceAll("")
                 .trim();
 
         try {
