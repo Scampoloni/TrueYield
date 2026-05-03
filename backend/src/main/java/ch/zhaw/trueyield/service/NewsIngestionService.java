@@ -37,7 +37,7 @@ public class NewsIngestionService {
 
     @Async
     public void ingestNewsForHolding(String holdingId, String companyName) {
-        log.info("NewsIngestion: starting multi-provider news fetch for '{}'", companyName);
+        log.info("NewsIngestion: starting multi-provider news fetch for '{}'", sanitize(companyName));
 
         // 1. Fetch from all configured providers
         List<NewsArticle> allArticles = new ArrayList<>();
@@ -46,9 +46,9 @@ public class NewsIngestionService {
                 try {
                     List<NewsArticle> articles = provider.fetchNewsForHolding(companyName);
                     allArticles.addAll(articles);
-                    log.info("NewsIngestion: {} returned {} articles for '{}'", provider.getProviderName(), articles.size(), companyName);
+                    log.info("NewsIngestion: {} returned {} articles for '{}'", provider.getProviderName(), articles.size(), sanitize(companyName));
                 } catch (Exception e) {
-                    log.error("NewsIngestion: provider {} failed for '{}': {}", provider.getProviderName(), companyName, e.getMessage(), e);
+                    log.error("NewsIngestion: provider {} failed for '{}': {}", provider.getProviderName(), sanitize(companyName), e.getMessage(), e);
                 }
             } else {
                 log.warn("NewsIngestion: provider {} is NOT configured (missing API key)", provider.getClass().getSimpleName());
@@ -64,7 +64,7 @@ public class NewsIngestionService {
             if (evidenceRepository.existsByHoldingIdAndSourceUrl(holdingId, url)) continue;
             candidates.add(article);
         }
-        log.info("NewsIngestion: {} unique new candidates after dedup for '{}'", candidates.size(), companyName);
+        log.info("NewsIngestion: {} unique new candidates after dedup for '{}'", candidates.size(), sanitize(companyName));
 
         if (candidates.isEmpty()) {
             log.info("NewsIngestion: no new candidates for '{}', exiting", sanitize(companyName));
@@ -102,7 +102,7 @@ public class NewsIngestionService {
                 .limit(remaining)
                 .toList();
         log.info("NewsIngestion: saving top {} articles for '{}' (cap {}, existing {})",
-                topCandidates.size(), companyName, MAX_EVIDENCE_PER_HOLDING, existing);
+                topCandidates.size(), sanitize(companyName), MAX_EVIDENCE_PER_HOLDING, existing);
 
         // 5. Sentiment analysis + source weighting + save
         int saved = 0;
