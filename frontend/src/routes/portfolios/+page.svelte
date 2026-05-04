@@ -14,10 +14,33 @@
   const kpiPending = $derived(portfolios.filter(p => p.auditStatus === 'PENDING_REVIEW' || p.auditStatus === 'AI_ANALYZING').length);
   const kpiApproved = $derived(portfolios.filter(p => p.auditStatus === 'APPROVED').length);
 
+  let sfdrMap: Record<string, string> = $state({});
+
+  function sfdrDotColor(cls: string): string {
+    if (cls === 'ARTICLE_9') return '#10b981';
+    if (cls === 'ARTICLE_8') return '#f59e0b';
+    return '#3d4a5e';
+  }
+
+  function sfdrLabel(cls: string): string {
+    if (cls === 'ARTICLE_9') return 'Art. 9';
+    if (cls === 'ARTICLE_8') return 'Art. 8';
+    return '—';
+  }
+
   onMount(async () => {
     try {
-      const res = await fetch('/api/portfolio', { cache: 'no-store' });
-      portfolios = await res.json();
+      const roles: string[] = page.data.user?.user_roles ?? [];
+      const canSeeSfdr = roles.includes('fund-manager') || roles.includes('compliance-officer');
+      const [pfRes, sfdrRes] = await Promise.all([
+        fetch('/api/portfolio', { cache: 'no-store' }),
+        canSeeSfdr ? fetch('/api/compliance/sfdr', { cache: 'no-store' }) : Promise.resolve(null)
+      ]);
+      portfolios = await pfRes.json();
+      if (sfdrRes?.ok) {
+        const scores = await sfdrRes.json();
+        sfdrMap = Object.fromEntries(scores.map((s: any) => [s.portfolioId, s.classification]));
+      }
     } finally {
       loading = false;
     }
@@ -137,7 +160,17 @@
               <td><div class="pf-name">{p.name}</div></td>
               <td class="pf-desc">{p.description || '—'}</td>
               <td><span class="pf-id">{p.fundManagerId}</span></td>
-              <td><span class="badge {statusClass(p.auditStatus)}">{statusLabel(p.auditStatus)}</span></td>
+              <td>
+                <div class="status-cell">
+                  <span class="badge {statusClass(p.auditStatus)}">{statusLabel(p.auditStatus)}</span>
+                  {#if sfdrMap[p.id]}
+                    <span class="sfdr-pill">
+                      <span class="sfdr-dot" style="background:{sfdrDotColor(sfdrMap[p.id])}"></span>
+                      <span class="sfdr-lbl">{sfdrLabel(sfdrMap[p.id])}</span>
+                    </span>
+                  {/if}
+                </div>
+              </td>
               <td>
                 <div class="tbl-acts">
                   <a href={`/portfolios/${p.id}`} class="xb xb-blue">Holdings →</a>
@@ -175,5 +208,32 @@
   }
   .m-card.green::before {
     background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.45) 50%, transparent);
+  }
+
+  .status-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .sfdr-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sfdr-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .sfdr-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-3);
+    white-space: nowrap;
   }
 </style>
