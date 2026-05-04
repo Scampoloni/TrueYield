@@ -2,6 +2,7 @@ package ch.zhaw.trueyield.controller;
 
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
+import ch.zhaw.trueyield.repository.AuditReportRepository;
 import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.PortfolioService;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,11 +46,16 @@ class PortfolioControllerTest {
     @MockitoBean
     private UserService userService;
 
+    @MockitoBean
+    private AuditReportRepository auditReportRepository;
+
     private Portfolio samplePortfolio;
 
     @BeforeEach
     void setUp() {
         when(userService.getCurrentUserId()).thenReturn("user-123");
+        when(auditReportRepository.findAll()).thenReturn(List.of());
+        when(auditReportRepository.findByPortfolioId(anyString())).thenReturn(List.of());
 
         samplePortfolio = new Portfolio("ESG Global Fund", "user-123");
         samplePortfolio.setDescription("A diversified ESG portfolio");

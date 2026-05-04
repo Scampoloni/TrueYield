@@ -12,13 +12,25 @@ public class PortfolioResponseDTO {
     private String name;
     private String description;
     private String fundManagerId;
+    private String auditStatus;
 
     public static PortfolioResponseDTO fromEntity(Portfolio portfolio) {
         return new PortfolioResponseDTO(
                 portfolio.getId(),
                 portfolio.getName(),
                 portfolio.getDescription(),
-                portfolio.getFundManagerId()
+                portfolio.getFundManagerId(),
+                null
+        );
+    }
+
+    public static PortfolioResponseDTO fromEntity(Portfolio portfolio, String auditStatus) {
+        return new PortfolioResponseDTO(
+                portfolio.getId(),
+                portfolio.getName(),
+                portfolio.getDescription(),
+                portfolio.getFundManagerId(),
+                auditStatus
         );
     }
 }
