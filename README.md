@@ -1096,7 +1096,7 @@ ESG-Nachrichten pro Holding über die The Guardian API ab und speichert sie als 
 
 **Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf
 PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService.
-362 Testmethoden in 31 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
+421 Testmethoden in 32 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
 und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
 
 **Deployment:** CI/CD Workflow über GitHub Actions aktiv. Frontend und Backend laufen produktiv auf Azure App Service (Details im Deployment-Abschnitt).
@@ -1117,13 +1117,13 @@ Die folgenden Erweiterungen sind priorisiert, um die Lösung von einem funktiona
 | B-21 | **Source Reliability Weighting** | Sentiment-Scores von Premium-Quellen (Reuters, Bloomberg, Financial Times, WSJ, Guardian) werden voll gewichtet; andere Quellen mit Faktor 0.5 gedämpft |
 | B-22 | **Holding Auto-Complete (Ticker)** | Debounced Ticker-Suche via Yahoo Finance mit Dropdown-Vorschlägen (EQUITY + ETF); wählt automatisch Name aus |
 | B-14 | **Duplicate-Detection für Evidence** | URL-basierte Deduplizierung in-memory (cross-provider) und gegen DB, bevor AI-Calls stattfinden; Evidence-Cap bei 10 pro Holding |
+| B-23 | **Portfolio Asset Allocation (Donut-Chart)** | Reines SVG-Donut-Chart auf der Portfolio-Detailseite; Hover-Effekt, Tooltip und Legende; grauer "Ungewichtet"-Slice für Holdings ohne Gewichtung |
+| B-10 | **KPI-Karten für Fund Manager** | Drei Dashboard-Cards (Total / Pending Review / Approved) auf der Portfolios-Übersicht; Daten live aus AuditReport-Status via erweitertem PortfolioResponseDTO |
 
-### Priorität 1: Visualisierung & Dashboards (Wow-Faktor)
+### Priorität 1: Visualisierung & Dashboards
 *Der Fokus liegt auf intuitiver Datenvisualisierung für Compliance- und Portfolio-Übersichten.*
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
-| B-23 | **Portfolio Asset Allocation (Pie-Chart)** | Visuelle Aufschlüsselung des Portfolios nach prozentualer Gewichtung der Holdings im Detail-View (z.B. mit Chart.js / ApexCharts). | 1 Tag |
-| B-10 | **KPI-Karten für Fund Manager** | "Portfolios Pending Approval", "Average Approval Time" im Dashboard. | 0.5 Tage |
 | B-03 | **Longitudinales Risk Tracking** | Sentiment-Zeitreihe pro Holding visualisiert als Timeseries-Chart. | 1–2 Tage |
 | B-16 | **Realtime-Updates via SSE/WebSocket** | Auditor und Fund Manager sehen Statuswechsel (`AI_ANALYZING` → `PENDING_REVIEW`) ohne Page-Reload (Live-Statusbalken). | 1–2 Tage |
 
