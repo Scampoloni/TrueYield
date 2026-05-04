@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import ConfirmModal from '$lib/components/ConfirmModal.svelte';
+  import DonutChart from '$lib/components/DonutChart.svelte';
   import { showToast } from '$lib/toast';
 
   const id = page.params.id;
@@ -70,6 +71,7 @@
   </div>
 
   <div class="content">
+    <DonutChart {holdings} />
     <div class="sec-head">
       <span class="sec-name">Holdings</span>
       <span class="text-muted" style="font-size:12px;">{holdings.length} position{holdings.length !== 1 ? 's' : ''}</span>
