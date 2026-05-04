@@ -1110,35 +1110,30 @@ Die folgenden Erweiterungen sind priorisiert, um die Lösung von einem funktiona
 ### Bereits umgesetzt
 | # | Feature | Beschreibung |
 |---|---------|-------------|
-| B-01 | **Automatisches News-Monitoring** | Guardian API liefert bei Holding-Erstellung automatisch ESG-News als Evidence |
+| B-01 | **Automatisches News-Monitoring** | Multi-Provider-Aggregation (Guardian, NewsAPI.org, Newsdata.io) liefert bei Holding-Erstellung automatisch ESG-News als Evidence |
 | B-02 | **SFDR Article 8/9 Scoring** | Sentiment-Aggregation klassifiziert Portfolios regulatorisch |
+| B-19 | **Dedizierte Finanz-News-APIs** | NewsAPI.org und Newsdata.io als zusätzliche ticker-basierte Quellen neben Guardian; generisches Branchenrauschen deutlich reduziert |
+| B-20 | **Zweistufiger KI-Relevanzfilter** | ESG-spezifisches Relevanz-Prompt mit Scoring-Skala 0.0–1.0; Artikel unter Schwellenwert 0.35 werden als Evidence verworfen |
+| B-21 | **Source Reliability Weighting** | Sentiment-Scores von Premium-Quellen (Reuters, Bloomberg, Financial Times, WSJ, Guardian) werden voll gewichtet; andere Quellen mit Faktor 0.5 gedämpft |
+| B-22 | **Holding Auto-Complete (Ticker)** | Debounced Ticker-Suche via Yahoo Finance mit Dropdown-Vorschlägen (EQUITY + ETF); wählt automatisch Name aus |
+| B-14 | **Duplicate-Detection für Evidence** | URL-basierte Deduplizierung in-memory (cross-provider) und gegen DB, bevor AI-Calls stattfinden; Evidence-Cap bei 10 pro Holding |
 
-### Priorität 1: Datenqualität & KI-Zuverlässigkeit (Core Logic)
-*Der Fokus liegt auf der Vermeidung von False-Positives (Risk-Scores durch irrelevante Sektor-News).*
+### Priorität 1: Visualisierung & Dashboards (Wow-Faktor)
+*Der Fokus liegt auf intuitiver Datenvisualisierung für Compliance- und Portfolio-Übersichten.*
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
-| B-19 | **Dedizierte Finanz-News-API** | Ersetzen der Guardian-API durch eine Ticker-basierte API (z.B. Finnhub, AlphaVantage, NewsAPI.org), um generisches Branchenrauschen zu eliminieren. | 1–2 Tage |
-| B-20 | **Zweistufiger KI-Relevanzfilter** | Bevor ein Risk-Score berechnet wird, prüft die KI zwingend: "Betrifft der Artikel explizit Firma X?". Irrelevante Artikel werden als Evidence verworfen. | 1–2 Tage |
-| B-21 | **Source Reliability Weighting** | Risk-Scores werden anhand der Seriosität der Quelle gewichtet (z.B. Reuters = 1.0, Blog = 0.3), um extrem schwankende Scores zu stabilisieren. | 1 Tag |
+| B-23 | **Portfolio Asset Allocation (Pie-Chart)** | Visuelle Aufschlüsselung des Portfolios nach prozentualer Gewichtung der Holdings im Detail-View (z.B. mit Chart.js / ApexCharts). | 1 Tag |
+| B-10 | **KPI-Karten für Fund Manager** | "Portfolios Pending Approval", "Average Approval Time" im Dashboard. | 0.5 Tage |
+| B-03 | **Longitudinales Risk Tracking** | Sentiment-Zeitreihe pro Holding visualisiert als Timeseries-Chart. | 1–2 Tage |
+| B-16 | **Realtime-Updates via SSE/WebSocket** | Auditor und Fund Manager sehen Statuswechsel (`AI_ANALYZING` → `PENDING_REVIEW`) ohne Page-Reload (Live-Statusbalken). | 1–2 Tage |
 
 ### Priorität 2: Usability & Enterprise Workflow (UX)
 *Der Fokus liegt auf maximaler Zeitersparnis für Fund Manager bei der Dateneingabe.*
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
-| B-22 | **Holding Auto-Complete (Ticker)** | User tippt nur den Ticker (z.B. "AAPL"), Name und ISIN werden über eine API (oder interne Historie) sofort per Dropdown auto-ausgefüllt. | 1–2 Tage |
 | B-07 | **CSV/Excel-Upload für Holdings** | Drag & Drop Import ganzer Portfolios statt manueller Einzelerfassung. | 1–2 Tage |
-| B-14 | **Duplicate-Detection für Evidence** | Deduplizierung per URL-Hash, damit dieselbe News nicht mehrfach gelistet wird. | 0.5 Tage |
 
-### Priorität 3: Visualisierung & Dashboards (Wow-Faktor)
-*Der Fokus liegt auf intuitiver Datenvisualisierung für Compliance- und Portfolio-Übersichten.*
-| # | Feature | Mehrwert | Aufwand |
-|---|---------|----------|---------|
-| B-23 | **Portfolio Asset Allocation (Pie-Chart)** | Visuelle Aufschlüsselung des Portfolios nach prozentualer Gewichtung der Holdings im Detail-View (z.B. mit Chart.js / ApexCharts). | 1 Tag |
-| B-03 | **Longitudinales Risk Tracking** | Sentiment-Zeitreihe pro Holding visualisiert als Timeseries-Chart. | 1–2 Tage |
-| B-16 | **Realtime-Updates via SSE/WebSocket** | Auditor und Fund Manager sehen Statuswechsel (`AI_ANALYZING` → `PENDING_REVIEW`) ohne Page-Reload (Live-Statusbalken). | 1–2 Tage |
-| B-10 | **KPI-Karten für Fund Manager** | "Portfolios Pending Approval", "Average Approval Time" im Dashboard. | 0.5 Tage |
-
-### Priorität 4: Polish, Reporting & Tests
+### Priorität 3: Polish, Reporting & Tests
 *Der Fokus liegt auf Stabilität und revisionssicheren Abgabe-Artefakten.*
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
