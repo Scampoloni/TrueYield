@@ -10,6 +10,10 @@
   let loading = $state(true);
   let deleteTarget: any = $state(null);
 
+  const kpiTotal = $derived(portfolios.length);
+  const kpiPending = $derived(portfolios.filter(p => p.auditStatus === 'PENDING_REVIEW' || p.auditStatus === 'AI_ANALYZING').length);
+  const kpiApproved = $derived(portfolios.filter(p => p.auditStatus === 'APPROVED').length);
+
   onMount(async () => {
     try {
       const res = await fetch('/api/portfolio', { cache: 'no-store' });
@@ -59,6 +63,42 @@
 </div>
 
 <div class="content">
+  {#if isFundManager && !loading}
+  <div class="metrics">
+    <div class="m-card blue">
+      <div class="m-icon-wrap iw-blue">
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1.5" y="4.5" width="13" height="9" rx="1.5" stroke="#93c5fd" stroke-width="1.3"/>
+          <path d="M1.5 7.5h13" stroke="#93c5fd" stroke-width="1.3"/>
+          <path d="M5 10.5h6" stroke="#93c5fd" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="m-val blue">{kpiTotal}</div>
+      <div class="m-lbl">Portfolios total</div>
+    </div>
+    <div class="m-card amber">
+      <div class="m-icon-wrap iw-amber">
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="8" cy="8" r="5.5" stroke="#fcd34d" stroke-width="1.3"/>
+          <path d="M8 5.5V8.5" stroke="#fcd34d" stroke-width="1.3" stroke-linecap="round"/>
+          <circle cx="8" cy="10.5" r="0.7" fill="#fcd34d"/>
+        </svg>
+      </div>
+      <div class="m-val amber">{kpiPending}</div>
+      <div class="m-lbl">Pending Review</div>
+    </div>
+    <div class="m-card green">
+      <div class="m-icon-wrap iw-green">
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="8" cy="8" r="5.5" stroke="#6ee7b7" stroke-width="1.3"/>
+          <path d="M5.5 8l2 2 3-3" stroke="#6ee7b7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="m-val green">{kpiApproved}</div>
+      <div class="m-lbl">Approved</div>
+    </div>
+  </div>
+  {/if}
   <div class="glass-table">
     {#if loading}
       <div class="skeleton-pad">
@@ -125,3 +165,15 @@
     onCancel={() => deleteTarget = null}
   />
 {/if}
+
+<style>
+  .m-card.blue::before {
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5) 50%, transparent);
+  }
+  .m-card.amber::before {
+    background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.5) 50%, transparent);
+  }
+  .m-card.green::before {
+    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.45) 50%, transparent);
+  }
+</style>
