@@ -1120,21 +1120,22 @@ Die folgenden Erweiterungen sind priorisiert, um die Lösung von einem funktiona
 | B-23 | **Portfolio Asset Allocation (Donut-Chart)** | Reines SVG-Donut-Chart auf der Portfolio-Detailseite; Hover-Effekt, Tooltip und Legende; grauer "Ungewichtet"-Slice für Holdings ohne Gewichtung |
 | B-10 | **KPI-Karten für Fund Manager** | Drei Dashboard-Cards (Total / Pending Review / Approved) auf der Portfolios-Übersicht; Daten live aus AuditReport-Status via erweitertem PortfolioResponseDTO |
 
-### Priorität 1: Visualisierung & Dashboards
-*Der Fokus liegt auf intuitiver Datenvisualisierung für Compliance- und Portfolio-Übersichten.*
+### Priorität 1: Demo-Impact (höchster Wow-Faktor, machbar bis Abgabe)
+*Features die in der Live-Demo sofort überzeugen und den Human-in-the-Loop Ansatz greifbar machen.*
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
+| B-24 | **Manueller Risk Score Override (Auditor)** | Auditor kann den AI-generierten Risk Score eines Holdings manuell überschreiben und muss dies mit einem Kommentar begründen. Zeigt Human-in-the-Loop klar in der Demo. Neues Feld `overrideRiskScore` auf AuditReport, Inline-Edit im Frontend. | 2–3h |
+| B-25 | **Evidence-Confidence-Badge** | Jede Evidence-Karte zeigt ein farbiges Konfidenz-Badge (High / Medium / Low) basierend auf Relevanz-Score und Quell-Tier. Rein Frontend, keine Backend-Änderung. | 1–2h |
+| B-26 | **SFDR-Ampel auf Portfolio-Karte** | Kleine farbige Ampel (grün/gelb/rot) direkt auf der Portfolio-Listenzeile zeigt auf einen Blick ob Article 9, 8 oder keines. Sofort sichtbar ohne Klick. | 1h |
 | B-03 | **Longitudinales Risk Tracking** | Sentiment-Zeitreihe pro Holding visualisiert als Timeseries-Chart. | 1–2 Tage |
-| B-16 | **Realtime-Updates via SSE/WebSocket** | Auditor und Fund Manager sehen Statuswechsel (`AI_ANALYZING` → `PENDING_REVIEW`) ohne Page-Reload (Live-Statusbalken). | 1–2 Tage |
+| B-16 | **Realtime-Updates via SSE/WebSocket** | Auditor und Fund Manager sehen Statuswechsel (`AI_ANALYZING` → `PENDING_REVIEW`) ohne Page-Reload. | 1–2 Tage |
 
-### Priorität 2: Usability & Enterprise Workflow (UX)
-*Der Fokus liegt auf maximaler Zeitersparnis für Fund Manager bei der Dateneingabe.*
+### Priorität 2: Usability & Enterprise Workflow
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
 | B-07 | **CSV/Excel-Upload für Holdings** | Drag & Drop Import ganzer Portfolios statt manueller Einzelerfassung. | 1–2 Tage |
 
 ### Priorität 3: Polish, Reporting & Tests
-*Der Fokus liegt auf Stabilität und revisionssicheren Abgabe-Artefakten.*
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
 | B-09 | **Audit-PDF-Export** | Revisionssicherer Export des genehmigten Reports inkl. Evidence-Bibliografie für den Regulator. | 2–3 Tage |
