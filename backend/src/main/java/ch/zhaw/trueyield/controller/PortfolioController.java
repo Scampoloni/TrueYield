@@ -1,12 +1,15 @@
 package ch.zhaw.trueyield.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import ch.zhaw.trueyield.model.AuditReport;
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioResponseDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioUpdateDTO;
+import ch.zhaw.trueyield.repository.AuditReportRepository;
 import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.PortfolioService;
 import jakarta.validation.Valid;
@@ -33,6 +36,9 @@ public class PortfolioController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private AuditReportRepository auditReportRepository;
+
     @PostMapping
     @PreAuthorize("hasRole('fund-manager')")
     public ResponseEntity<PortfolioResponseDTO> createPortfolio(@Valid @RequestBody PortfolioCreateDTO dto) {
@@ -49,8 +55,16 @@ public class PortfolioController {
                 (userService.userHasRole("auditor") || userService.userHasRole("compliance-officer"))
                 ? portfolioService.getAllPortfolios()
                 : portfolioService.getAllPortfoliosByFundManager(userId);
+
+        Map<String, String> statusByPortfolio = auditReportRepository.findAll().stream()
+                .collect(Collectors.toMap(
+                        AuditReport::getPortfolioId,
+                        r -> r.getAuditStatus().name(),
+                        (existing, replacement) -> existing
+                ));
+
         List<PortfolioResponseDTO> response = portfolios.stream()
-                .map(PortfolioResponseDTO::fromEntity)
+                .map(p -> PortfolioResponseDTO.fromEntity(p, statusByPortfolio.get(p.getId())))
                 .collect(Collectors.toList());
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -62,7 +76,11 @@ public class PortfolioController {
                 (userService.userHasRole("auditor") || userService.userHasRole("compliance-officer"))
                 ? portfolioService.getPortfolioByIdForAuditor(id)
                 : portfolioService.getPortfolioById(id, userService.getCurrentUserId());
-        return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(portfolio), HttpStatus.OK);
+        String auditStatus = auditReportRepository.findByPortfolioId(id).stream()
+                .findFirst()
+                .map(r -> r.getAuditStatus().name())
+                .orElse(null);
+        return new ResponseEntity<>(PortfolioResponseDTO.fromEntity(portfolio, auditStatus), HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
