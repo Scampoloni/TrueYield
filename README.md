@@ -1060,8 +1060,8 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 |---|---|
 | Codeanalyse mit SonarQube | SonarCloud aktiv auf `main`-Branch, Analyse via `sonar-maven-plugin` in CI (non-blocking). Token via Secret `SONAR_TOKEN`. |
 | Komplexes Datenmodell (5 Entitäten) | Portfolio, Holding, Evidence, AuditReport, AuditComment — übererfüllt gegenüber Mindestanforderung (3) |
-| Komplexes Frontend | 3 Rollen mit rollenspezifischen Dashboards, State-Machine-Visualisierung, Sentiment-Badges, Risk-Scores, Charts (Compliance KPIs) |
-| Zugriff auf Drittsysteme | The Guardian API — automatische ESG-News-Abfrage pro Holding bei Audit-Start, gespeichert als Evidence |
+| Komplexes Frontend | 3 Rollen mit rollenspezifischen Dashboards, State-Machine-Visualisierung, Sentiment-Badges, Risk-Scores, SVG-Donut-Chart (Asset Allocation), KPI-Karten, SFDR-Ampel, Evidence-Confidence-Badges, Symbol-Autocomplete |
+| Zugriff auf Drittsysteme | Multi-Provider News-Aggregation: The Guardian API, NewsAPI.org und Newsdata.io — automatische ESG-News-Abfrage pro Holding, gespeichert als Evidence mit KI-Relevanzfilter und Source-Weighting |
 | Komplexe Abfragen auf der Datenbank | MongoDB Aggregation Pipeline für Audit-Dashboard (gruppiert nach Status pro Portfolio) |
 | Komplexe Benutzerverwaltung | 3 RBAC-Rollen (`fund-manager`, `auditor`, `compliance-officer`) mit unterschiedlichen Berechtigungen auf Endpunkt-Ebene (`@PreAuthorize`) und im Frontend (Route Guards) |
 | Detaillierte Dokumentation auf GitHub | Issues mit Beschreibungen und überprüfbaren Anforderungen, 3+ Labels, Sprints als Iterations, SCRUM-Board mit Ready/In Progress/Done |
@@ -1085,21 +1085,27 @@ ESG-Risikozusammenfassung (`AI_ANALYZING → PENDING_REVIEW`). Evidence-Einträg
 (-1.0 bis +1.0), die Greenwashing-relevante Nachrichten klassifizieren und als Risk-Score (0–10)
 sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert werden.
 
-**Drittsystem-Integration (Guardian API):** Beim Audit-Start ruft TrueYield automatisch aktuelle
-ESG-Nachrichten pro Holding über die The Guardian API ab und speichert sie als Evidence-Einträge in MongoDB.
+**Drittsystem-Integration (Multi-Provider News):** TrueYield aggregiert ESG-Nachrichten aus drei Quellen parallel: The Guardian API, NewsAPI.org und Newsdata.io. Alle Artikel durchlaufen einen zweistufigen KI-Filter: zuerst ESG-Relevanz-Scoring (Schwellenwert 0.35, Claude Haiku), dann Sentiment-Analyse. Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian) werden mit vollem Gewicht gewertet, andere mit Faktor 0.5 gedämpft. URL-Deduplizierung verhindert doppelte Evidence cross-provider. Evidence-Cap bei 10 Einträgen pro Holding, nach Relevanz priorisiert.
+
+**Symbol-Autocomplete (Ticker → Firmenname):** Beim Erstellen eines Holdings tippt der Fund Manager nur das Ticker-Symbol (z.B. "AAPL") und erhält sofort Dropdown-Vorschläge (debounced, 280ms) via Yahoo Finance Search API — gefiltert auf EQUITY und ETF. Auswahl füllt Symbol und Firmenname automatisch aus.
+
+**Portfolio-Visualisierung:** SVG-Donut-Chart auf der Portfolio-Detailseite visualisiert die Asset Allocation nach `weightPercent`. Hover-Effekt (scale + brightness), Tooltip, Legende, und grauer "Ungewichtet"-Slice für Holdings ohne Gewichtung. Keine externe Chart-Library — reines SVG.
+
+**Dashboard KPI-Karten (Fund Manager):** Drei Cards (Total / Pending Review / Approved) auf der Portfolios-Übersicht zeigen den Audit-Status aller Portfolios auf einen Blick. `auditStatus` wird über erweitertes `PortfolioResponseDTO` direkt aus dem verknüpften `AuditReport` mitgeliefert.
+
+**SFDR-Ampel (Portfolio-Liste):** Farbiger Dot + Label ("Art. 9" / "Art. 8" / "—") direkt auf jeder Portfolio-Tabellenzeile — sichtbar für Fund Manager und Compliance Officer, ohne ins Portfolio klicken zu müssen. Daten kommen aus `/api/compliance/sfdr` parallel zum Portfolio-Fetch.
+
+**Evidence Confidence Badge:** Jede Evidence-Karte zeigt ein Konfidenz-Badge (HIGH / MEDIUM / LOW) in Grün/Amber/Rot — berechnet aus Quell-Tier (Premium vs. Other) und Sentiment-Stärke. Sichtbar auf der Holding-Detailseite und im Audit-Report.
 
 **MCP Server (Anforderung 22):** Spring AI 1.0.0 MCP Server (`spring-ai-starter-mcp-server-webmvc`) exponiert drei ESG-Analyse-Tools via SSE-Endpoint `/sse`. MCP-kompatible Clients (Claude Desktop) können sich verbinden und `generateEsgRiskSummary`, `analyseEsgSentiment` und `fetchEsgNews` direkt aufrufen. Konfiguration: `spring.ai.mcp.server.name=trueyield-esg`, `type=SYNC`.
 
-**Compliance Officer (Anforderung 23):** Dritte RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff. Vier dedizierte Endpoints: `GET /api/compliance/overview` (KPI-Übersicht), `/sfdr` (SFDR Article 8/9 Klassifizierung per Portfolio), `/portfolios` (alle Portfolios), `/reports` (alle Audit-Reports). Alle schreibenden Operationen sind blockiert (403 per `@PreAuthorize`). Frontend-Dashboard unter `/compliance` mit drei Tabs (Overview / Portfolios / Audit Reports); Audit-Reports verlinken direkt auf die Detailseite. Sidebar zeigt rollenspezifisch "Dashboard → /compliance" für Compliance Officers. JWT-Claim-Extraktion ist resilient gegenüber Auth0-Namespace-Varianten.
+**Compliance Officer (Anforderung 23):** Dritte RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff. Vier dedizierte Endpoints: `GET /api/compliance/overview` (KPI-Übersicht), `/sfdr` (SFDR Article 8/9 Klassifizierung per Portfolio), `/portfolios` (alle Portfolios), `/reports` (alle Audit-Reports). Alle schreibenden Operationen sind blockiert (403 per `@PreAuthorize`). Frontend-Dashboard unter `/compliance` mit drei Tabs (Overview / Portfolios / Audit Reports). JWT-Claim-Extraktion ist resilient gegenüber Auth0-Namespace-Varianten.
 
-**Code-Qualität (Prio 3):** `DRAFT`-Status existiert nicht im `AuditStatus`-Enum (nie erreichbar); die Frontend-Audit-Timeline wurde entsprechend bereinigt. SonarCloud konfiguriert und aktiv auf `main` (Token via Secret `SONAR_TOKEN`); Analyse läuft non-blocking (`continue-on-error: true`), damit fehlende Token den Build nicht brechen.
+**Code-Qualität:** `DRAFT`-Status existiert nicht im `AuditStatus`-Enum und wurde bereinigt. SonarCloud aktiv auf `main` (non-blocking, `continue-on-error: true`). ReDoS-Risiken in News-Provider-Regex eliminiert. Security-Hardening: Ownership-Checks auf allen schreibenden Endpoints, rollenbasierte Zugriffsprüfung auf Controller-Ebene.
 
-**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf
-PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService.
-421 Testmethoden in 32 Testklassen. Parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`)
-und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
+**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService. 421 Testmethoden in 32 Testklassen — parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
 
-**Deployment:** CI/CD Workflow über GitHub Actions aktiv. Frontend und Backend laufen produktiv auf Azure App Service (Details im Deployment-Abschnitt).
+**Deployment:** CI/CD via GitHub Actions. Frontend und Backend laufen produktiv auf Azure App Service (Details im Deployment-Abschnitt).
 
 ---
 
@@ -1111,24 +1117,24 @@ Die folgenden Erweiterungen sind priorisiert, um die Lösung von einem funktiona
 | # | Feature | Beschreibung |
 |---|---------|-------------|
 | B-01 | **Automatisches News-Monitoring** | Multi-Provider-Aggregation (Guardian, NewsAPI.org, Newsdata.io) liefert bei Holding-Erstellung automatisch ESG-News als Evidence |
-| B-02 | **SFDR Article 8/9 Scoring** | Sentiment-Aggregation klassifiziert Portfolios regulatorisch |
+| B-02 | **SFDR Article 8/9 Scoring** | Sentiment-Aggregation klassifiziert Portfolios regulatorisch; SFDR-Klasse sichtbar im Compliance-Dashboard und als Ampel auf der Portfolio-Liste |
+| B-14 | **Duplicate-Detection für Evidence** | URL-basierte Deduplizierung in-memory (cross-provider) und gegen DB, bevor AI-Calls stattfinden; Evidence-Cap bei 10 pro Holding |
 | B-19 | **Dedizierte Finanz-News-APIs** | NewsAPI.org und Newsdata.io als zusätzliche ticker-basierte Quellen neben Guardian; generisches Branchenrauschen deutlich reduziert |
 | B-20 | **Zweistufiger KI-Relevanzfilter** | ESG-spezifisches Relevanz-Prompt mit Scoring-Skala 0.0–1.0; Artikel unter Schwellenwert 0.35 werden als Evidence verworfen |
 | B-21 | **Source Reliability Weighting** | Sentiment-Scores von Premium-Quellen (Reuters, Bloomberg, Financial Times, WSJ, Guardian) werden voll gewichtet; andere Quellen mit Faktor 0.5 gedämpft |
 | B-22 | **Holding Auto-Complete (Ticker)** | Debounced Ticker-Suche via Yahoo Finance mit Dropdown-Vorschlägen (EQUITY + ETF); wählt automatisch Name aus |
-| B-14 | **Duplicate-Detection für Evidence** | URL-basierte Deduplizierung in-memory (cross-provider) und gegen DB, bevor AI-Calls stattfinden; Evidence-Cap bei 10 pro Holding |
 | B-23 | **Portfolio Asset Allocation (Donut-Chart)** | Reines SVG-Donut-Chart auf der Portfolio-Detailseite; Hover-Effekt, Tooltip und Legende; grauer "Ungewichtet"-Slice für Holdings ohne Gewichtung |
 | B-10 | **KPI-Karten für Fund Manager** | Drei Dashboard-Cards (Total / Pending Review / Approved) auf der Portfolios-Übersicht; Daten live aus AuditReport-Status via erweitertem PortfolioResponseDTO |
+| B-25 | **Evidence Confidence Badge** | HIGH / MEDIUM / LOW Badge auf jeder Evidence-Karte (Grün/Amber/Rot) — berechnet aus Quell-Tier und Sentiment-Stärke; sichtbar auf Holding-Detail und Audit-Report |
+| B-26 | **SFDR-Ampel auf Portfolio-Liste** | Farbiger Dot + Label ("Art. 9" / "Art. 8" / "—") direkt auf der Tabellenzeile; parallel fetch von `/api/compliance/sfdr`; nur für Fund Manager und Compliance Officer |
 
-### Priorität 1: Demo-Impact (höchster Wow-Faktor, machbar bis Abgabe)
-*Features die in der Live-Demo sofort überzeugen und den Human-in-the-Loop Ansatz greifbar machen.*
+### Offen: Demo-Impact (Abgabe 24.05.2026)
+*Features die in der Live-Demo den Human-in-the-Loop Ansatz greifbar machen.*
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
-| B-24 | **Manueller Risk Score Override (Auditor)** | Auditor kann den AI-generierten Risk Score eines Holdings manuell überschreiben und muss dies mit einem Kommentar begründen. Zeigt Human-in-the-Loop klar in der Demo. Neues Feld `overrideRiskScore` auf AuditReport, Inline-Edit im Frontend. | 2–3h |
-| B-25 | **Evidence-Confidence-Badge** | Jede Evidence-Karte zeigt ein farbiges Konfidenz-Badge (High / Medium / Low) basierend auf Relevanz-Score und Quell-Tier. Rein Frontend, keine Backend-Änderung. | 1–2h |
-| B-26 | **SFDR-Ampel auf Portfolio-Karte** | Kleine farbige Ampel (grün/gelb/rot) direkt auf der Portfolio-Listenzeile zeigt auf einen Blick ob Article 9, 8 oder keines. Sofort sichtbar ohne Klick. | 1h |
-| B-03 | **Longitudinales Risk Tracking** | Sentiment-Zeitreihe pro Holding visualisiert als Timeseries-Chart. | 1–2 Tage |
-| B-16 | **Realtime-Updates via SSE/WebSocket** | Auditor und Fund Manager sehen Statuswechsel (`AI_ANALYZING` → `PENDING_REVIEW`) ohne Page-Reload. | 1–2 Tage |
+| B-24 | **Manueller Risk Score Override (Auditor)** | Auditor überschreibt den AI-generierten Risk Score mit Pflichtkommentar — zeigt Human-in-the-Loop live in der Demo. Feld `overrideRiskScore` auf AuditReport, Inline-Edit im Frontend. | 2–3h |
+| B-03 | **Longitudinales Risk Tracking** | Sentiment-Zeitreihe pro Holding als Timeseries-Chart. | 1–2 Tage |
+| B-16 | **Realtime-Updates via SSE/WebSocket** | Statuswechsel (`AI_ANALYZING` → `PENDING_REVIEW`) ohne Page-Reload sichtbar. | 1–2 Tage |
 
 ### Priorität 2: Usability & Enterprise Workflow
 | # | Feature | Mehrwert | Aufwand |
