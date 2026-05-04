@@ -43,6 +43,14 @@
     return 'high';
   }
 
+  function confidence(e: any): 'HIGH' | 'MEDIUM' | 'LOW' {
+    const isPremium = /reuters|bloomberg|financial times|wsj|the guardian/i.test(e.sourceName ?? '');
+    const mag = Math.abs(1 - (e.riskScore ?? 5) / 5);
+    if (isPremium && mag >= 0.3) return 'HIGH';
+    if (isPremium || mag >= 0.2) return 'MEDIUM';
+    return 'LOW';
+  }
+
   let fetchingNews = $state(false);
   let fetchNewsStatus = $state('');
 
@@ -143,7 +151,10 @@
         <div class="evidence-card">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap: 8px;">
             <div class="evidence-headline">{e.headline}</div>
-            <span class="badge-source">{e.sourceName || 'Web'}</span>
+            <div style="display:flex;gap:5px;align-items:flex-start;flex-shrink:0;">
+              <span class="conf-badge conf-{confidence(e).toLowerCase()}">{confidence(e)}</span>
+              <span class="badge-source">{e.sourceName || 'Web'}</span>
+            </div>
           </div>
           <div class="evidence-source">{e.summary}</div>
           <div class="evidence-date">{e.createdAt}</div>
@@ -181,6 +192,34 @@
 {/if}
 
 <style>
+  .conf-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 4px;
+    padding: 2px 6px;
+    border: 1px solid;
+    white-space: nowrap;
+    flex-shrink: 0;
+    line-height: 1.6;
+  }
+  .conf-high {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+  .conf-medium {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.3);
+  }
+  .conf-low {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
   .evidence-link {
     display: inline-flex;
     align-items: center;
