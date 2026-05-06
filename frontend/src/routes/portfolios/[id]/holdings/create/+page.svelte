@@ -208,51 +208,69 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .dropdown {
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + 6px);
     left: 0;
     right: 0;
-    background: #1a2332;
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    z-index: 50;
-    max-height: 260px;
+    background: #0f1923;
+    border: 1px solid rgba(147,197,253,0.25);
+    border-radius: 10px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.75), 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+    z-index: 100;
+    max-height: 280px;
     overflow-y: auto;
+    overflow-x: hidden;
   }
+  .dropdown::-webkit-scrollbar { width: 4px; }
+  .dropdown::-webkit-scrollbar-track { background: transparent; }
+  .dropdown::-webkit-scrollbar-thumb { background: rgba(147,197,253,0.2); border-radius: 2px; }
   .dropdown-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 9px 14px;
+    gap: 12px;
+    padding: 10px 14px;
     cursor: pointer;
-    transition: background 0.1s;
+    transition: background 0.12s;
     user-select: none;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
   }
+  .dropdown-item:last-child { border-bottom: none; }
+  .dropdown-item:first-child { border-radius: 10px 10px 0 0; }
+  .dropdown-item:last-child { border-radius: 0 0 10px 10px; }
+  .dropdown-item:only-child { border-radius: 10px; }
   .dropdown-item:hover,
   .dropdown-item.selected {
-    background: rgba(59,130,246,0.15);
+    background: rgba(59,130,246,0.18);
+  }
+  .dropdown-item.selected {
+    background: rgba(59,130,246,0.25);
   }
   .dropdown-symbol {
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
     font-weight: 700;
     color: #93c5fd;
-    min-width: 60px;
+    min-width: 64px;
+    letter-spacing: 0.3px;
   }
   .dropdown-name {
     font-size: 13px;
-    color: var(--text-1, #e2e8f0);
+    color: #e2e8f0;
     flex: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-weight: 400;
   }
   .dropdown-exchange {
     font-size: 10px;
-    color: var(--text-3, #7a90aa);
-    background: rgba(255,255,255,0.06);
-    border-radius: 3px;
-    padding: 1px 5px;
+    font-weight: 600;
+    color: #93c5fd;
+    background: rgba(59,130,246,0.12);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 4px;
+    padding: 2px 6px;
     white-space: nowrap;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
   }
 </style>
