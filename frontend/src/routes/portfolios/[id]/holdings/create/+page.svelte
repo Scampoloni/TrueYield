@@ -18,6 +18,25 @@
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   let selectedIndex = $state(-1);
 
+  // Portal: dropdown is appended to <body> so no parent backdrop-filter affects it
+  let inputEl: HTMLInputElement | null = $state(null);
+  let dropdownTop = $state(0);
+  let dropdownLeft = $state(0);
+  let dropdownWidth = $state(0);
+
+  function portal(node: HTMLElement) {
+    document.body.appendChild(node);
+    return { destroy() { node.remove(); } };
+  }
+
+  function updateDropdownPos() {
+    if (!inputEl) return;
+    const r = inputEl.getBoundingClientRect();
+    dropdownTop = r.bottom + window.scrollY + 4;
+    dropdownLeft = r.left + window.scrollX;
+    dropdownWidth = r.width;
+  }
+
   function onSymbolInput() {
     selectedIndex = -1;
     if (debounceTimer) clearTimeout(debounceTimer);
@@ -33,6 +52,7 @@
       if (res.ok) {
         suggestions = await res.json();
         showDropdown = suggestions.length > 0;
+        if (showDropdown) updateDropdownPos();
       }
     } catch {
       suggestions = [];
@@ -112,44 +132,50 @@
 
       <div class="field">
         <label for="symbol">Symbol <span>*</span></label>
-        <div class="autocomplete-wrap">
-          <div class="inp-row">
-            <input
-              id="symbol"
-              class="inp"
-              type="text"
-              bind:value={symbol}
-              oninput={onSymbolInput}
-              onkeydown={onSymbolKeydown}
-              onblur={onSymbolBlur}
-              placeholder="e.g. AAPL"
-              autocomplete="off"
-              style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;letter-spacing:0.5px;"
-            />
-            {#if searchLoading}
-              <span class="search-spinner"></span>
-            {/if}
-          </div>
-          {#if showDropdown && suggestions.length > 0}
-            <div class="dropdown" role="listbox">
-              {#each suggestions as s, i}
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <div
-                  class="dropdown-item"
-                  class:selected={i === selectedIndex}
-                  role="option"
-                  tabindex="-1"
-                  aria-selected={i === selectedIndex}
-                  onmousedown={() => selectSuggestion(s)}
-                >
-                  <span class="dropdown-symbol">{s.symbol}</span>
-                  <span class="dropdown-name">{s.name}</span>
-                  <span class="dropdown-exchange">{s.exchange}</span>
-                </div>
-              {/each}
-            </div>
+        <div class="inp-row">
+          <input
+            id="symbol"
+            class="inp"
+            type="text"
+            bind:value={symbol}
+            bind:this={inputEl}
+            oninput={onSymbolInput}
+            onkeydown={onSymbolKeydown}
+            onblur={onSymbolBlur}
+            placeholder="e.g. AAPL"
+            autocomplete="off"
+            style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;letter-spacing:0.5px;padding-right:32px;"
+          />
+          {#if searchLoading}
+            <span class="search-spinner"></span>
           {/if}
         </div>
+
+        {#if showDropdown && suggestions.length > 0}
+          <!-- svelte-ignore a11y_click_events_have_key_events -->
+          <div
+            use:portal
+            class="dropdown"
+            role="listbox"
+            style="top:{dropdownTop}px;left:{dropdownLeft}px;width:{dropdownWidth}px;"
+          >
+            {#each suggestions as s, i}
+              <!-- svelte-ignore a11y_click_events_have_key_events -->
+              <div
+                class="dropdown-item"
+                class:selected={i === selectedIndex}
+                role="option"
+                tabindex="-1"
+                aria-selected={i === selectedIndex}
+                onmousedown={() => selectSuggestion(s)}
+              >
+                <span class="dropdown-symbol">{s.symbol}</span>
+                <span class="dropdown-name">{s.name}</span>
+                <span class="dropdown-exchange">{s.exchange}</span>
+              </div>
+            {/each}
+          </div>
+        {/if}
       </div>
 
       <div class="field">
@@ -182,26 +208,10 @@
 </div>
 
 <style>
-  /* form-glass has overflow:hidden globally — override so dropdown can escape */
-  :global(.form-glass) {
-    overflow: visible !important;
-  }
-  /* the decorative ::after glow must be clipped independently */
-  :global(.form-glass::after) {
-    overflow: hidden;
-  }
-
-  .autocomplete-wrap {
-    position: relative;
-  }
   .inp-row {
     position: relative;
     display: flex;
     align-items: center;
-  }
-  .inp-row .inp {
-    width: 100%;
-    padding-right: 32px;
   }
   .search-spinner {
     position: absolute;
@@ -215,44 +225,39 @@
     pointer-events: none;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Dropdown is portaled to <body> — position:absolute relative to document */
+  :global(.autocomplete-portal) {
+    position: absolute;
+  }
   .dropdown {
     position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    right: 0;
-    background: rgb(13, 22, 38);
-    isolation: isolate;
+    background: #111c2d;
     border: 1px solid rgba(147,197,253,0.3);
     border-radius: 10px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.7);
-    z-index: 9999;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.95), 0 8px 24px rgba(0,0,0,0.8);
+    z-index: 99999;
     max-height: 280px;
     overflow-y: auto;
     overflow-x: hidden;
   }
   .dropdown::-webkit-scrollbar { width: 4px; }
   .dropdown::-webkit-scrollbar-track { background: transparent; }
-  .dropdown::-webkit-scrollbar-thumb { background: rgba(147,197,253,0.2); border-radius: 2px; }
+  .dropdown::-webkit-scrollbar-thumb { background: rgba(147,197,253,0.25); border-radius: 2px; }
   .dropdown-item {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 10px 14px;
     cursor: pointer;
-    transition: background 0.12s;
+    transition: background 0.1s;
     user-select: none;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
   }
   .dropdown-item:last-child { border-bottom: none; }
-  .dropdown-item:first-child { border-radius: 10px 10px 0 0; }
-  .dropdown-item:last-child { border-radius: 0 0 10px 10px; }
-  .dropdown-item:only-child { border-radius: 10px; }
   .dropdown-item:hover,
   .dropdown-item.selected {
-    background: rgba(59,130,246,0.18);
-  }
-  .dropdown-item.selected {
-    background: rgba(59,130,246,0.25);
+    background: rgba(59,130,246,0.2);
   }
   .dropdown-symbol {
     font-family: 'JetBrains Mono', monospace;
@@ -269,14 +274,13 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-weight: 400;
   }
   .dropdown-exchange {
     font-size: 10px;
     font-weight: 600;
     color: #93c5fd;
-    background: rgba(59,130,246,0.12);
-    border: 1px solid rgba(59,130,246,0.2);
+    background: rgba(59,130,246,0.15);
+    border: 1px solid rgba(59,130,246,0.25);
     border-radius: 4px;
     padding: 2px 6px;
     white-space: nowrap;
