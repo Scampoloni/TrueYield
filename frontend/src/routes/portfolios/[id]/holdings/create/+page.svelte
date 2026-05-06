@@ -220,11 +220,12 @@
     top: calc(100% + 6px);
     left: 0;
     right: 0;
-    background: #0f1923;
-    border: 1px solid rgba(147,197,253,0.25);
+    background: rgb(13, 22, 38);
+    isolation: isolate;
+    border: 1px solid rgba(147,197,253,0.3);
     border-radius: 10px;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.75), 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
-    z-index: 100;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.7);
+    z-index: 9999;
     max-height: 280px;
     overflow-y: auto;
     overflow-x: hidden;
