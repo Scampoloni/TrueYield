@@ -182,6 +182,15 @@
 </div>
 
 <style>
+  /* form-glass has overflow:hidden globally — override so dropdown can escape */
+  :global(.form-glass) {
+    overflow: visible !important;
+  }
+  /* the decorative ::after glow must be clipped independently */
+  :global(.form-glass::after) {
+    overflow: hidden;
+  }
+
   .autocomplete-wrap {
     position: relative;
   }
