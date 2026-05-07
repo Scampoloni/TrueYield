@@ -183,7 +183,7 @@ Schnelle, kostengünstige und regulatorisch akzeptable ESG-Verifikation von Inve
 **2. Portfolio-Dashboard (Fund Manager)**
 - Übersicht aller Portfolios mit Status-Badge (Pending / Under Review / Approved / Rejected)
 - "Create New Portfolio"-Button → Holdings manuell per Formular erfassen
-- KPI-Cards: "Portfolios Pending Approval: 3", "Average Approval Time: 2.4 days" *(geplant, noch nicht implementiert — siehe Backlog B-10)*
+- KPI-Cards: "Total: 5", "Pending Review: 2", "Approved: 3" — implementiert (B-10 ✅); "Average Approval Time" ist als zukünftige Kennzahl vorgesehen
 
 **3. Portfolio-Submission-Flow (Fund Manager)**
 - Holdings werden manuell per Formular (Symbol, ISIN, Name, Gewichtung) hinzugefügt
@@ -313,7 +313,7 @@ Wenn ein Fonds später als "Greenwashing" entlarvt wird, muss die Bank beweisen 
 *Was macht es besonders:*
 - Konkurrent MSCI: Score ohne Beweiskette
 - Konkurrent Sustainalytics: Research-Report, aber keine News-Archive
-- TrueYield: Jeder Artikel ist als Screenshot/PDF archiviert, mit Timestamp, Source-URL, Full-Text → Forensisch belastbar
+- TrueYield: Jeder Artikel wird mit Headline, Source-URL, Publikationsdatum und Snippet archiviert — vollständig nachvollziehbar und auditierbar
 
 ### HIGH-LEVEL-KONZEPT
 **«TrueYield ist das CARFAX für Investmentfonds — es zeigt dir die versteckte Schadens-Historie (ESG-Verstösse, Greenwashing-Risiken), bevor du investierst oder den Fonds zertifizierst.»**
@@ -425,7 +425,7 @@ Wenn ein Fonds später als "Greenwashing" entlarvt wird, muss die Bank beweisen 
 - Moat: Regulierung ist Barrier-to-Entry für reine KI-Lösungen
 
 **3. Kombinierter Tech-Stack ist schwer zu replizieren**
-- NewsAPI-Integration + NLP + Spring AI + Audit-Workflow + PDF-Archivierung + SFDR-Templates
+- Multi-Provider-News-Integration (Guardian, NewsAPI.org, Newsdata.io) + Spring AI + Audit-Workflow + RBAC + SFDR-Scoring
 - Einzelne Komponenten sind verfügbar, aber die Integration ist Custom-Built
 - Konkurrent müsste 12-18 Monate investieren um ähnliches System zu bauen
 - Moat: First-Mover-Advantage in spezifischem Nischen-Workflow
@@ -571,7 +571,7 @@ Dieses Kapitel dokumentiert zusammengefasstes Peer-Feedback (anonymisiert) und l
   Konsequenz für TrueYield:
   Wir ergänzen Qualitätskriterien für Quellen (Reputation, Aktualität, Duplikatkontrolle, Nachvollziehbarkeit) und machen diese Regeln als Governance-Baustein sichtbar.
 
-7. Frage nach Preislogik und Go-to-Market (insb. großer Sprung zwischen Tiers).
+7. Frage nach Preislogik und Go-to-Market (insb. grosser Sprung zwischen Tiers).
   Konsequenz für TrueYield:
   Das Pricing wird mit nachvollziehbaren Annahmen (Volumen, SLA, Integrationsaufwand, Risiko-Exposure) begründet und in der Dokumentation klarer vom Pilot- in den Enterprise-Modus überführt.
 
@@ -587,7 +587,7 @@ Dieses Kapitel dokumentiert zusammengefasstes Peer-Feedback (anonymisiert) und l
 
 2. Board ist teilweise zu umfangreich, Kernaussage geht stellenweise unter.
   Konsequenz für TrueYield:
-  Wir komprimieren die Kommunikation auf wenige Leitbotschaften: Problemgröße, differenzierender Mechanismus (Human-in-the-Loop + Evidence), messbare Wirkung (Zeit/Risiko).
+  Wir komprimieren die Kommunikation auf wenige Leitbotschaften: Problemgrösse, differenzierender Mechanismus (Human-in-the-Loop + Evidence), messbare Wirkung (Zeit/Risiko).
 
 3. Nutzergruppen sind gut differenziert, aber in der WKW-Frage zu stark zusammengefasst.
   Konsequenz für TrueYield:
@@ -722,8 +722,8 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | System (KI/API) |
 | **Vorbedingung** | ESG Audit wurde angefordert (UC-03). Holdings mit Symbolen/ISINs sind vorhanden. |
-| **Normalablauf** | 1. System liest die Holdings des Portfolios. 2. System ruft pro Holding aktuelle ESG-relevante News über die Guardian API ab. 3. System filtert Artikel nach Relevanz (ESG-Keywords: Umwelt, Soziales, Governance). 4. System übergibt die Artikel an die KI (UC-08). |
-| **Ausnahmen** | News-API Rate Limit erreicht → Wartezeit oder Fallback auf gecachte Daten. Keine Artikel gefunden → Evidence-Liste bleibt leer. |
+| **Normalablauf** | 1. System liest die Holdings des Portfolios. 2. System ruft pro Holding aktuelle ESG-relevante News über drei parallele Provider ab: The Guardian API, NewsAPI.org und Newsdata.io. 3. System dedupliziert Artikel URL-basiert cross-provider. 4. KI-Relevanzfilter (`analyzeRelevance`, Schwellenwert 0.35) verwirft nicht ESG-spezifische Artikel. 5. System übergibt die gefilterten Artikel an die KI (UC-08). |
+| **Ausnahmen** | Provider nicht erreichbar → Fallback auf verfügbare Provider; alle Provider ausgefallen → Evidence-Liste bleibt leer. Keine ESG-relevanten Artikel gefunden → Evidence-Liste bleibt leer. |
 | **Nachbedingung** | Rohdaten der News liegen vor und sind zur KI-Analyse bereit. |
 
 ---
@@ -824,7 +824,7 @@ Repository → **Settings → Secrets and variables → Actions → New reposito
 |---|---|
 | `SONAR_TOKEN` | Token aus SonarCloud (Account → Security → Generate Token) |
 
-> Ohne dieses Secret wird der SonarCloud-Step in CI uebersprungen.
+> Ohne dieses Secret wird der SonarCloud-Step in CI übersprungen.
 
 ---
 
@@ -901,7 +901,7 @@ Ausführung:
 - `npm run dev` (separates Terminal)
 - `npm run test:e2e`
 
-Standardmaessig erwartet Cypress die App unter `http://localhost:5173`. Alternativ kann `E2E_BASE_URL` gesetzt werden.
+Standardmässig erwartet Cypress die App unter `http://localhost:5173`. Alternativ kann `E2E_BASE_URL` gesetzt werden.
 Authentifizierte Tests nutzen optional `E2E_TEST_EMAIL` und `E2E_TEST_PASSWORD`.
 
 ### KI-Integration (Spring AI)
@@ -965,15 +965,15 @@ TrueYield implementiert folgende Qualitätskriterien für News-Quellen, um die N
 
 | Kriterium | Umsetzung |
 |---|---|
-| **Quellenreputation** | Ausschliesslich The Guardian API — redaktionell geprüfte, international anerkannte Nachrichtenquelle |
-| **ESG-Relevanz** | Suchanfrage enthält immer `ESG` als Pflicht-Keyword; Fallback auf `<Firmenname> ESG sustainability` bei keinen Treffern |
+| **Quellenreputation** | Drei Provider parallel: **The Guardian API** (keyword-basiert), **NewsAPI.org** und **Newsdata.io** (ticker-basiert) — redaktionell geprüfte Quellen. Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian) werden mit vollem Sentiment-Gewicht gewertet, andere mit Faktor 0.5 gedämpft. |
+| **ESG-Relevanz** | Zweistufiger KI-Filter: Guardian-Abfragen enthalten `ESG` als Pflicht-Keyword; alle Artikel durchlaufen anschliessend `analyzeRelevance()` (Claude Haiku, Schwellenwert 0.35) |
 | **Firmennamen-Normalisierung** | Rechtliche Suffixe (`Inc.`, `PLC`, `Ltd.`, `AG`, `SE`, etc.) werden vor der Suche entfernt für bessere Trefferqualität |
-| **Duplikatkontrolle** | URL-basierter Check vor dem Speichern (`existsByHoldingIdAndSourceUrl`) — gleiche Artikel werden nicht mehrfach gespeichert |
-| **Mengenbegrenzung** | Maximal 5 Artikel pro Holding-Abfrage (`MAX_ARTICLES = 5`) — verhindert Übersättigung mit gleichartigen Quellen |
-| **Nachvollziehbarkeit** | Jeder Evidence-Eintrag speichert Quellenname, URL und Publikationsdatum |
+| **Duplikatkontrolle** | URL-basierte Deduplizierung in-memory (cross-provider) und gegen DB (`existsByHoldingIdAndSourceUrl`) vor AI-Calls |
+| **Mengenbegrenzung** | Maximal 5 Artikel pro Provider-Abfrage (`MAX_ARTICLES = 5`); nach Deduplizierung und Relevanzfilter werden bis zu 10 Evidence-Einträge pro Holding gespeichert (cap nach Relevanz-Score priorisiert) |
+| **Nachvollziehbarkeit** | Jeder Evidence-Eintrag speichert Quellenname, URL, Publikationsdatum und Snippet |
 
 **Bekannte Einschränkungen (Coverage Limits):**
-- Nur englischsprachige Artikel (Guardian-Einschränkung); mehrsprachige Quellen sind als Backlog-Item vorgesehen (B-04)
+- Primär englischsprachige Artikel; mehrsprachige Quellen sind als Backlog-Item vorgesehen (B-04)
 - Kein expliziter Aktualitätsfilter auf Artikeldatum — ältere Artikel können in den Resultaten erscheinen
 
 ---
@@ -1040,10 +1040,7 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 **Holdings-Übersicht** — Aggregierte Ansicht aller Holdings über alle Portfolios
 ![Holdings-Übersicht](doc/screenshots/holdings-overview.png)
 
-**Evidence & Risk Analysis** — KI-generierte Evidence-Cards mit Sentiment-Badge und Risk-Score pro Holding
-![Evidence](doc/screenshots/evidence-page.png)
-
-**Holding-Detail** — Einzelansicht eines Holdings mit SFDR-Ampel, ISIN, Gewichtung, Evidence-Karten (Sentiment-Badge HIGH/MEDIUM/LOW Confidence), Risk-Score und Ingest-News-Button
+**Holding-Detail / Evidence & Risk Analysis** — Einzelansicht eines Holdings mit SFDR-Ampel, ISIN, Gewichtung, KI-generierten Evidence-Cards (Sentiment-Badge POSITIVE/NEUTRAL/NEGATIVE, Confidence-Badge HIGH/MEDIUM/LOW, Risk-Score 0–10) und Ingest-News-Button
 ![Evidence & Risk Analysis](doc/screenshots/evidence-page.png)
 
 **Evidence erfassen** — Manuelles Erstellen eines Evidence-Eintrags mit KI-Sentiment-Analyse
