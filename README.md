@@ -886,7 +886,7 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 | Methode | Endpoint | Beschreibung | Zugriff |
 |---|---|---|---|
 | GET | `/api/compliance/overview` | Systemweite KPIs (Portfolios, Holdings, AuditReports nach Status) | `compliance-officer` |
-| GET | `/api/compliance/sfdr` | SFDR Article 8/9 Klassifizierung pro Portfolio (Sentiment-Aggregation) | `compliance-officer` |
+| GET | `/api/compliance/sfdr` | SFDR Article 8/9 Klassifizierung pro Portfolio (Sentiment-Aggregation) | `compliance-officer`, `fund-manager` |
 | GET | `/api/compliance/portfolios` | Alle Portfolios (Lesezugriff, ohne Einschränkung auf Fund-Manager-ID) | `compliance-officer` |
 | GET | `/api/compliance/reports` | Alle Audit-Reports (systemweit, inkl. Statusinformation) | `compliance-officer` |
 
