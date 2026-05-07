@@ -1022,19 +1022,19 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 **Login**
 ![Login](doc/screenshots/login-page.png)
 
-**Portfolio-Übersicht** — Alle eigenen Portfolios mit Status-Badges
+**Portfolio-Übersicht** — Tabelle aller eigenen Portfolios mit Status-Badge (PENDING_REVIEW / UNDER_REVIEW / APPROVED / REJECTED), SFDR-Ampel (Art. 9 / Art. 8 / —) direkt pro Zeile, und drei KPI-Cards (Total / Pending Review / Approved) oben
 ![Portfolio-Übersicht](doc/screenshots/portfolios-list.png)
 
-**Portfolio erstellen** — Formular für neues Portfolio
+**Portfolio erstellen** — Formular für neues Portfolio (Name, Beschreibung, ESG-Zielartikel)
 ![Portfolio erstellen](doc/screenshots/portfolio-create.png)
 
-**Portfolio-Detail** — Holdings-Tabelle, Audit-Report triggern
+**Portfolio-Detail** — Holdings-Tabelle mit Risk-Score-Balken und SFDR-Badge pro Holding, SVG-Donut-Chart für Asset Allocation (Hover-Tooltip, Legende, grauer "Ungewichtet"-Slice), Audit-Report-Trigger-Button
 ![Portfolio-Detail](doc/screenshots/portfolio-detail.png)
 
-**Portfolio bearbeiten**
+**Portfolio bearbeiten** — Inline-Formular zum Ändern von Portfolio-Name, Beschreibung und ESG-Zielartikel; nur für den eigenen Fund Manager zugänglich
 ![Portfolio bearbeiten](doc/screenshots/portfolio-edit.png)
 
-**Holding hinzufügen** — Formular mit Symbol, ISIN, Gewichtung
+**Holding hinzufügen** — Formular mit Symbol-Autocomplete (debounced, 280 ms, Yahoo Finance API — Dropdown filtert auf EQUITY/ETF und füllt Name automatisch aus), ISIN und Gewichtung
 ![Holding hinzufügen](doc/screenshots/holding-create.png)
 
 **Holdings-Übersicht** — Aggregierte Ansicht aller Holdings über alle Portfolios
