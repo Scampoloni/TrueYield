@@ -31,7 +31,7 @@ public class ComplianceController {
     }
 
     @GetMapping("/sfdr")
-    @PreAuthorize("hasRole('compliance-officer')")
+    @PreAuthorize("hasRole('compliance-officer') or hasRole('fund-manager')")
     public ResponseEntity<List<SfdrPortfolioScoreDTO>> getSfdrScores() {
         return ResponseEntity.ok(complianceService.getSfdrScores());
     }
