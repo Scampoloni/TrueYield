@@ -906,24 +906,56 @@ Authentifizierte Tests nutzen optional `E2E_TEST_EMAIL` und `E2E_TEST_PASSWORD`.
 
 ### KI-Integration (Spring AI)
 
-TrueYield nutzt **Spring AI 1.0.0** (`spring-ai-starter-model-anthropic`) mit **AnthropicChatModel** und dem Modell **Claude Haiku (claude-haiku-4-5-20251001)** für zwei KI-Funktionen im ESG-Workflow:
+TrueYield nutzt **Spring AI 1.0.0** (`spring-ai-starter-model-anthropic`) mit **AnthropicChatModel** und dem Modell **Claude Haiku (`claude-haiku-4-5-20251001`)** für drei KI-Funktionen im ESG-Workflow sowie einen KI-gestützten Chat-Assistenten:
 
-#### 1. ESG-Risikozusammenfassung beim Audit-Erstellen
+#### Funktion 1: ESG-Risikozusammenfassung beim Audit-Erstellen
 
-Wenn ein Fund Manager einen Audit-Report erstellt (`POST /api/service/auditreport`), wechselt der Report zunächst in den Status `AI_ANALYZING`. Der `AiAnalysisService` sendet einen Prompt an Claude Haiku:
+Wenn ein Fund Manager einen Audit-Report erstellt (`POST /api/service/auditreport`), wechselt der Report zunächst in den Status `AI_ANALYZING`. `AiAnalysisService.generateRiskSummary()` sendet einen Prompt an Claude Haiku:
 
 > *"You are an ESG risk analyst. Provide a concise 2-3 sentence risk summary for the investment portfolio … Focus on potential greenwashing risks and ESG compliance concerns."*
 
 Die generierte Zusammenfassung wird als `aiRiskSummary` im `AuditReport` gespeichert und ist für den Auditor auf der Detailseite sichtbar. Danach wechselt der Status automatisch zu `PENDING_REVIEW`.
 
-#### 2. Sentiment-Analyse für Evidence
+#### Funktion 2: Sentiment-Analyse für Evidence
 
-Beim Erstellen eines Evidence-Eintrags (`POST /api/evidence`) analysiert Claude Haiku das `contentSnippet` und gibt einen Dezimalwert zwischen `-1.0` (sehr negative ESG-Nachricht) und `+1.0` (sehr positiv) zurück. Dieser Wert (`aiSentimentScore`) wird persistiert und im Frontend als:
+Beim Erstellen eines Evidence-Eintrags (`POST /api/evidence`) analysiert `AiAnalysisService.analyzeSentiment()` das `contentSnippet` und gibt einen Dezimalwert zwischen `-1.0` (sehr negative ESG-Nachricht) und `+1.0` (sehr positiv) zurück. Dieser Wert (`aiSentimentScore`) wird persistiert und im Frontend als:
 - **Risk-Score** (0–10 Skala, invertiert)
 - **Sentiment-Badge** (POSITIVE / NEUTRAL / NEGATIVE)
 - **Farbige Risk-Bar** (grün / gelb / rot)
 
 dargestellt. Dies ermöglicht dem Auditor eine schnelle visuelle Einschätzung der ESG-Nachrichtenlage je Holding.
+
+#### Funktion 3: ESG-Relevanzfilter für News-Artikel
+
+Bevor ein News-Artikel als Evidence gespeichert wird, prüft `AiAnalysisService.analyzeRelevance()` ob der Artikel wirklich ESG-relevant für die spezifische Firma ist. Claude Haiku bewertet auf einer Skala von 0.0 bis 1.0:
+
+- **0.7–1.0:** Artikel behandelt direkt ESG-Risiken, Greenwashing, Governance oder Umweltverstösse dieser Firma
+- **0.3–0.6:** Teilweiser ESG-Bezug oder branchenweite ESG-Themen mit Firmenrelevanz
+- **0.0–0.2:** Nur tangential verwandt, generisches Business-News ohne ESG-Winkel
+
+Artikel mit einem Score unter dem **Schwellenwert 0.35** werden verworfen und nicht als Evidence gespeichert. Dies reduziert Rauschen durch irrelevante Artikel erheblich.
+
+#### Fallback-Verhalten
+
+Ist kein Anthropic API-Key konfiguriert (oder der API-Aufruf schlägt fehl), verhält sich `AiAnalysisService` graceful:
+- `isAvailable()` gibt `false` zurück → kein API-Call
+- `generateRiskSummary()` liefert `"AI analysis unavailable."` — Audit-Workflow wird nicht blockiert
+- `analyzeSentiment()` liefert `0.0` (neutral) — Evidence wird trotzdem gespeichert
+- `analyzeRelevance()` liefert `1.0` (relevant) — kein Artikel wird fälschlicherweise gefiltert
+
+#### KI-Chat-Assistent (`/chat`)
+
+Alle drei Rollen haben Zugriff auf einen KI-gestützten Chat-Assistenten unter `/chat`. `ChatService` verwendet `ChatClient` (Spring AI) mit einem systemweiten ESG-Analyst-Prompt und greift via `EsgChatTools` (@Tool-Annotationen) direkt auf die Service-Layer zu. Verfügbare Tool-Operationen:
+
+| Tool | Beschreibung | Rollen |
+|---|---|---|
+| `getAllPortfolios` | Listet alle sichtbaren Portfolios | alle |
+| `getHoldingsByPortfolioName` | Holdings eines Portfolios per Name | alle |
+| `getEvidenceByHoldingName` | Evidence-Einträge mit Sentiment-Scores | alle |
+| `createPortfolio` | Erstellt ein neues Portfolio | nur `fund-manager` |
+| `createHolding` | Fügt ein Holding zu einem Portfolio hinzu | nur `fund-manager` |
+
+Schreibende Operationen sind durch eine Rollenprüfung in `EsgChatTools` abgesichert (`AccessDeniedException` für Nicht-Fund-Manager). Ist kein API-Key konfiguriert, gibt der Chat `"Chat is currently unavailable."` zurück.
 
 ---
 
@@ -1011,8 +1043,13 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 **Evidence & Risk Analysis** — KI-generierte Evidence-Cards mit Sentiment-Badge und Risk-Score pro Holding
 ![Evidence](doc/screenshots/evidence-page.png)
 
+**Holding-Detail** — Einzelansicht eines Holdings mit SFDR-Ampel, ISIN, Gewichtung, Evidence-Karten (Sentiment-Badge HIGH/MEDIUM/LOW Confidence), Risk-Score und Ingest-News-Button
+![Evidence & Risk Analysis](doc/screenshots/evidence-page.png)
+
 **Evidence erfassen** — Manuelles Erstellen eines Evidence-Eintrags mit KI-Sentiment-Analyse
 ![Evidence erfassen](doc/screenshots/evidence-create.png)
+
+**KI-Chat-Assistent** — Alle Rollen haben Zugang zum Chat unter `/chat`. Der Assistent kann Portfolios und Holdings auflisten, Evidence-Scores abfragen und — für Fund Manager — neue Portfolios und Holdings anlegen. *(Kein Screenshot vorhanden; Feature unter `/chat` nach Login erreichbar.)*
 
 **Account** — Benutzerprofil mit Rolle (fund-manager)
 ![Account Fund Manager](doc/screenshots/account-manager.png)
@@ -1097,15 +1134,19 @@ sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert w
 
 **Evidence Confidence Badge:** Jede Evidence-Karte zeigt ein Konfidenz-Badge (HIGH / MEDIUM / LOW) in Grün/Amber/Rot — berechnet aus Quell-Tier (Premium vs. Other) und Sentiment-Stärke. Sichtbar auf der Holding-Detailseite und im Audit-Report.
 
+**KI-Chat-Assistent:** `ChatService` mit Spring AI `ChatClient` und `EsgChatTools` (@Tool-Annotationen) ermöglicht allen drei Rollen unter `/chat` natürlichsprachliche Abfragen zu Portfolios, Holdings und Evidence. Fund Manager können per Chat neue Portfolios und Holdings anlegen. Schreibrechte sind durch `AccessDeniedException` in `EsgChatTools` abgesichert.
+
 **MCP Server (Anforderung 22):** Spring AI 1.0.0 MCP Server (`spring-ai-starter-mcp-server-webmvc`) exponiert drei ESG-Analyse-Tools via SSE-Endpoint `/sse`. MCP-kompatible Clients (Claude Desktop) können sich verbinden und `generateEsgRiskSummary`, `analyseEsgSentiment` und `fetchEsgNews` direkt aufrufen. Konfiguration: `spring.ai.mcp.server.name=trueyield-esg`, `type=SYNC`.
 
 **Compliance Officer (Anforderung 23):** Dritte RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff. Vier dedizierte Endpoints: `GET /api/compliance/overview` (KPI-Übersicht), `/sfdr` (SFDR Article 8/9 Klassifizierung per Portfolio), `/portfolios` (alle Portfolios), `/reports` (alle Audit-Reports). Alle schreibenden Operationen sind blockiert (403 per `@PreAuthorize`). Frontend-Dashboard unter `/compliance` mit drei Tabs (Overview / Portfolios / Audit Reports). JWT-Claim-Extraktion ist resilient gegenüber Auth0-Namespace-Varianten.
 
 **Code-Qualität:** `DRAFT`-Status existiert nicht im `AuditStatus`-Enum und wurde bereinigt. SonarCloud aktiv auf `main` (non-blocking, `continue-on-error: true`). ReDoS-Risiken in News-Provider-Regex eliminiert. Security-Hardening: Ownership-Checks auf allen schreibenden Endpoints, rollenbasierte Zugriffsprüfung auf Controller-Ebene.
 
-**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService. 421 Testmethoden in 32 Testklassen — parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung.
+**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService. **421 Testmethoden in 32 Testklassen** — parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung. Cypress E2E: 5 Testdateien, 113+ Testfälle.
 
 **Deployment:** CI/CD via GitHub Actions. Frontend und Backend laufen produktiv auf Azure App Service (Details im Deployment-Abschnitt).
+
+**Stand der Implementation:** Alle Kernfunktionen (Portfolio-Verwaltung, Holdings, Evidence-Erfassung, Audit-Workflow, KI-Risikoanalyse, SFDR-Compliance, 3-Rollen-RBAC, Chat-Assistent) sind vollständig umgesetzt, getestet und deployed. Offene Backlog-Items für die Weiterentwicklung: [B-24 Manueller Risk Score Override](#backlog--nächste-schritte), [B-03 Longitudinales Risk Tracking (Timeseries-Chart)](#backlog--nächste-schritte) und [B-16 Realtime-Updates via SSE](#backlog--nächste-schritte).
 
 ---
 
