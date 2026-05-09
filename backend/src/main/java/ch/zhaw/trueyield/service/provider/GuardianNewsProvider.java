@@ -74,9 +74,11 @@ public class GuardianNewsProvider implements NewsProvider {
         String firstWord = cleanName.split("\\s+")[0];
 
         try {
+            // Primary: exact company name + ESG (phrase match)
             List<Map<String, Object>> results = searchGuardian("\"" + cleanName + "\" ESG");
-            if (results.isEmpty() && !firstWord.equals(cleanName)) {
-                results = searchGuardian(firstWord + " ESG sustainability");
+            // Fallback: only if first word is meaningfully different and still company-specific
+            if (results.isEmpty() && !firstWord.equals(cleanName) && firstWord.length() > 3) {
+                results = searchGuardian("\"" + firstWord + "\" AND (ESG OR sustainability OR greenwashing)");
             }
             return results.stream().map(this::mapArticle).toList();
         } catch (Exception e) {

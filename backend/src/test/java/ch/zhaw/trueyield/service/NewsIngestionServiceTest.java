@@ -48,7 +48,7 @@ class NewsIngestionServiceTest {
         lenient().when(aiAnalysisService.isAvailable()).thenReturn(true);
         lenient().when(aiAnalysisService.analyzeSentiment(anyString())).thenReturn(0.5);
         lenient().when(aiAnalysisService.analyzeRelevance(anyString(), anyString())).thenReturn(0.8);
-        lenient().when(evidenceRepository.existsByHoldingIdAndSourceUrl(anyString(), anyString())).thenReturn(false);
+        lenient().when(evidenceRepository.existsBySourceUrl(anyString())).thenReturn(false);
         lenient().when(mockProvider.getProviderName()).thenReturn("MockProvider");
     }
 
@@ -87,7 +87,7 @@ class NewsIngestionServiceTest {
         when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
                 new NewsArticle("Duplicate article", "Content", "https://example.com/dup", LocalDate.now(), "Mock")
         ));
-        when(evidenceRepository.existsByHoldingIdAndSourceUrl(HOLDING_ID, "https://example.com/dup")).thenReturn(true);
+        when(evidenceRepository.existsBySourceUrl("https://example.com/dup")).thenReturn(true);
 
         newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
 
@@ -253,7 +253,7 @@ class NewsIngestionServiceTest {
         when(mockProvider.fetchNewsForHolding(COMPANY)).thenReturn(List.of(
                 new NewsArticle("Already saved", "Content", "https://example.com/existing", LocalDate.now(), "Mock")
         ));
-        when(evidenceRepository.existsByHoldingIdAndSourceUrl(HOLDING_ID, "https://example.com/existing"))
+        when(evidenceRepository.existsBySourceUrl("https://example.com/existing"))
                 .thenReturn(true);
 
         newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);

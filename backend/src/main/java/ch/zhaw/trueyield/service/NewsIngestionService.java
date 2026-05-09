@@ -22,7 +22,7 @@ public class NewsIngestionService {
 
     private static final Logger log = LoggerFactory.getLogger(NewsIngestionService.class);
     static final int MAX_EVIDENCE_PER_HOLDING = 10;
-    private static final double RELEVANCE_THRESHOLD = 0.35;
+    private static final double RELEVANCE_THRESHOLD = 0.45;
 
     @Autowired
     private List<NewsProvider> newsProviders;
@@ -55,13 +55,13 @@ public class NewsIngestionService {
             }
         }
 
-        // 2. URL dedup (in-memory + DB)
+        // 2. URL dedup (in-memory + DB — global across all holdings to avoid same article on multiple holdings)
         Set<String> seenUrls = new HashSet<>();
         List<NewsArticle> candidates = new ArrayList<>();
         for (NewsArticle article : allArticles) {
             String url = article.url();
             if (url == null || url.isBlank() || !seenUrls.add(url)) continue;
-            if (evidenceRepository.existsByHoldingIdAndSourceUrl(holdingId, url)) continue;
+            if (evidenceRepository.existsBySourceUrl(url)) continue;
             candidates.add(article);
         }
         log.info("NewsIngestion: {} unique new candidates after dedup for '{}'", candidates.size(), sanitize(companyName));
