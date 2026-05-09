@@ -11,5 +11,7 @@ public interface EvidenceRepository extends MongoRepository<Evidence, String> {
 
     boolean existsByHoldingIdAndSourceUrl(String holdingId, String sourceUrl);
 
+    boolean existsBySourceUrl(String sourceUrl);
+
     long countByHoldingId(String holdingId);
 }
