@@ -11,8 +11,10 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -29,6 +31,9 @@ public class AlphaVantageNewsProvider implements NewsProvider {
     private static final int MAX_ARTICLES = 5;
     private static final Set<String> ALLOWED_HOSTS = Set.of("www.alphavantage.co");
     private static final DateTimeFormatter AV_DATE = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
+    private static final Map<String, List<String>> TICKER_ALIASES = Map.of(
+            "BEP", List.of("BEPC")
+    );
 
     private final RestClient restClient;
     private final String apiKey;
@@ -87,32 +92,64 @@ public class AlphaVantageNewsProvider implements NewsProvider {
         if (!isConfigured()) return Collections.emptyList();
         if (symbol == null || symbol.isBlank()) return Collections.emptyList();
         try {
+            for (String candidate : candidateSymbols(symbol)) {
+                List<Map<String, Object>> feed = fetchFeed(candidate, true);
+
+                // Fallback: if strict ESG topic filter yields no results, retry ticker-only.
+                if (feed.isEmpty()) {
+                    log.info("AlphaVantageNewsProvider: no topic-filtered feed for '{}', retrying ticker-only", candidate);
+                    feed = fetchFeed(candidate, false);
+                }
+
+                if (!feed.isEmpty()) {
+                    return feed.stream()
+                            .limit(MAX_ARTICLES)
+                            .map(this::mapArticle)
+                            .toList();
+                }
+            }
+
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.warn("AlphaVantageNewsProvider: failed for '{}': {}", symbol, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    private List<String> candidateSymbols(String symbol) {
+        String normalized = symbol.toUpperCase(Locale.ROOT).trim();
+        LinkedHashSet<String> ordered = new LinkedHashSet<>();
+        ordered.add(normalized);
+        List<String> aliases = TICKER_ALIASES.get(normalized);
+        if (aliases != null) {
+            ordered.addAll(aliases);
+        }
+        return List.copyOf(ordered);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> fetchFeed(String symbol, boolean withEsgTopic) {
+        try {
             Map<?, ?> response = restClient.get()
-                    .uri(u -> u.path("/query")
-                            .queryParam("function", "NEWS_SENTIMENT")
-                            .queryParam("tickers", symbol.toUpperCase())
-                            .queryParam("topics", "environment_social_governance")
-                            .queryParam("limit", MAX_ARTICLES)
-                            .queryParam("apikey", apiKey)
-                            .build())
+                    .uri(u -> {
+                        var builder = u.path("/query")
+                                .queryParam("function", "NEWS_SENTIMENT")
+                                .queryParam("tickers", symbol)
+                                .queryParam("limit", MAX_ARTICLES)
+                                .queryParam("apikey", apiKey);
+                        if (withEsgTopic) {
+                            builder.queryParam("topics", "environment_social_governance");
+                        }
+                        return builder.build();
+                    })
                     .retrieve()
                     .body(Map.class);
 
-            if (response == null || !response.containsKey("feed")) {
-                log.warn("AlphaVantageNewsProvider: empty or error response for '{}'", symbol);
-                return Collections.emptyList();
-            }
-
-            @SuppressWarnings("unchecked")
+            if (response == null || !response.containsKey("feed")) return Collections.emptyList();
             List<Map<String, Object>> feed = (List<Map<String, Object>>) response.get("feed");
-            if (feed == null) return Collections.emptyList();
-
-            return feed.stream()
-                    .limit(MAX_ARTICLES)
-                    .map(this::mapArticle)
-                    .toList();
+            return feed != null ? feed : Collections.emptyList();
         } catch (Exception e) {
-            log.warn("AlphaVantageNewsProvider: failed for '{}': {}", symbol, e.getMessage());
+            log.warn("AlphaVantageNewsProvider: request failed for '{}' (withEsgTopic={}): {}", symbol, withEsgTopic, e.getMessage());
             return Collections.emptyList();
         }
     }
