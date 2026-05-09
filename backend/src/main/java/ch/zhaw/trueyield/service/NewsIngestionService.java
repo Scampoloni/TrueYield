@@ -66,13 +66,13 @@ public class NewsIngestionService {
             }
         }
 
-        // 2. URL dedup (in-memory + DB — global across all holdings to avoid same article on multiple holdings)
+        // 2. URL dedup (in-memory + DB — per holding, so multiple holdings can each store the same relevant article)
         Set<String> seenUrls = new HashSet<>();
         List<NewsArticle> candidates = new ArrayList<>();
         for (NewsArticle article : allArticles) {
             String url = article.url();
             if (url == null || url.isBlank() || !seenUrls.add(url)) continue;
-            if (evidenceRepository.existsBySourceUrl(url)) continue;
+            if (evidenceRepository.existsByHoldingIdAndSourceUrl(holdingId, url)) continue;
             candidates.add(article);
         }
         log.info("NewsIngestion: {} unique new candidates after dedup for '{}'", candidates.size(), sanitize(companyName));
