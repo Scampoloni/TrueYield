@@ -95,7 +95,7 @@ public class AuditReportService {
                 }
                 String query = holding.getName() != null ? holding.getName() : holding.getSymbol();
                 // This is async, so it won't block the report creation
-                newsIngestionService.ingestNewsForHolding(holding.getId(), query);
+                newsIngestionService.ingestNewsForHolding(holding.getId(), query, holding.getSymbol());
             }
         } catch (Exception e) {
             log.warn("News evidence fetch failed for portfolio '{}': {}", portfolioId, e.getMessage());

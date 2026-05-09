@@ -40,7 +40,7 @@ public class HoldingService {
         Holding saved = holdingRepository.save(holding);
         String companyName = dto.getName() != null && !dto.getName().isBlank() ? dto.getName() : dto.getSymbol();
         if (newsIngestionService != null && companyName != null) {
-            newsIngestionService.ingestNewsForHolding(saved.getId(), companyName);
+            newsIngestionService.ingestNewsForHolding(saved.getId(), companyName, saved.getSymbol());
         }
         return saved;
     }

@@ -37,21 +37,32 @@ public class NewsIngestionService {
 
     @Async
     public void ingestNewsForHolding(String holdingId, String companyName) {
-        log.info("NewsIngestion: starting multi-provider news fetch for '{}'", sanitize(companyName));
+        ingestNewsForHolding(holdingId, companyName, null);
+    }
+
+    @Async
+    public void ingestNewsForHolding(String holdingId, String companyName, String symbol) {
+        log.info("NewsIngestion: starting multi-provider news fetch for '{}' (symbol: {})",
+                sanitize(companyName), sanitize(symbol != null ? symbol : "none"));
 
         // 1. Fetch from all configured providers
         List<NewsArticle> allArticles = new ArrayList<>();
         for (NewsProvider provider : newsProviders) {
             if (provider.isConfigured()) {
                 try {
-                    List<NewsArticle> articles = provider.fetchNewsForHolding(companyName);
+                    List<NewsArticle> articles = (symbol != null && !symbol.isBlank())
+                            ? provider.fetchNewsForSymbol(symbol, companyName)
+                            : provider.fetchNewsForHolding(companyName);
                     allArticles.addAll(articles);
-                    log.info("NewsIngestion: {} returned {} articles for '{}'", provider.getProviderName(), articles.size(), sanitize(companyName));
+                    log.info("NewsIngestion: {} returned {} articles for '{}'",
+                            provider.getProviderName(), articles.size(), sanitize(companyName));
                 } catch (Exception e) {
-                    log.error("NewsIngestion: provider {} failed for '{}': {}", provider.getProviderName(), sanitize(companyName), e.getMessage(), e);
+                    log.error("NewsIngestion: provider {} failed for '{}': {}",
+                            provider.getProviderName(), sanitize(companyName), e.getMessage(), e);
                 }
             } else {
-                log.warn("NewsIngestion: provider {} is NOT configured (missing API key)", provider.getClass().getSimpleName());
+                log.warn("NewsIngestion: provider {} is NOT configured (missing API key)",
+                        provider.getClass().getSimpleName());
             }
         }
 

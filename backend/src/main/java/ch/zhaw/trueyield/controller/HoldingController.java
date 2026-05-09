@@ -81,7 +81,7 @@ public class HoldingController {
         Holding holding = accessControlService.requireHoldingAccess(id);
         String companyName = holding.getName() != null && !holding.getName().isBlank()
                 ? holding.getName() : holding.getSymbol();
-        newsIngestionService.ingestNewsForHolding(holding.getId(), companyName);
+        newsIngestionService.ingestNewsForHolding(holding.getId(), companyName, holding.getSymbol());
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 }
