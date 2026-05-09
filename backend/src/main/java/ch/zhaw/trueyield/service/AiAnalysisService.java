@@ -74,26 +74,21 @@ public class AiAnalysisService {
         }
         String prompt = """
                 Rate how relevant this news article is to the ESG (Environmental, Social, Governance) \
-                risk profile of the specific company "%s".
+                risk profile of the company "%s".
 
-                IMPORTANT: The company must be explicitly named or clearly identifiable in the article. \
-                Generic ESG market trends, investor sentiment studies, or industry-wide reports that do \
-                not mention this company score 0.0–0.2 regardless of topic.
-
-                Score 0.7–1.0: the article explicitly names "%s" AND covers its environmental impact, \
-                labour practices, governance issues, greenwashing allegations, ESG ratings, sustainability \
+                Score 0.7–1.0: the article specifically covers this company's environmental impact, \
+                labour practices, governance issues, greenwashing, ESG ratings, sustainability \
                 strategy, regulatory ESG compliance, or supply-chain ethics.
-                Score 0.3–0.6: the article explicitly names "%s" with a partial ESG angle, or covers a \
-                company-specific event (earnings, product launch, legal case) with clear ESG implications \
-                for this specific company.
-                Score 0.0–0.2: the company is not mentioned, article is about other companies, generic \
-                market commentary, broad ESG investor trends, or unrelated business news.
+                Score 0.3–0.6: the article covers this company with a partial ESG angle, or covers \
+                sector-wide ESG issues that directly affect this company.
+                Score 0.0–0.2: only tangentially related, about a different company, generic business \
+                news with no ESG angle, or an unrelated topic entirely.
 
                 Respond ONLY with a single decimal number between 0.0 and 1.0. No explanation.
 
                 Company: "%s"
                 Article: "%s"
-                """.formatted(companyName, companyName, companyName, companyName, articleText);
+                """.formatted(companyName, companyName, articleText);
         try {
             String text = chatModel.call(new Prompt(prompt))
                     .getResult().getOutput().getText();
