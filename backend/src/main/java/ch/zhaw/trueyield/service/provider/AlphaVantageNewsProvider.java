@@ -85,6 +85,7 @@ public class AlphaVantageNewsProvider implements NewsProvider {
     @Override
     public List<NewsArticle> fetchNewsForSymbol(String symbol, String companyName) {
         if (!isConfigured()) return Collections.emptyList();
+        if (symbol == null || symbol.isBlank()) return Collections.emptyList();
         try {
             Map<?, ?> response = restClient.get()
                     .uri(u -> u.path("/query")
@@ -128,8 +129,12 @@ public class AlphaVantageNewsProvider implements NewsProvider {
             try {
                 publishedAt = LocalDate.parse(timePublished, AV_DATE);
             } catch (Exception ignored) {
-                publishedAt = LocalDate.parse(timePublished.substring(0, 8),
-                        DateTimeFormatter.BASIC_ISO_DATE);
+                try {
+                    publishedAt = LocalDate.parse(timePublished.substring(0, 8),
+                            DateTimeFormatter.BASIC_ISO_DATE);
+                } catch (Exception alsoIgnored) {
+                    publishedAt = LocalDate.now();
+                }
             }
         }
 
