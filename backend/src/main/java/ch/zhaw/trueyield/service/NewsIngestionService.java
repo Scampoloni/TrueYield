@@ -152,8 +152,7 @@ public class NewsIngestionService {
         return sourceName.contains("reuters") ||
                sourceName.contains("bloomberg") ||
                sourceName.contains("financial times") ||
-               sourceName.contains("wall street journal") ||
-               sourceName.contains("the guardian");
+               sourceName.contains("wall street journal");
     }
 
     private String sanitize(String value) {
