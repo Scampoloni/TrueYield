@@ -306,7 +306,7 @@ class AuditReportServiceTest {
 
         auditReportService.createAuditReport(createDTO);
 
-        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-001", "Apple Inc.");
+        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-001", "Apple Inc.", "AAPL");
     }
 
     @Test
@@ -343,7 +343,7 @@ class AuditReportServiceTest {
 
         auditReportService.createAuditReport(createDTO);
 
-        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-001", "AAPL");
+        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-001", "AAPL", "AAPL");
     }
 
     @Test

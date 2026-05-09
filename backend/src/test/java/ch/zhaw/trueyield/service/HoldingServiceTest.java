@@ -143,7 +143,7 @@ class HoldingServiceTest {
 
         holdingService.createHolding(createDTO);
 
-        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-001", "Apple Inc.");
+        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-001", "Apple Inc.", "AAPL");
     }
 
     @Test
@@ -159,7 +159,7 @@ class HoldingServiceTest {
 
         holdingService.createHolding(dtoNoName);
 
-        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-002", "MSFT");
+        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-002", "MSFT", "MSFT");
     }
 
     @Test
@@ -175,7 +175,7 @@ class HoldingServiceTest {
 
         holdingService.createHolding(dtoBlankName);
 
-        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-003", "GOOGL");
+        verify(newsIngestionService, times(1)).ingestNewsForHolding("holding-003", "GOOGL", "GOOGL");
     }
 
     @Test
