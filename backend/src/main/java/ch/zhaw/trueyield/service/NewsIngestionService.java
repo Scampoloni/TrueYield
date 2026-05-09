@@ -22,7 +22,7 @@ public class NewsIngestionService {
 
     private static final Logger log = LoggerFactory.getLogger(NewsIngestionService.class);
     static final int MAX_EVIDENCE_PER_HOLDING = 10;
-    private static final double RELEVANCE_THRESHOLD = 0.45;
+    private static final double RELEVANCE_THRESHOLD = 0.35;
 
     @Autowired
     private List<NewsProvider> newsProviders;
