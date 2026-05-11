@@ -171,7 +171,7 @@ public class AuditReportService {
 
     public List<AuditReportAggregationDTO> getAuditReportDashboard(String portfolioId) {
         if (!portfolioService.portfolioExists(portfolioId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "Portfolio not found: " + portfolioId);
         }
         accessControlService.requirePortfolioAccess(portfolioId);

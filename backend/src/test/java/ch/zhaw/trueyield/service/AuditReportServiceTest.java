@@ -238,13 +238,13 @@ class AuditReportServiceTest {
     // ── getAuditReportDashboard ──────────────────────────────────────────────
 
     @Test
-    void getAuditReportDashboard_throwsBadRequest_whenPortfolioNotFound() {
+    void getAuditReportDashboard_throwsNotFound_whenPortfolioNotFound() {
         when(portfolioService.portfolioExists("unknown-portfolio")).thenReturn(false);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.getAuditReportDashboard("unknown-portfolio"));
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         verify(auditReportRepository, never()).aggregateByPortfolioId(any());
     }
 
