@@ -19,9 +19,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -54,8 +57,7 @@ class PortfolioControllerTest {
     @BeforeEach
     void setUp() {
         when(userService.getCurrentUserId()).thenReturn("user-123");
-        when(auditReportRepository.findAll()).thenReturn(List.of());
-        when(auditReportRepository.findByPortfolioId(anyString())).thenReturn(List.of());
+        when(portfolioService.getLatestAuditStatusByPortfolioIds(anyList())).thenReturn(new HashMap<>());
 
         samplePortfolio = new Portfolio("ESG Global Fund", "user-123");
         samplePortfolio.setDescription("A diversified ESG portfolio");
