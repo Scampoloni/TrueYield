@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -69,8 +70,8 @@ class AuditReportServiceTest {
         lenient().when(dto.getAuditReportId()).thenReturn("report-001");
         lenient().when(aiAnalysisService.generateRiskSummary(anyList()))
             .thenReturn("Mock AI risk summary.");
-        lenient().when(aiAnalysisService.generateRiskSummary(anyList()))
-            .thenReturn("Mock AI risk summary.");
+        lenient().when(aiAnalysisService.generatePortfolioRiskScore(anyList(), anyList()))
+            .thenReturn(new AiAnalysisService.PortfolioRiskResult(5, "Mock risk rationale."));
     }
 
     // ── getAuditReportById ───────────────────────────────────────────────────
@@ -377,6 +378,65 @@ class AuditReportServiceTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         verify(auditReportRepository, never()).save(any());
+    }
+
+    @Test
+    void createAuditReport_collectsSnippets_whenEvidenceAvailable() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+
+        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "SHEL");
+        holding.setId("holding-shel");
+        holding.setName("Shell PLC");
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
+
+        ch.zhaw.trueyield.model.Evidence ev = new ch.zhaw.trueyield.model.Evidence("holding-shel");
+        ev.setContentSnippet("Shell faces scrutiny over emissions.");
+        when(evidenceService.getEvidenceByHoldingId("holding-shel")).thenReturn(java.util.List.of(ev));
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+        verify(evidenceService, times(1)).getEvidenceByHoldingId("holding-shel");
+    }
+
+    @Test
+    void createAuditReport_continuesGracefully_whenGetEvidenceByHoldingIdThrows() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+
+        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "SHEL");
+        holding.setId("holding-shel");
+        holding.setName("Shell PLC");
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(java.util.List.of(holding));
+        when(evidenceService.getEvidenceByHoldingId("holding-shel"))
+                .thenThrow(new RuntimeException("DB error"));
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+    }
+
+    @Test
+    void createAuditReport_continuesGracefully_whenRiskScoreGenerationThrows() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+        when(aiAnalysisService.generatePortfolioRiskScore(anyList(), anyList()))
+                .thenThrow(new RuntimeException("AI timeout"));
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+        verify(auditReportRepository, times(2)).save(any(AuditReport.class));
     }
 
 
