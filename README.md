@@ -710,9 +710,9 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | ESG Auditor |
 | **Vorbedingung** | ESG Auditor ist eingeloggt (UC-01). AuditReport hat Status `PENDING_REVIEW`. |
-| **Normalablauf** | 1. ESG Auditor öffnet einen AuditReport aus der Queue (UC-04). 2. ESG Auditor prüft die KI-Zusammenfassung, Risiko-Scores und Evidence-Einträge. 3. ESG Auditor übernimmt den Report: `PUT /api/service/auditreport/assign` → Status wechselt auf `UNDER_REVIEW`. 4. ESG Auditor erfasst optional eine Begründung (AuditComment). 5a. ESG Auditor genehmigt den Report: `PUT /api/service/auditreport/complete` → Status wechselt auf `APPROVED`. 5b. ESG Auditor lehnt den Report ab: `PUT /api/service/auditreport/reject` → Status wechselt auf `REJECTED`. |
-| **Ausnahmen** | Report nicht mehr im Status `PENDING_REVIEW` → 400 Bad Request. Falscher Auditor versucht abzuschliessen → 400 (auditorId mismatch). |
-| **Nachbedingung** | AuditReport hat finalen Status (`APPROVED` oder `REJECTED`). Optionaler AuditComment ist gespeichert und für den Fund Manager einsehbar. |
+| **Normalablauf** | 1. ESG Auditor öffnet einen AuditReport aus der Queue (UC-04). 2. ESG Auditor prüft die KI-Zusammenfassung, Risiko-Scores und Evidence-Einträge. 3. ESG Auditor übernimmt den Report: `PUT /api/service/auditreport/assign` → Status wechselt auf `UNDER_REVIEW`. 4. ESG Auditor erfasst mindestens eine Begründung (AuditComment) — die Approve/Reject-Buttons sind erst aktiv, wenn mindestens ein Kommentar vorhanden ist. 5a. ESG Auditor genehmigt den Report: `PUT /api/service/auditreport/complete` → Status wechselt auf `APPROVED`. 5b. ESG Auditor lehnt den Report ab: `PUT /api/service/auditreport/reject` → Status wechselt auf `REJECTED`. |
+| **Ausnahmen** | Report nicht mehr im Status `PENDING_REVIEW` → 400 Bad Request. Falscher Auditor versucht abzuschliessen → 400 (auditorId mismatch). Kein Kommentar erfasst → Approve/Reject-Buttons deaktiviert. |
+| **Nachbedingung** | AuditReport hat finalen Status (`APPROVED` oder `REJECTED`). AuditComment ist gespeichert und für den Fund Manager einsehbar. |
 
 ---
 
@@ -722,7 +722,7 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | System (KI/API) |
 | **Vorbedingung** | ESG Audit wurde angefordert (UC-03). Holdings mit Symbolen/ISINs sind vorhanden. |
-| **Normalablauf** | 1. System liest die Holdings des Portfolios. 2. System ruft pro Holding aktuelle ESG-relevante News über vier parallele Provider ab: The Guardian API, NewsAPI.org, Newsdata.io und Alpha Vantage. 3. System dedupliziert Artikel URL-basiert cross-provider. 4. KI-Relevanzfilter (`analyzeRelevance`, Schwellenwert 0.35) verwirft nicht ESG-spezifische Artikel. 5. System übergibt die gefilterten Artikel an die KI (UC-08). |
+| **Normalablauf** | 1. System liest die Holdings des Portfolios. 2. System ruft pro Holding aktuelle ESG-relevante News über vier sequentielle Provider ab (asynchron zum HTTP-Thread): The Guardian API, NewsAPI.org, Newsdata.io und AlphaVantage (symbol-basiert). 3. System dedupliziert Artikel URL-basiert pro Holding. 4. KI-Relevanzfilter (`analyzeRelevance`, Schwellenwert 0.35) verwirft nicht ESG-spezifische Artikel. 5. System übergibt die gefilterten Artikel an die KI (UC-08). |
 | **Ausnahmen** | Provider nicht erreichbar → Fallback auf verfügbare Provider; alle Provider ausgefallen → Evidence-Liste bleibt leer. Keine ESG-relevanten Artikel gefunden → Evidence-Liste bleibt leer. |
 | **Nachbedingung** | Rohdaten der News liegen vor und sind zur KI-Analyse bereit. |
 
@@ -802,6 +802,7 @@ Jedem Testbenutzer genau eine Rolle zuweisen (`fund-manager`, `auditor` oder `co
 **Backend** (`backend/src/main/resources/application.properties` oder als Env-Var im Deployment):
 
 ```properties
+spring.data.mongodb.uri=YOUR_MONGODB_URI
 spring.security.oauth2.resourceserver.jwt.issuer-uri=https://YOUR_AUTH0_DOMAIN/
 spring.ai.anthropic.api-key=YOUR_ANTHROPIC_API_KEY
 news.api.guardian.key=YOUR_GUARDIAN_API_KEY
@@ -856,6 +857,8 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 | POST | `/api/holding` | Holding hinzufügen | 201 Created, 400 Bad Request |
 | GET | `/api/holding?portfolioId={id}` | Holdings eines Portfolios abrufen | 200 OK |
 | DELETE | `/api/holding/{id}` | Holding löschen | 204 No Content, 403 Forbidden, 404 Not Found |
+| GET | `/api/holding/news-provider-status` | Konfigurationsstatus aller News-Provider | 200 OK |
+| POST | `/api/holding/{id}/ingest-news` | News-Ingestion für eine Holding manuell auslösen | 202 Accepted |
 
 #### Evidence (`/api/evidence`)
 
@@ -876,6 +879,7 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 | PUT | `/api/service/auditreport/complete` | AuditReport abschliessen (UNDER_REVIEW → APPROVED) | 200 OK, 400 Bad Request |
 | PUT | `/api/service/auditreport/reject` | AuditReport ablehnen (UNDER_REVIEW → REJECTED) | 200 OK, 400 Bad Request |
 | GET | `/api/service/auditreport/dashboard?portfolioId={id}` | Dashboard-Aggregation per Portfolio | 200 OK |
+| GET | `/api/service/auditreport/auditor-queue` | Offene und zugewiesene Reports für eingeloggten Auditor | 200 OK |
 
 #### AuditComment (`/api/service/auditcomment`)
 
