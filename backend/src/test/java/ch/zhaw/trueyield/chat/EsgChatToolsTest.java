@@ -3,10 +3,12 @@ package ch.zhaw.trueyield.chat;
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
 import ch.zhaw.trueyield.security.AccessControlService;
+import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.EvidenceService;
 import ch.zhaw.trueyield.service.HoldingService;
 import ch.zhaw.trueyield.service.PortfolioService;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -24,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,8 +45,16 @@ class EsgChatToolsTest {
     @Mock
     private AccessControlService accessControlService;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
     private EsgChatTools esgChatTools;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(userService.getCurrentUserId()).thenReturn("test-user");
+    }
 
     @AfterEach
     void tearDown() {
@@ -120,6 +131,7 @@ class EsgChatToolsTest {
     @Test
     void getAllPortfolios_asFundManager_returnsOnlyOwnPortfolios() {
         setAuthentication("fm-user", "ROLE_fund-manager");
+        when(userService.getCurrentUserId()).thenReturn("fm-user");
 
         Portfolio own = new Portfolio("My Fund", "fm-user");
         own.setId("p-own");
