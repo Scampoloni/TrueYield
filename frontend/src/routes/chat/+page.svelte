@@ -6,7 +6,7 @@
     text: string;
   };
 
-  const roles = $derived(page.data.roles ?? []);
+  const roles = $derived(page.data.user?.user_roles ?? []);
 
   function buildWelcomeMessage(): string {
     if (roles.includes('fund-manager')) {
