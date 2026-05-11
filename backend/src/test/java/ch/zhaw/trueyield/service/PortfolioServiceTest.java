@@ -1,8 +1,11 @@
 package ch.zhaw.trueyield.service;
 
+import ch.zhaw.trueyield.model.AuditReport;
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioUpdateDTO;
+import ch.zhaw.trueyield.model.enums.AuditStatus;
+import ch.zhaw.trueyield.repository.AuditReportRepository;
 import ch.zhaw.trueyield.repository.PortfolioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,6 +33,9 @@ class PortfolioServiceTest {
 
     @Mock
     private PortfolioRepository portfolioRepository;
+
+    @Mock
+    private AuditReportRepository auditReportRepository;
 
     @InjectMocks
     private PortfolioService portfolioService;
@@ -243,5 +250,40 @@ class PortfolioServiceTest {
         when(portfolioRepository.existsById("nonexistent")).thenReturn(false);
 
         assertFalse(portfolioService.portfolioExists("nonexistent"));
+    }
+
+    // ── getLatestAuditStatusByPortfolioIds ───────────────────────────────────
+
+    @Test
+    void getLatestAuditStatusByPortfolioIds_returnsStatusMap_forMatchingIds() {
+        AuditReport report = mock(AuditReport.class);
+        when(report.getPortfolioId()).thenReturn("portfolio-1");
+        when(report.getAuditStatus()).thenReturn(AuditStatus.APPROVED);
+        when(auditReportRepository.findAll()).thenReturn(List.of(report));
+
+        Map<String, String> result = portfolioService.getLatestAuditStatusByPortfolioIds(List.of("portfolio-1"));
+
+        assertEquals(1, result.size());
+        assertEquals("APPROVED", result.get("portfolio-1"));
+    }
+
+    @Test
+    void getLatestAuditStatusByPortfolioIds_filtersOutUnrelatedPortfolios() {
+        AuditReport report = mock(AuditReport.class);
+        when(report.getPortfolioId()).thenReturn("other-portfolio");
+        when(auditReportRepository.findAll()).thenReturn(List.of(report));
+
+        Map<String, String> result = portfolioService.getLatestAuditStatusByPortfolioIds(List.of("portfolio-1"));
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getLatestAuditStatusByPortfolioIds_returnsEmpty_whenNoReportsExist() {
+        when(auditReportRepository.findAll()).thenReturn(List.of());
+
+        Map<String, String> result = portfolioService.getLatestAuditStatusByPortfolioIds(List.of("portfolio-1"));
+
+        assertTrue(result.isEmpty());
     }
 }
