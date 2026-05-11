@@ -92,16 +92,39 @@ class NewsdataIoProviderTest {
     }
 
     @Test
-    void fetchNews_limitsToFiveArticles() {
+    void fetchNews_limitsToTenArticles() {
         List<Map<String, Object>> articles = new java.util.ArrayList<>();
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 15; i++) {
             articles.add(Map.of("title", "Article " + i, "link", "https://newsdata.io/" + i, "description", "desc"));
         }
         doReturn(Map.of("results", articles)).when(responseSpec).body(Map.class);
 
         List<NewsArticle> result = provider.fetchNewsForHolding("Siemens Corp.");
 
-        assertEquals(5, result.size());
+        assertEquals(10, result.size());
+    }
+
+    @Test
+    void fetchNewsForSymbol_returnsArticles_whenApiResponds() {
+        Map<String, Object> article = Map.of(
+                "title", "BP ESG by Symbol",
+                "link", "https://newsdata.io/bp-symbol",
+                "description", "BP symbol-based ESG article.",
+                "source_id", "reuters");
+        doReturn(Map.of("results", List.of(article))).when(responseSpec).body(Map.class);
+
+        List<NewsArticle> result = provider.fetchNewsForSymbol("BP", "BP PLC");
+
+        assertEquals(1, result.size());
+        assertEquals("BP ESG by Symbol", result.get(0).title());
+        assertEquals("Reuters", result.get(0).sourceName());
+    }
+
+    @Test
+    void fetchNewsForSymbol_returnsEmpty_whenApiThrows() {
+        doThrow(new RuntimeException("timeout")).when(responseSpec).body(Map.class);
+
+        assertTrue(provider.fetchNewsForSymbol("BP", "BP PLC").isEmpty());
     }
 
     @Test
