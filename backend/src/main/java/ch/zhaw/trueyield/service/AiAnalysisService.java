@@ -9,9 +9,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AiAnalysisService {
+
+    public record PortfolioRiskResult(int score, String rationale) {}
 
     private static final Logger log = LoggerFactory.getLogger(AiAnalysisService.class);
 
@@ -65,6 +68,71 @@ public class AiAnalysisService {
         } catch (Exception e) {
             log.warn("AiAnalysisService: analyzeSentiment failed: {}", e.getMessage());
             return 0.0;
+        }
+    }
+
+    public boolean isPremiumSource(String sourceName) {
+        if (sourceName == null || sourceName.isBlank()) return false;
+        if (!isAvailable()) return false;
+        String prompt = """
+                Is "%s" a premium, high-quality financial or general news source with strong editorial
+                standards (e.g. Reuters, Bloomberg, Financial Times, Wall Street Journal, The Guardian,
+                AP, AFP, BBC, Le Monde, Der Spiegel, NZZ)?
+                Respond ONLY with "yes" or "no".
+                """.formatted(sourceName);
+        try {
+            String answer = chatModel.call(new Prompt(prompt))
+                    .getResult().getOutput().getText();
+            return answer != null && answer.trim().toLowerCase().startsWith("yes");
+        } catch (Exception e) {
+            log.warn("AiAnalysisService: isPremiumSource check failed for '{}': {}", sourceName, e.getMessage());
+            return false;
+        }
+    }
+
+    public PortfolioRiskResult generatePortfolioRiskScore(List<String> holdingNames, List<String> evidenceSnippets) {
+        if (!isAvailable()) {
+            return new PortfolioRiskResult(5, "AI analysis unavailable.");
+        }
+        String holdings = holdingNames.isEmpty() ? "no holdings listed" : String.join(", ", holdingNames);
+        String evidence = evidenceSnippets.isEmpty()
+                ? "No news evidence available."
+                : evidenceSnippets.stream().map(s -> "- " + s).collect(Collectors.joining("\n"));
+        log.info("AiAnalysisService: generating portfolio risk score for holdings: [{}], {} evidence snippets",
+                holdings, evidenceSnippets.size());
+        String prompt = """
+                You are an ESG risk analyst. Assess the overall ESG risk of an investment portfolio.
+
+                Holdings in this portfolio: %s
+
+                Recent ESG news evidence collected for these holdings:
+                %s
+
+                Using BOTH your training knowledge about these companies AND the news evidence above, \
+                assign an overall portfolio ESG risk score.
+
+                Scoring guide:
+                - Score 8–10: Severe ESG violations, clear greenwashing, fossil fuel industries without \
+                credible transition plan
+                - Score 5–7: Mixed ESG profile, moderate risks, some controversies
+                - Score 1–4: Sustainable companies, strong ESG compliance, renewable energy, low controversy
+                - Score 0: Only if all companies are explicitly ESG-certified with no negative signals
+
+                Respond in EXACTLY this format:
+                Line 1: a single integer from 0 to 10 (nothing else on this line)
+                Line 2: one or two sentences explaining the score in English
+                """.formatted(holdings, evidence);
+        try {
+            String response = chatModel.call(new Prompt(prompt))
+                    .getResult().getOutput().getText().trim();
+            String[] lines = response.split("\n", 2);
+            int score = Math.max(0, Math.min(10, Integer.parseInt(lines[0].trim())));
+            String rationale = lines.length > 1 && !lines[1].isBlank() ? lines[1].trim() : "No rationale provided.";
+            log.info("AiAnalysisService: portfolio risk score={}, rationale='{}'", score, rationale);
+            return new PortfolioRiskResult(score, rationale);
+        } catch (Exception e) {
+            log.warn("AiAnalysisService: generatePortfolioRiskScore failed: {}", e.getMessage());
+            return new PortfolioRiskResult(5, "AI analysis unavailable.");
         }
     }
 

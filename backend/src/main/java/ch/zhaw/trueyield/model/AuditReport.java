@@ -31,6 +31,10 @@ public class AuditReport {
 
     private String aiRiskSummary;
 
+    private Integer aiRiskScore;
+
+    private String aiRiskRationale;
+
     private String auditorId;
 
     private LocalDateTime createdAt;

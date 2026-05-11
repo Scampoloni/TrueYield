@@ -56,15 +56,26 @@ public class NewsdataIoProvider implements NewsProvider {
     @Override
     public List<NewsArticle> fetchNewsForHolding(String companyName) {
         if (!isConfigured()) return Collections.emptyList();
+        String cleanName = COMPANY_SUFFIX.matcher(companyName).replaceAll("").trim();
+        String query = cleanName + " AND (ESG OR sustainability OR greenwashing OR climate OR emissions)";
+        return fetchNews(query, companyName);
+    }
 
-        String cleanName = COMPANY_SUFFIX.matcher(companyName).replaceAll("")
-                .trim();
+    @Override
+    public List<NewsArticle> fetchNewsForSymbol(String symbol, String companyName) {
+        if (!isConfigured()) return Collections.emptyList();
+        String cleanName = COMPANY_SUFFIX.matcher(companyName).replaceAll("").trim();
+        String query = "(" + symbol + " OR " + cleanName + ") AND (ESG OR sustainability OR greenwashing OR climate)";
+        return fetchNews(query, companyName);
+    }
 
+    private List<NewsArticle> fetchNews(String query, String companyName) {
         try {
+            @SuppressWarnings("unchecked")
             Map<String, Object> response = restClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/news")
-                            .queryParam("q", "\"" + cleanName + "\" AND (ESG OR sustainability OR greenwashing)")
+                            .queryParam("q", query)
                             .queryParam("category", "business")
                             .queryParam("language", "en")
                             .queryParam("apikey", apiKey)
@@ -73,11 +84,11 @@ public class NewsdataIoProvider implements NewsProvider {
                     .body(Map.class);
 
             if (response == null || !response.containsKey("results")) return Collections.emptyList();
-            
+
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> results = (List<Map<String, Object>>) response.get("results");
             if (results == null) return Collections.emptyList();
-            
+
             return results.stream().limit(MAX_ARTICLES).map(this::mapArticle).toList();
         } catch (Exception e) {
             log.warn("NewsdataIoProvider: failed to fetch news for '{}': {}", companyName, e.getMessage());
