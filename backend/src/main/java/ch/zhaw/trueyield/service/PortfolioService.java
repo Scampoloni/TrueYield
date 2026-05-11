@@ -1,11 +1,15 @@
 package ch.zhaw.trueyield.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import ch.zhaw.trueyield.model.AuditReport;
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioUpdateDTO;
+import ch.zhaw.trueyield.repository.AuditReportRepository;
 import ch.zhaw.trueyield.repository.PortfolioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,6 +21,9 @@ public class PortfolioService {
 
     @Autowired
     private PortfolioRepository portfolioRepository;
+
+    @Autowired
+    private AuditReportRepository auditReportRepository;
 
     // CREATE
     public Portfolio createPortfolio(PortfolioCreateDTO dto, String fundManagerId) {
@@ -76,5 +83,16 @@ public class PortfolioService {
     // FK EXISTENCE CHECK
     public boolean portfolioExists(String id) {
         return portfolioRepository.existsById(id);
+    }
+
+    // AUDIT STATUS MAP (delegiert von Controller, vermeidet Layer-Verletzung)
+    public Map<String, String> getLatestAuditStatusByPortfolioIds(List<String> portfolioIds) {
+        return auditReportRepository.findAll().stream()
+                .filter(r -> portfolioIds.contains(r.getPortfolioId()))
+                .collect(Collectors.toMap(
+                        AuditReport::getPortfolioId,
+                        r -> r.getAuditStatus().name(),
+                        (existing, replacement) -> existing
+                ));
     }
 }
