@@ -118,4 +118,27 @@ class NewsApiOrgProviderTest {
 
         verify(responseSpec, atLeastOnce()).body(Map.class);
     }
+
+    @Test
+    void fetchNewsForSymbol_returnsArticles_whenApiResponds() {
+        Map<String, Object> article = Map.of(
+                "title", "Tesla Emissions Symbol",
+                "url", "https://newsapi.org/tesla-symbol",
+                "description", "Tesla emissions news via symbol.",
+                "source", Map.of("name", "Reuters"));
+        doReturn(Map.of("articles", List.of(article))).when(responseSpec).body(Map.class);
+
+        List<NewsArticle> result = provider.fetchNewsForSymbol("TSLA", "Tesla Inc.");
+
+        assertEquals(1, result.size());
+        assertEquals("Tesla Emissions Symbol", result.get(0).title());
+        assertEquals("Reuters", result.get(0).sourceName());
+    }
+
+    @Test
+    void fetchNewsForSymbol_returnsEmpty_whenApiThrows() {
+        doThrow(new RuntimeException("timeout")).when(responseSpec).body(Map.class);
+
+        assertTrue(provider.fetchNewsForSymbol("TSLA", "Tesla Inc.").isEmpty());
+    }
 }
