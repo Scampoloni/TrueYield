@@ -87,7 +87,7 @@ public class PortfolioService {
 
     // AUDIT STATUS MAP (delegiert von Controller, vermeidet Layer-Verletzung)
     public Map<String, String> getLatestAuditStatusByPortfolioIds(List<String> portfolioIds) {
-        return auditReportRepository.findAll().stream()
+        return auditReportRepository.findAllByOrderByCreatedAtDesc().stream()
                 .filter(r -> portfolioIds.contains(r.getPortfolioId()))
                 .collect(Collectors.toMap(
                         AuditReport::getPortfolioId,

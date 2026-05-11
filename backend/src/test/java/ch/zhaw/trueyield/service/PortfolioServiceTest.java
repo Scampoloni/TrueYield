@@ -259,7 +259,7 @@ class PortfolioServiceTest {
         AuditReport report = mock(AuditReport.class);
         when(report.getPortfolioId()).thenReturn("portfolio-1");
         when(report.getAuditStatus()).thenReturn(AuditStatus.APPROVED);
-        when(auditReportRepository.findAll()).thenReturn(List.of(report));
+        when(auditReportRepository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(report));
 
         Map<String, String> result = portfolioService.getLatestAuditStatusByPortfolioIds(List.of("portfolio-1"));
 
@@ -271,7 +271,7 @@ class PortfolioServiceTest {
     void getLatestAuditStatusByPortfolioIds_filtersOutUnrelatedPortfolios() {
         AuditReport report = mock(AuditReport.class);
         when(report.getPortfolioId()).thenReturn("other-portfolio");
-        when(auditReportRepository.findAll()).thenReturn(List.of(report));
+        when(auditReportRepository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(report));
 
         Map<String, String> result = portfolioService.getLatestAuditStatusByPortfolioIds(List.of("portfolio-1"));
 
@@ -280,7 +280,7 @@ class PortfolioServiceTest {
 
     @Test
     void getLatestAuditStatusByPortfolioIds_returnsEmpty_whenNoReportsExist() {
-        when(auditReportRepository.findAll()).thenReturn(List.of());
+        when(auditReportRepository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of());
 
         Map<String, String> result = portfolioService.getLatestAuditStatusByPortfolioIds(List.of("portfolio-1"));
 
