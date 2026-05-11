@@ -425,7 +425,7 @@ Wenn ein Fonds später als "Greenwashing" entlarvt wird, muss die Bank beweisen 
 - Moat: Regulierung ist Barrier-to-Entry für reine KI-Lösungen
 
 **3. Kombinierter Tech-Stack ist schwer zu replizieren**
-- Multi-Provider-News-Integration (Guardian, NewsAPI.org, Newsdata.io) + Spring AI + Audit-Workflow + RBAC + SFDR-Scoring
+- Multi-Provider-News-Integration (Guardian, NewsAPI.org, Newsdata.io, Alpha Vantage) + Spring AI + Audit-Workflow + RBAC + SFDR-Scoring
 - Einzelne Komponenten sind verfügbar, aber die Integration ist Custom-Built
 - Konkurrent müsste 12-18 Monate investieren um ähnliches System zu bauen
 - Moat: First-Mover-Advantage in spezifischem Nischen-Workflow
@@ -662,7 +662,7 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | Fund Manager |
 | **Vorbedingung** | Fund Manager ist eingeloggt (UC-01). |
-| **Normalablauf** | 1. Fund Manager navigiert zur Portfolio-Übersichtsseite. 2. System zeigt alle Portfolios des eingeloggten Fund Managers. 3. Fund Manager erstellt ein neues Portfolio (Name, Beschreibung, ESG-Zielartikel). 4. System speichert das Portfolio mit der `fundManagerId` des Benutzers. 5. Fund Manager öffnet ein Portfolio und fügt Holdings hinzu (Symbol, ISIN, Name, Gewichtung). 6. Fund Manager kann bestehende Portfolios bearbeiten oder löschen. |
+| **Normalablauf** | 1. Fund Manager navigiert zur Portfolio-Übersichtsseite. 2. System zeigt alle Portfolios des eingeloggten Fund Managers. 3. Fund Manager erstellt ein neues Portfolio (Name, Beschreibung). 4. System speichert das Portfolio mit der `fundManagerId` des Benutzers. 5. Fund Manager öffnet ein Portfolio und fügt Holdings hinzu (Symbol, ISIN, Name, Gewichtung). 6. Fund Manager kann bestehende Portfolios bearbeiten oder löschen. |
 | **Ausnahmen** | Pflichtfelder fehlen → Validierungsfehler (400). Zugriff auf fremdes Portfolio → 403 Forbidden. Portfolio nicht gefunden → 404 Not Found. |
 | **Nachbedingung** | Portfolio mit Holdings ist in der Datenbank gespeichert und dem Fund Manager zugeordnet. |
 
@@ -722,7 +722,7 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | System (KI/API) |
 | **Vorbedingung** | ESG Audit wurde angefordert (UC-03). Holdings mit Symbolen/ISINs sind vorhanden. |
-| **Normalablauf** | 1. System liest die Holdings des Portfolios. 2. System ruft pro Holding aktuelle ESG-relevante News über drei parallele Provider ab: The Guardian API, NewsAPI.org und Newsdata.io. 3. System dedupliziert Artikel URL-basiert cross-provider. 4. KI-Relevanzfilter (`analyzeRelevance`, Schwellenwert 0.35) verwirft nicht ESG-spezifische Artikel. 5. System übergibt die gefilterten Artikel an die KI (UC-08). |
+| **Normalablauf** | 1. System liest die Holdings des Portfolios. 2. System ruft pro Holding aktuelle ESG-relevante News über vier parallele Provider ab: The Guardian API, NewsAPI.org, Newsdata.io und Alpha Vantage. 3. System dedupliziert Artikel URL-basiert cross-provider. 4. KI-Relevanzfilter (`analyzeRelevance`, Schwellenwert 0.35) verwirft nicht ESG-spezifische Artikel. 5. System übergibt die gefilterten Artikel an die KI (UC-08). |
 | **Ausnahmen** | Provider nicht erreichbar → Fallback auf verfügbare Provider; alle Provider ausgefallen → Evidence-Liste bleibt leer. Keine ESG-relevanten Artikel gefunden → Evidence-Liste bleibt leer. |
 | **Nachbedingung** | Rohdaten der News liegen vor und sind zur KI-Analyse bereit. |
 
@@ -734,7 +734,7 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | System (KI/API) |
 | **Vorbedingung** | News-Daten wurden abgerufen (UC-07). Spring AI ist konfiguriert. |
-| **Normalablauf** | 1. System übergibt News-Texte an Spring AI (Claude/OpenAI). 2. KI-Modell bewertet die ESG-Risiken (Sentiment, Schweregrad, Kategorie). 3. KI generiert eine strukturierte Zusammenfassung (`aiRiskSummary`) pro AuditReport. 4. System berechnet einen aggregierten Risiko-Score. 5. System speichert Summary und Score im AuditReport. |
+| **Normalablauf** | 1. System übergibt News-Texte an Spring AI (Claude/OpenAI). 2. KI-Modell bewertet die ESG-Risiken (Sentiment, Schweregrad, Kategorie). 3. KI generiert eine strukturierte Zusammenfassung (`aiRiskSummary`) pro AuditReport. 4. System generiert eine strukturierte Risikozusammenfassung. 5. System speichert die Zusammenfassung als `aiRiskSummary` im AuditReport. |
 | **Ausnahmen** | KI-API nicht erreichbar → Fehlermeldung, AuditReport bleibt ohne Summary. |
 | **Nachbedingung** | `AuditReport.aiRiskSummary` enthält die KI-generierte Einschätzung. |
 
@@ -746,7 +746,7 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | System (KI/API) |
 | **Vorbedingung** | News-Artikel wurden abgerufen und von KI bewertet. |
-| **Normalablauf** | 1. System erstellt pro relevantem News-Artikel einen `Evidence`-Eintrag. 2. Evidence enthält: Headline, Quellenname, URL, Datum, Sentiment-Bewertung, ESG-Kategorie, Holding-Referenz. 3. System speichert alle Evidence-Einträge in der MongoDB-Collection `evidence`. |
+| **Normalablauf** | 1. System erstellt pro relevantem News-Artikel einen `Evidence`-Eintrag. 2. Evidence enthält: Headline, Quellenname, URL, Datum, Sentiment-Bewertung, Holding-Referenz. 3. System speichert alle Evidence-Einträge in der MongoDB-Collection `evidence`. |
 | **Ausnahmen** | Duplikate (gleiche URL) → bestehender Eintrag wird nicht überschrieben. |
 | **Nachbedingung** | Lückenlose, archivierte Evidence-Kette ist für Auditoren und Regulatoren einsehbar. |
 
@@ -804,7 +804,10 @@ Jedem Testbenutzer genau eine Rolle zuweisen (`fund-manager`, `auditor` oder `co
 ```properties
 spring.security.oauth2.resourceserver.jwt.issuer-uri=https://YOUR_AUTH0_DOMAIN/
 spring.ai.anthropic.api-key=YOUR_ANTHROPIC_API_KEY
-news.api.key=YOUR_GUARDIAN_API_KEY
+news.api.guardian.key=YOUR_GUARDIAN_API_KEY
+news.api.newsdata.key=YOUR_NEWSDATA_API_KEY
+news.api.newsapiorg.key=YOUR_NEWSAPIORG_API_KEY
+news.api.alphavantage.key=YOUR_ALPHAVANTAGE_API_KEY
 ```
 
 **Frontend** (`.env` oder Deployment-Vars):
@@ -965,7 +968,7 @@ TrueYield implementiert folgende Qualitätskriterien für News-Quellen, um die N
 
 | Kriterium | Umsetzung |
 |---|---|
-| **Quellenreputation** | Drei Provider parallel: **The Guardian API** (keyword-basiert), **NewsAPI.org** und **Newsdata.io** (ticker-basiert) — redaktionell geprüfte Quellen. Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian) werden mit vollem Sentiment-Gewicht gewertet, andere mit Faktor 0.5 gedämpft. |
+| **Quellenreputation** | Vier Provider parallel: **The Guardian API** (keyword-basiert), **NewsAPI.org**, **Newsdata.io** und **Alpha Vantage** (ticker-basiert, primärer Finanz-News-Provider) — redaktionell geprüfte Quellen. Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian) werden mit vollem Sentiment-Gewicht gewertet, andere mit Faktor 0.5 gedämpft. |
 | **ESG-Relevanz** | Zweistufiger KI-Filter: Guardian-Abfragen enthalten `ESG` als Pflicht-Keyword; alle Artikel durchlaufen anschliessend `analyzeRelevance()` (Claude Haiku, Schwellenwert 0.35) |
 | **Firmennamen-Normalisierung** | Rechtliche Suffixe (`Inc.`, `PLC`, `Ltd.`, `AG`, `SE`, etc.) werden vor der Suche entfernt für bessere Trefferqualität |
 | **Duplikatkontrolle** | URL-basierte Deduplizierung in-memory (cross-provider) und gegen DB (`existsByHoldingIdAndSourceUrl`) vor AI-Calls |
@@ -994,7 +997,7 @@ GET https://trueyield-backend.azurewebsites.net/sse
 |---|---|---|
 | `generateEsgRiskSummary` | Concise ESG-Risikozusammenfassung für eine oder mehrere Firmen | `companies` — kommaseparierte Firmennamen |
 | `analyseEsgSentiment` | Sentiment-Score (-1.0 bis +1.0) für einen ESG-Textausschnitt | `text` — Textausschnitt |
-| `fetchEsgNews` | Aktuelle ESG-Nachrichtenartikel über The Guardian API | `company` — Firmenname |
+| `fetchEsgNews` | Aktuelle ESG-Nachrichtenartikel über alle konfigurierten News-Provider | `company` — Firmenname |
 
 #### Claude Desktop konfigurieren (lokal)
 
@@ -1025,13 +1028,13 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 **Portfolio-Übersicht** — Tabelle aller eigenen Portfolios mit Status-Badge (PENDING_REVIEW / UNDER_REVIEW / APPROVED / REJECTED), SFDR-Ampel (Art. 9 / Art. 8 / —) direkt pro Zeile, und drei KPI-Cards (Total / Pending Review / Approved) oben
 ![Portfolio-Übersicht](doc/screenshots/portfolios-list.png)
 
-**Portfolio erstellen** — Formular für neues Portfolio (Name, Beschreibung, ESG-Zielartikel)
+**Portfolio erstellen** — Formular für neues Portfolio (Name, Beschreibung)
 ![Portfolio erstellen](doc/screenshots/portfolio-create.png)
 
 **Portfolio-Detail** — Holdings-Tabelle mit Risk-Score-Balken und SFDR-Badge pro Holding, SVG-Donut-Chart für Asset Allocation (Hover-Tooltip, Legende, grauer "Ungewichtet"-Slice), Audit-Report-Trigger-Button
 ![Portfolio-Detail](doc/screenshots/portfolio-detail.png)
 
-**Portfolio bearbeiten** — Inline-Formular zum Ändern von Portfolio-Name, Beschreibung und ESG-Zielartikel; nur für den eigenen Fund Manager zugänglich
+**Portfolio bearbeiten** — Inline-Formular zum Ändern von Portfolio-Name und Beschreibung; nur für den eigenen Fund Manager zugänglich
 ![Portfolio bearbeiten](doc/screenshots/portfolio-edit.png)
 
 **Holding hinzufügen** — Formular mit Symbol-Autocomplete (debounced, 280 ms, Yahoo Finance API — Dropdown filtert auf EQUITY/ETF und füllt Name automatisch aus), ISIN und Gewichtung
@@ -1095,7 +1098,7 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 | Codeanalyse mit SonarQube | SonarCloud aktiv auf `main`-Branch, Analyse via `sonar-maven-plugin` in CI (non-blocking). Token via Secret `SONAR_TOKEN`. |
 | Komplexes Datenmodell (5 Entitäten) | Portfolio, Holding, Evidence, AuditReport, AuditComment — übererfüllt gegenüber Mindestanforderung (3) |
 | Komplexes Frontend | 3 Rollen mit rollenspezifischen Dashboards, State-Machine-Visualisierung, Sentiment-Badges, Risk-Scores, SVG-Donut-Chart (Asset Allocation), KPI-Karten, SFDR-Ampel, Evidence-Confidence-Badges, Symbol-Autocomplete |
-| Zugriff auf Drittsysteme | Multi-Provider News-Aggregation: The Guardian API, NewsAPI.org und Newsdata.io — automatische ESG-News-Abfrage pro Holding, gespeichert als Evidence mit KI-Relevanzfilter und Source-Weighting |
+| Zugriff auf Drittsysteme | Multi-Provider News-Aggregation: The Guardian API, NewsAPI.org, Newsdata.io und Alpha Vantage — automatische ESG-News-Abfrage pro Holding, gespeichert als Evidence mit KI-Relevanzfilter und Source-Weighting |
 | Komplexe Abfragen auf der Datenbank | MongoDB Aggregation Pipeline für Audit-Dashboard (gruppiert nach Status pro Portfolio) |
 | Komplexe Benutzerverwaltung | 3 RBAC-Rollen (`fund-manager`, `auditor`, `compliance-officer`) mit unterschiedlichen Berechtigungen auf Endpunkt-Ebene (`@PreAuthorize`) und im Frontend (Route Guards) |
 | Detaillierte Dokumentation auf GitHub | Issues mit Beschreibungen und überprüfbaren Anforderungen, 3+ Labels, Sprints als Iterations, SCRUM-Board mit Ready/In Progress/Done |
@@ -1119,7 +1122,7 @@ ESG-Risikozusammenfassung (`AI_ANALYZING → PENDING_REVIEW`). Evidence-Einträg
 (-1.0 bis +1.0), die Greenwashing-relevante Nachrichten klassifizieren und als Risk-Score (0–10)
 sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert werden.
 
-**Drittsystem-Integration (Multi-Provider News):** TrueYield aggregiert ESG-Nachrichten aus drei Quellen parallel: The Guardian API, NewsAPI.org und Newsdata.io. Alle Artikel durchlaufen einen zweistufigen KI-Filter: zuerst ESG-Relevanz-Scoring (Schwellenwert 0.35, Claude Haiku), dann Sentiment-Analyse. Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian) werden mit vollem Gewicht gewertet, andere mit Faktor 0.5 gedämpft. URL-Deduplizierung verhindert doppelte Evidence cross-provider. Evidence-Cap bei 10 Einträgen pro Holding, nach Relevanz priorisiert.
+**Drittsystem-Integration (Multi-Provider News):** TrueYield aggregiert ESG-Nachrichten aus vier Quellen parallel: The Guardian API, NewsAPI.org, Newsdata.io und Alpha Vantage. Alle Artikel durchlaufen einen zweistufigen KI-Filter: zuerst ESG-Relevanz-Scoring (Schwellenwert 0.35, Claude Haiku), dann Sentiment-Analyse. Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian) werden mit vollem Gewicht gewertet, andere mit Faktor 0.5 gedämpft. URL-Deduplizierung verhindert doppelte Evidence cross-provider. Evidence-Cap bei 10 Einträgen pro Holding, nach Relevanz priorisiert.
 
 **Symbol-Autocomplete (Ticker → Firmenname):** Beim Erstellen eines Holdings tippt der Fund Manager nur das Ticker-Symbol (z.B. "AAPL") und erhält sofort Dropdown-Vorschläge (debounced, 280ms) via Yahoo Finance Search API — gefiltert auf EQUITY und ETF. Auswahl füllt Symbol und Firmenname automatisch aus.
 
@@ -1154,10 +1157,10 @@ Die folgenden Erweiterungen sind priorisiert, um die Lösung von einem funktiona
 ### Bereits umgesetzt
 | # | Feature | Beschreibung |
 |---|---------|-------------|
-| B-01 | **Automatisches News-Monitoring** | Multi-Provider-Aggregation (Guardian, NewsAPI.org, Newsdata.io) liefert bei Holding-Erstellung automatisch ESG-News als Evidence |
+| B-01 | **Automatisches News-Monitoring** | Multi-Provider-Aggregation (Guardian, NewsAPI.org, Newsdata.io, Alpha Vantage) liefert bei Holding-Erstellung automatisch ESG-News als Evidence |
 | B-02 | **SFDR Article 8/9 Scoring** | Sentiment-Aggregation klassifiziert Portfolios regulatorisch; SFDR-Klasse sichtbar im Compliance-Dashboard und als Ampel auf der Portfolio-Liste |
 | B-14 | **Duplicate-Detection für Evidence** | URL-basierte Deduplizierung in-memory (cross-provider) und gegen DB, bevor AI-Calls stattfinden; Evidence-Cap bei 10 pro Holding |
-| B-19 | **Dedizierte Finanz-News-APIs** | NewsAPI.org und Newsdata.io als zusätzliche ticker-basierte Quellen neben Guardian; generisches Branchenrauschen deutlich reduziert |
+| B-19 | **Dedizierte Finanz-News-APIs** | NewsAPI.org, Newsdata.io und Alpha Vantage als zusätzliche Quellen neben Guardian; Alpha Vantage ist der primäre ticker-basierte Provider; generisches Branchenrauschen deutlich reduziert |
 | B-20 | **Zweistufiger KI-Relevanzfilter** | ESG-spezifisches Relevanz-Prompt mit Scoring-Skala 0.0–1.0; Artikel unter Schwellenwert 0.35 werden als Evidence verworfen |
 | B-21 | **Source Reliability Weighting** | Sentiment-Scores von Premium-Quellen (Reuters, Bloomberg, Financial Times, WSJ, Guardian) werden voll gewichtet; andere Quellen mit Faktor 0.5 gedämpft |
 | B-22 | **Holding Auto-Complete (Ticker)** | Debounced Ticker-Suche via Yahoo Finance mit Dropdown-Vorschlägen (EQUITY + ETF); wählt automatisch Name aus |
