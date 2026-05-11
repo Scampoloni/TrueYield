@@ -12,7 +12,7 @@
   let showApproveModal = $state(false);
   let showRejectModal = $state(false);
   let openAccordions: Record<string, boolean> = $state({});
-  let portfolioRiskScore: number | null = $state(null);
+  let portfolioRiskScore: number | null = $state(null); // legacy evidence-based score, kept for fallback
   let comments: any[] = $state([]);
   let newComment = $state('');
   let submittingComment = $state(false);
@@ -213,7 +213,22 @@
       </div>
     </div>
 
-    {#if portfolioRiskScore !== null}
+    {#if report.aiRiskScore != null}
+      {@const score = report.aiRiskScore}
+      {@const scoreColor = score <= 3 ? 'var(--green,#4ade80)' : score <= 6 ? 'var(--amber,#fbbf24)' : 'var(--red,#f87171)'}
+      <div class="risk-score-banner">
+        <div class="risk-score-label">AI Portfolio Risk Score</div>
+        <div class="risk-score-value" style="color:{scoreColor}">
+          {score}<span style="font-size:14px;opacity:0.6">/10</span>
+        </div>
+        <div class="risk-score-bar">
+          <div class="risk-score-fill" style="width:{score * 10}%;background:{scoreColor}"></div>
+        </div>
+      </div>
+      {#if report.aiRiskRationale}
+        <div class="ai-rationale">{report.aiRiskRationale}</div>
+      {/if}
+    {:else if portfolioRiskScore !== null}
       <div class="risk-score-banner">
         <div class="risk-score-label">Overall Portfolio Risk Score</div>
         <div class="risk-score-value" style="color:{portfolioRiskScore < 4 ? 'var(--green,#4ade80)' : portfolioRiskScore < 7 ? 'var(--amber,#fbbf24)' : 'var(--red,#f87171)'}">
@@ -362,6 +377,14 @@
 {/if}
 
 <style>
+  .ai-rationale {
+    font-size: 13px;
+    color: var(--text-2, #b4c6de);
+    line-height: 1.5;
+    margin-top: -8px;
+    margin-bottom: 16px;
+    padding: 0 4px;
+  }
   .risk-score-banner {
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.08);

@@ -1,9 +1,11 @@
 package ch.zhaw.trueyield.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import ch.zhaw.trueyield.model.AuditReport;
+import ch.zhaw.trueyield.model.Evidence;
 import ch.zhaw.trueyield.model.Holding;
 import ch.zhaw.trueyield.model.dto.AuditReportAggregationDTO;
 import ch.zhaw.trueyield.model.dto.AuditReportCreateDTO;
@@ -80,6 +82,32 @@ public class AuditReportService {
             summary = "AI analysis unavailable.";
         }
         report.setAiRiskSummary(summary);
+
+        // Collect evidence snippets (max 5 per holding) to use as RAG context for risk scoring
+        List<String> snippets = new ArrayList<>();
+        for (Holding holding : holdings) {
+            try {
+                List<Evidence> evidenceList = evidenceService.getEvidenceByHoldingId(holding.getId());
+                if (evidenceList != null) {
+                    evidenceList.stream()
+                            .filter(e -> e.getContentSnippet() != null && !e.getContentSnippet().isBlank())
+                            .limit(5)
+                            .map(Evidence::getContentSnippet)
+                            .forEach(snippets::add);
+                }
+            } catch (Exception e) {
+                log.warn("Could not load evidence snippets for holding '{}': {}", holding.getId(), e.getMessage());
+            }
+        }
+
+        try {
+            AiAnalysisService.PortfolioRiskResult riskResult =
+                    aiAnalysisService.generatePortfolioRiskScore(holdingNames, snippets);
+            report.setAiRiskScore(riskResult.score());
+            report.setAiRiskRationale(riskResult.rationale());
+        } catch (Exception e) {
+            log.warn("Portfolio risk score generation failed for portfolio '{}': {}", dto.getPortfolioId(), e.getMessage());
+        }
 
         report.setAuditStatus(AuditStatus.PENDING_REVIEW);
         return auditReportRepository.save(report);
