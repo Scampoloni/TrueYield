@@ -14,8 +14,6 @@ public interface AuditReportRepository extends MongoRepository<AuditReport, Stri
 
     List<AuditReport> findAllByOrderByCreatedAtDesc();
 
-    List<AuditReport> findByPortfolioIdOrderByCreatedAtDesc(String portfolioId);
-
     List<AuditReport> findByAuditStatus(AuditStatus status);
 
     List<AuditReport> findByAuditStatusOrAuditorId(AuditStatus status, String auditorId);
