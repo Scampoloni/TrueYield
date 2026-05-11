@@ -131,11 +131,11 @@ class EvidenceControllerTest {
     // ── POST /api/evidence ───────────────────────────────────────────────────
 
     @Test
-    void createEvidence_asFundManager_returnsCreated() throws Exception {
+    void createEvidence_asAuditor_returnsCreated() throws Exception {
         when(evidenceService.createEvidence(any(EvidenceCreateDTO.class))).thenReturn(sampleEvidence);
 
         mockMvc.perform(post("/api/evidence")
-                        .with(user("manager").roles("fund-manager"))
+                        .with(user("auditor").roles("auditor"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"holdingId":"holding-001","sourceUrl":"https://example.com","contentSnippet":"This is a valid ESG news snippet."}
@@ -146,9 +146,9 @@ class EvidenceControllerTest {
     }
 
     @Test
-    void createEvidence_asAuditor_returnsForbidden() throws Exception {
+    void createEvidence_asFundManager_returnsForbidden() throws Exception {
         mockMvc.perform(post("/api/evidence")
-                        .with(user("auditor").roles("auditor"))
+                        .with(user("manager").roles("fund-manager"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"holdingId":"holding-001","contentSnippet":"Some snippet."}
@@ -177,7 +177,7 @@ class EvidenceControllerTest {
     void createEvidence_withBlankRequiredFields_returnsBadRequest(
             String holdingId, String contentSnippet) throws Exception {
         mockMvc.perform(post("/api/evidence")
-                        .with(user("manager").roles("fund-manager"))
+                        .with(user("auditor").roles("auditor"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"holdingId\":\"" + holdingId + "\",\"contentSnippet\":\"" + contentSnippet + "\"}"))
                 .andExpect(status().isBadRequest());

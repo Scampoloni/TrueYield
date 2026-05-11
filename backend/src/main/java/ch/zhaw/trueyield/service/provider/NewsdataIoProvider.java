@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 public class NewsdataIoProvider implements NewsProvider {
 
     private static final Logger log = LoggerFactory.getLogger(NewsdataIoProvider.class);
-    private static final int MAX_ARTICLES = 5;
+    private static final int MAX_ARTICLES = 10;
     private static final Set<String> ALLOWED_HOSTS = Set.of("newsdata.io");
     // Possessive quantifier \s*+ prevents backtracking between the suffix and end-of-string anchor
     private static final Pattern COMPANY_SUFFIX =

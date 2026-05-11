@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 public class GuardianNewsProvider implements NewsProvider {
 
     private static final Logger log = LoggerFactory.getLogger(GuardianNewsProvider.class);
-    private static final int MAX_ARTICLES = 5;
+    private static final int MAX_ARTICLES = 10;
     private static final Set<String> ALLOWED_HOSTS = Set.of("content.guardianapis.com");
     // Possessive quantifier \s*+ prevents backtracking between the suffix and end-of-string anchor
     private static final Pattern COMPANY_SUFFIX =
@@ -74,11 +74,11 @@ public class GuardianNewsProvider implements NewsProvider {
         String firstWord = cleanName.split("\\s+")[0];
 
         try {
-            // Primary: exact company name + ESG (phrase match)
-            List<Map<String, Object>> results = searchGuardian("\"" + cleanName + "\" ESG");
-            // Fallback: only if first word is meaningfully different and still company-specific
+            // Primary: company name (no phrase lock) + broad ESG terms
+            List<Map<String, Object>> results = searchGuardian(cleanName + " AND (ESG OR sustainability OR greenwashing OR climate OR emissions)");
+            // Fallback: first significant word if multi-word name yields nothing
             if (results.isEmpty() && !firstWord.equals(cleanName) && firstWord.length() > 3) {
-                results = searchGuardian("\"" + firstWord + "\" AND (ESG OR sustainability OR greenwashing)");
+                results = searchGuardian(firstWord + " AND (ESG OR sustainability OR greenwashing OR climate)");
             }
             return results.stream().map(this::mapArticle).toList();
         } catch (Exception e) {

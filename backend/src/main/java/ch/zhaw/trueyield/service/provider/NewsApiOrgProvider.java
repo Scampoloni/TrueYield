@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 public class NewsApiOrgProvider implements NewsProvider {
 
     private static final Logger log = LoggerFactory.getLogger(NewsApiOrgProvider.class);
-    private static final int MAX_ARTICLES = 5;
+    private static final int MAX_ARTICLES = 10;
     private static final Set<String> ALLOWED_HOSTS = Set.of("newsapi.org");
     // Possessive quantifier \s*+ prevents backtracking between the suffix and end-of-string anchor
     private static final Pattern COMPANY_SUFFIX =
@@ -58,14 +58,27 @@ public class NewsApiOrgProvider implements NewsProvider {
     public List<NewsArticle> fetchNewsForHolding(String companyName) {
         if (!isConfigured()) return Collections.emptyList();
 
-        String cleanName = COMPANY_SUFFIX.matcher(companyName).replaceAll("")
-                .trim();
+        String cleanName = COMPANY_SUFFIX.matcher(companyName).replaceAll("").trim();
+        String query = cleanName + " AND (ESG OR sustainability OR greenwashing OR climate OR emissions)";
+        return fetchEverything(query, companyName);
+    }
 
+    @Override
+    public List<NewsArticle> fetchNewsForSymbol(String symbol, String companyName) {
+        if (!isConfigured()) return Collections.emptyList();
+        String cleanName = COMPANY_SUFFIX.matcher(companyName).replaceAll("").trim();
+        // Combine symbol OR company name with ESG terms for broader coverage
+        String query = "(" + symbol + " OR \"" + cleanName + "\") AND (ESG OR sustainability OR greenwashing OR climate)";
+        return fetchEverything(query, companyName);
+    }
+
+    private List<NewsArticle> fetchEverything(String query, String companyName) {
         try {
+            @SuppressWarnings("unchecked")
             Map<String, Object> response = restClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/everything")
-                            .queryParam("q", "\"" + cleanName + "\" AND (ESG OR sustainability)")
+                            .queryParam("q", query)
                             .queryParam("language", "en")
                             .queryParam("sortBy", "relevancy")
                             .queryParam("pageSize", MAX_ARTICLES)
@@ -75,11 +88,11 @@ public class NewsApiOrgProvider implements NewsProvider {
                     .body(Map.class);
 
             if (response == null || !response.containsKey("articles")) return Collections.emptyList();
-            
+
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> articles = (List<Map<String, Object>>) response.get("articles");
             if (articles == null) return Collections.emptyList();
-            
+
             return articles.stream().map(this::mapArticle).toList();
         } catch (Exception e) {
             log.warn("NewsApiOrgProvider: failed to fetch news for '{}': {}", companyName, e.getMessage());

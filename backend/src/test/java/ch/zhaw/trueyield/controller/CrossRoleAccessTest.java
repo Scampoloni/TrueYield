@@ -100,6 +100,15 @@ class CrossRoleAccessTest {
     }
 
     @Test
+    void createEvidence_asFundManager_returnsForbidden() throws Exception {
+        mockMvc.perform(post("/api/evidence")
+                        .with(user("manager").roles("fund-manager"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"holdingId\":\"holding-001\",\"contentSnippet\":\"snippet\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void createAuditComment_asFundManager_returnsForbidden() throws Exception {
         mockMvc.perform(post("/api/service/auditcomment")
                         .with(user("manager").roles("fund-manager"))

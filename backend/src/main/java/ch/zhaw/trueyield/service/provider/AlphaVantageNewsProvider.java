@@ -28,7 +28,7 @@ import java.util.Set;
 public class AlphaVantageNewsProvider implements NewsProvider {
 
     private static final Logger log = LoggerFactory.getLogger(AlphaVantageNewsProvider.class);
-    private static final int MAX_ARTICLES = 5;
+    private static final int MAX_ARTICLES = 10;
     private static final Set<String> ALLOWED_HOSTS = Set.of("www.alphavantage.co");
     private static final DateTimeFormatter AV_DATE = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
     private static final Map<String, List<String>> TICKER_ALIASES = Map.of(
