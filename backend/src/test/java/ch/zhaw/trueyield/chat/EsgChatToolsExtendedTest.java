@@ -5,10 +5,12 @@ import ch.zhaw.trueyield.model.Holding;
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.HoldingCreateDTO;
 import ch.zhaw.trueyield.security.AccessControlService;
+import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.EvidenceService;
 import ch.zhaw.trueyield.service.HoldingService;
 import ch.zhaw.trueyield.service.PortfolioService;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +24,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,9 +34,15 @@ class EsgChatToolsExtendedTest {
     @Mock private HoldingService holdingService;
     @Mock private EvidenceService evidenceService;
     @Mock private AccessControlService accessControlService;
+    @Mock private UserService userService;
 
     @InjectMocks
     private EsgChatTools esgChatTools;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(userService.getCurrentUserId()).thenReturn("fm-user");
+    }
 
     @AfterEach
     void clearContext() {

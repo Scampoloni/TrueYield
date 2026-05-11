@@ -6,6 +6,7 @@ import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.HoldingCreateDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
 import ch.zhaw.trueyield.security.AccessControlService;
+import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.EvidenceService;
 import ch.zhaw.trueyield.service.HoldingService;
 import ch.zhaw.trueyield.service.PortfolioService;
@@ -33,12 +34,14 @@ public class EsgChatTools {
     private final HoldingService holdingService;
     private final EvidenceService evidenceService;
     private final AccessControlService accessControlService;
+    private final UserService userService;
 
-    public EsgChatTools(PortfolioService portfolioService, HoldingService holdingService, EvidenceService evidenceService, AccessControlService accessControlService) {
+    public EsgChatTools(PortfolioService portfolioService, HoldingService holdingService, EvidenceService evidenceService, AccessControlService accessControlService, UserService userService) {
         this.portfolioService = portfolioService;
         this.holdingService = holdingService;
         this.evidenceService = evidenceService;
         this.accessControlService = accessControlService;
+        this.userService = userService;
     }
 
     @Tool(description = "List all portfolios in the system.")
@@ -144,7 +147,7 @@ public class EsgChatTools {
 
         PortfolioCreateDTO dto = new PortfolioCreateDTO(normalizedName, trimToNull(description));
 
-        Portfolio created = portfolioService.createPortfolio(dto, currentUsername());
+        Portfolio created = portfolioService.createPortfolio(dto, userService.getCurrentUserId());
         return "Created portfolio '" + safe(created.getName()) + "' (id: " + safe(created.getId()) + ")";
     }
 
@@ -184,7 +187,7 @@ public class EsgChatTools {
 
     private List<Portfolio> getVisiblePortfolios() {
         if (hasRole("ROLE_fund-manager")) {
-            return portfolioService.getAllPortfoliosByFundManager(currentUsername());
+            return portfolioService.getAllPortfoliosByFundManager(userService.getCurrentUserId());
         }
         return portfolioService.getAllPortfolios();
     }
