@@ -286,6 +286,71 @@ class AiAnalysisServiceTest {
         assertEquals(0.8, result, 0.001);
     }
 
+    // ── generatePortfolioRiskScore ───────────────────────────────────────────
+
+    @Test
+    void generatePortfolioRiskScore_returnsValidScore_whenModelResponds() {
+        ChatResponse mockResponse = mockChatResponse("7\nHigh carbon footprint across fossil fuel holdings.");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+
+        AiAnalysisService.PortfolioRiskResult result = aiAnalysisService.generatePortfolioRiskScore(
+                List.of("Shell PLC", "Exxon Mobil"),
+                List.of("Shell faces regulatory scrutiny over emissions.", "Exxon lobbied against climate policy."));
+
+        assertEquals(7, result.score());
+        assertNotNull(result.rationale());
+        assertFalse(result.rationale().isBlank());
+        verify(chatModel, times(1)).call(any(Prompt.class));
+    }
+
+    @Test
+    void generatePortfolioRiskScore_fallbackOnError_whenModelThrows() {
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("API timeout"));
+
+        AiAnalysisService.PortfolioRiskResult result = aiAnalysisService.generatePortfolioRiskScore(
+                List.of("Shell PLC"), List.of("Some snippet"));
+
+        assertEquals(5, result.score());
+        assertEquals("AI analysis unavailable.", result.rationale());
+    }
+
+    @Test
+    void generatePortfolioRiskScore_withEmptyLists_doesNotThrow() {
+        ChatResponse mockResponse = mockChatResponse("3\nNo significant ESG risks identified.");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+
+        AiAnalysisService.PortfolioRiskResult result = aiAnalysisService.generatePortfolioRiskScore(
+                List.of(), List.of());
+
+        assertNotNull(result);
+        assertTrue(result.score() >= 0 && result.score() <= 10);
+    }
+
+    @Test
+    void generatePortfolioRiskScore_returnsUnavailable_whenNotAvailable() {
+        AiAnalysisService service = new AiAnalysisService();
+        ReflectionTestUtils.setField(service, "chatModel", null);
+        ReflectionTestUtils.setField(service, "apiKey", "");
+
+        AiAnalysisService.PortfolioRiskResult result = service.generatePortfolioRiskScore(
+                List.of("Apple Inc."), List.of("Snippet"));
+
+        assertEquals(5, result.score());
+        assertEquals("AI analysis unavailable.", result.rationale());
+        verifyNoInteractions(chatModel);
+    }
+
+    @Test
+    void generatePortfolioRiskScore_clampsScore_whenModelReturnsOutOfRange() {
+        ChatResponse mockResponse = mockChatResponse("15\nExtremely high risk.");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+
+        AiAnalysisService.PortfolioRiskResult result = aiAnalysisService.generatePortfolioRiskScore(
+                List.of("BadCorp"), List.of());
+
+        assertEquals(10, result.score());
+    }
+
     // ── Helper ───────────────────────────────────────────────────────────────
 
     private ChatResponse mockChatResponse(String text) {
