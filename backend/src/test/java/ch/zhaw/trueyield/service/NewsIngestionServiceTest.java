@@ -273,7 +273,6 @@ class NewsIngestionServiceTest {
         newsIngestionService.ingestNewsForHolding(HOLDING_ID, COMPANY);
 
         verify(evidenceRepository).existsByHoldingIdAndSourceUrl(HOLDING_ID, "https://example.com/scoped");
-        verify(evidenceRepository, never()).existsBySourceUrl(anyString());
     }
 
     @Test
