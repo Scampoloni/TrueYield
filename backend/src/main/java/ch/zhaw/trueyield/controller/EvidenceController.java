@@ -45,7 +45,7 @@ public class EvidenceController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('fund-manager')")
+    @PreAuthorize("hasAnyRole('auditor','compliance-officer')")
     public ResponseEntity<EvidenceResponseDTO> createEvidence(@Valid @RequestBody EvidenceCreateDTO dto) {
         Evidence created = evidenceService.createEvidence(dto);
         return new ResponseEntity<>(EvidenceResponseDTO.fromEntity(created), HttpStatus.CREATED);

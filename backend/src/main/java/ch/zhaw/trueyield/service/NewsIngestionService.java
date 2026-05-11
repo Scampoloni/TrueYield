@@ -122,9 +122,11 @@ public class NewsIngestionService {
             try {
                 if (aiAnalysisService != null && aiAnalysisService.isAvailable()) {
                     sentiment = aiAnalysisService.analyzeSentiment(sc.snippet());
-                    String source = sc.article().sourceName() != null
-                            ? sc.article().sourceName().toLowerCase() : "";
-                    if (!isPremiumSource(source)) {
+                    String sourceName = sc.article().sourceName();
+                    String sourceNameLower = sourceName != null ? sourceName.toLowerCase() : "";
+                    boolean premium = isKnownPremiumSource(sourceNameLower)
+                            || aiAnalysisService.isPremiumSource(sourceName);
+                    if (!premium) {
                         sentiment = sentiment * 0.5;
                     }
                 }
@@ -147,7 +149,7 @@ public class NewsIngestionService {
                 saved, sanitize(holdingId), sanitize(companyName));
     }
 
-    private boolean isPremiumSource(String sourceName) {
+    private boolean isKnownPremiumSource(String sourceName) {
         if (sourceName == null) return false;
         return sourceName.contains("reuters") ||
                sourceName.contains("bloomberg") ||

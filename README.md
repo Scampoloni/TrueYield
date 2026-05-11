@@ -635,7 +635,7 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 | Übergang | Auslöser | HTTP-Endpunkt |
 |---|---|---|
 | → `AI_ANALYZING` | Fund Manager erstellt Audit | `POST /api/service/auditreport` |
-| `AI_ANALYZING` → `PENDING_REVIEW` | KI-Analyse abgeschlossen | intern (AiAnalysisService) |
+| `AI_ANALYZING` → `PENDING_REVIEW` | KI-Analyse abgeschlossen | intern (AuditReportService) |
 | `PENDING_REVIEW` → `UNDER_REVIEW` | ESG Auditor übernimmt | `PUT /api/service/auditreport/assign` |
 | `UNDER_REVIEW` → `APPROVED` | ESG Auditor genehmigt | `PUT /api/service/auditreport/complete` |
 | `UNDER_REVIEW` → `REJECTED` | ESG Auditor lehnt ab | `PUT /api/service/auditreport/reject` |
@@ -734,7 +734,7 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | System (KI/API) |
 | **Vorbedingung** | News-Daten wurden abgerufen (UC-07). Spring AI ist konfiguriert. |
-| **Normalablauf** | 1. System übergibt News-Texte an Spring AI (Claude/OpenAI). 2. KI-Modell bewertet die ESG-Risiken (Sentiment, Schweregrad, Kategorie). 3. KI generiert eine strukturierte Zusammenfassung (`aiRiskSummary`) pro AuditReport. 4. System generiert eine strukturierte Risikozusammenfassung. 5. System speichert die Zusammenfassung als `aiRiskSummary` im AuditReport. |
+| **Normalablauf** | 1. System übergibt News-Texte an Spring AI (Claude/OpenAI). 2. KI-Modell bewertet die ESG-Risiken (Sentiment, Schweregrad, Kategorie). 3. KI generiert eine strukturierte Zusammenfassung (`aiRiskSummary`) pro AuditReport. 4. System speichert die Zusammenfassung als `aiRiskSummary` im AuditReport. |
 | **Ausnahmen** | KI-API nicht erreichbar → Fehlermeldung, AuditReport bleibt ohne Summary. |
 | **Nachbedingung** | `AuditReport.aiRiskSummary` enthält die KI-generierte Einschätzung. |
 
@@ -746,7 +746,7 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | System (KI/API) |
 | **Vorbedingung** | News-Artikel wurden abgerufen und von KI bewertet. |
-| **Normalablauf** | 1. System erstellt pro relevantem News-Artikel einen `Evidence`-Eintrag. 2. Evidence enthält: Headline, Quellenname, URL, Datum, Sentiment-Bewertung, Holding-Referenz. 3. System speichert alle Evidence-Einträge in der MongoDB-Collection `evidence`. |
+| **Normalablauf** | 1. System erstellt pro relevantem News-Artikel einen `Evidence`-Eintrag. 2. Evidence enthält: Inhalts-Snippet (contentSnippet), Quellenname, URL, Datum, Sentiment-Bewertung, Holding-Referenz. 3. System speichert alle Evidence-Einträge in der MongoDB-Collection `evidence`. |
 | **Ausnahmen** | Duplikate (gleiche URL) → bestehender Eintrag wird nicht überschrieben. |
 | **Nachbedingung** | Lückenlose, archivierte Evidence-Kette ist für Auditoren und Regulatoren einsehbar. |
 
@@ -901,7 +901,7 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 
 ### End-to-End Tests (Cypress)
 
-Im Frontend liegen E2E-Tests unter `frontend/cypress/e2e` mit 5 Testdateien und über 113 Testfällen. Abgedeckte Flows: Login & Rollenbasierter Zugriff, Portfolio CRUD, Audit Workflow, Evidence, Compliance Dashboard.
+Im Frontend liegen E2E-Tests unter `frontend/cypress/e2e` mit 5 Testdateien und 73 Testfällen. Abgedeckte Flows: Login & Rollenbasierter Zugriff, Portfolio CRUD, Audit Workflow, Evidence, Compliance Dashboard.
 
 Ausführung:
 - `cd frontend`
@@ -972,7 +972,7 @@ TrueYield implementiert folgende Qualitätskriterien für News-Quellen, um die N
 
 | Kriterium | Umsetzung |
 |---|---|
-| **Quellenreputation** | Vier Provider parallel: **The Guardian API** (keyword-basiert), **NewsAPI.org**, **Newsdata.io** und **Alpha Vantage** (ticker-basiert, primärer Finanz-News-Provider) — redaktionell geprüfte Quellen. Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian) werden mit vollem Sentiment-Gewicht gewertet, andere mit Faktor 0.5 gedämpft. |
+| **Quellenreputation** | Vier Provider sequenziell: **The Guardian API** (keyword-basiert), **NewsAPI.org**, **Newsdata.io** und **Alpha Vantage** (ticker-basiert, primärer Finanz-News-Provider) — redaktionell geprüfte Quellen. Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian) werden mit vollem Sentiment-Gewicht gewertet, andere mit Faktor 0.5 gedämpft. |
 | **ESG-Relevanz** | Zweistufiger KI-Filter: Guardian-Abfragen enthalten `ESG` als Pflicht-Keyword; alle Artikel durchlaufen anschliessend `analyzeRelevance()` (Claude Haiku, Schwellenwert 0.35) |
 | **Firmennamen-Normalisierung** | Rechtliche Suffixe (`Inc.`, `PLC`, `Ltd.`, `AG`, `SE`, etc.) werden vor der Suche entfernt für bessere Trefferqualität |
 | **Duplikatkontrolle** | URL-basierte Deduplizierung in-memory (cross-provider) und gegen DB (`existsByHoldingIdAndSourceUrl`) vor AI-Calls |
@@ -1035,7 +1035,7 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 **Portfolio erstellen** — Formular für neues Portfolio (Name, Beschreibung)
 ![Portfolio erstellen](doc/screenshots/portfolio-create.png)
 
-**Portfolio-Detail** — Holdings-Tabelle mit Risk-Score-Balken und SFDR-Badge pro Holding, SVG-Donut-Chart für Asset Allocation (Hover-Tooltip, Legende, grauer "Ungewichtet"-Slice), Audit-Report-Trigger-Button
+**Portfolio-Detail** — Holdings-Tabelle, SVG-Donut-Chart für Asset Allocation (Hover-Tooltip, Legende, grauer "Ungewichtet"-Slice), Audit-Report-Trigger-Button
 ![Portfolio-Detail](doc/screenshots/portfolio-detail.png)
 
 **Portfolio bearbeiten** — Inline-Formular zum Ändern von Portfolio-Name und Beschreibung; nur für den eigenen Fund Manager zugänglich
@@ -1047,7 +1047,7 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 **Holdings-Übersicht** — Aggregierte Ansicht aller Holdings über alle Portfolios
 ![Holdings-Übersicht](doc/screenshots/holdings-overview.png)
 
-**Holding-Detail / Evidence & Risk Analysis** — Einzelansicht eines Holdings mit SFDR-Ampel, ISIN, Gewichtung, KI-generierten Evidence-Cards (Sentiment-Badge POSITIVE/NEUTRAL/NEGATIVE, Confidence-Badge HIGH/MEDIUM/LOW, Risk-Score 0–10) und Ingest-News-Button
+**Holding-Detail / Evidence & Risk Analysis** — Einzelansicht eines Holdings mit KI-generierten Evidence-Cards (Sentiment-Badge POSITIVE/NEUTRAL/NEGATIVE, Confidence-Badge HIGH/MEDIUM/LOW, Risk-Score 0–10) und Ingest-News-Button
 ![Evidence & Risk Analysis](doc/screenshots/evidence-page.png)
 
 **Evidence erfassen** — Manuelles Erstellen eines Evidence-Eintrags mit KI-Sentiment-Analyse
@@ -1107,7 +1107,7 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 | Komplexe Benutzerverwaltung | 3 RBAC-Rollen (`fund-manager`, `auditor`, `compliance-officer`) mit unterschiedlichen Berechtigungen auf Endpunkt-Ebene (`@PreAuthorize`) und im Frontend (Route Guards) |
 | Detaillierte Dokumentation auf GitHub | Issues mit Beschreibungen und überprüfbaren Anforderungen, 3+ Labels, Sprints als Iterations, SCRUM-Board mit Ready/In Progress/Done |
 | Mehrere Branches sinnvoll verwendet | Jedes Feature in eigenem `feature/issue-<nr>-<titel>`-Branch entwickelt und via Pull Request gemerged |
-| End-to-End Tests (Cypress) | 5 Testdateien, 113+ Testfälle: auth.cy.js, portfolio.cy.js, audit.cy.js, evidence.cy.js, compliance.cy.js — ausgeführt in CI |
+| End-to-End Tests (Cypress) | 5 Testdateien, 73 Testfälle: auth.cy.js, portfolio.cy.js, audit.cy.js, evidence.cy.js, compliance.cy.js — ausgeführt in CI |
 | **MCP Server (Anforderung 22)** | Spring AI MCP Server exponiert drei ESG-Analyse-Tools (`generateEsgRiskSummary`, `analyseEsgSentiment`, `fetchEsgNews`) via SSE — verbindbar mit Claude Desktop oder jedem MCP-Client |
 | **Dritte Rolle: Compliance Officer (Anforderung 23)** | RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff. Eigene Endpoints: `/api/compliance/overview`, `/sfdr`, `/portfolios`, `/reports`. Frontend-Dashboard unter `/compliance` mit Tabs (Overview / Portfolios / Audit Reports). Rollenbasierte Sidebar-Navigation. |
 
@@ -1126,7 +1126,7 @@ ESG-Risikozusammenfassung (`AI_ANALYZING → PENDING_REVIEW`). Evidence-Einträg
 (-1.0 bis +1.0), die Greenwashing-relevante Nachrichten klassifizieren und als Risk-Score (0–10)
 sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert werden.
 
-**Drittsystem-Integration (Multi-Provider News):** TrueYield aggregiert ESG-Nachrichten aus vier Quellen parallel: The Guardian API, NewsAPI.org, Newsdata.io und Alpha Vantage. Alle Artikel durchlaufen einen zweistufigen KI-Filter: zuerst ESG-Relevanz-Scoring (Schwellenwert 0.35, Claude Haiku), dann Sentiment-Analyse. Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian) werden mit vollem Gewicht gewertet, andere mit Faktor 0.5 gedämpft. URL-Deduplizierung verhindert doppelte Evidence cross-provider. Evidence-Cap bei 10 Einträgen pro Holding, nach Relevanz priorisiert.
+**Drittsystem-Integration (Multi-Provider News):** TrueYield aggregiert ESG-Nachrichten aus vier Quellen sequenziell: The Guardian API, NewsAPI.org, Newsdata.io und Alpha Vantage. Alle Artikel durchlaufen einen zweistufigen KI-Filter: zuerst ESG-Relevanz-Scoring (Schwellenwert 0.35, Claude Haiku), dann Sentiment-Analyse. Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian) werden mit vollem Gewicht gewertet, andere mit Faktor 0.5 gedämpft. URL-Deduplizierung verhindert doppelte Evidence cross-provider. Evidence-Cap bei 10 Einträgen pro Holding, nach Relevanz priorisiert.
 
 **Symbol-Autocomplete (Ticker → Firmenname):** Beim Erstellen eines Holdings tippt der Fund Manager nur das Ticker-Symbol (z.B. "AAPL") und erhält sofort Dropdown-Vorschläge (debounced, 280ms) via Yahoo Finance Search API — gefiltert auf EQUITY und ETF. Auswahl füllt Symbol und Firmenname automatisch aus.
 
@@ -1146,7 +1146,7 @@ sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert w
 
 **Code-Qualität:** `DRAFT`-Status existiert nicht im `AuditStatus`-Enum und wurde bereinigt. SonarCloud aktiv auf `main` (non-blocking, `continue-on-error: true`). ReDoS-Risiken in News-Provider-Regex eliminiert. Security-Hardening: Ownership-Checks auf allen schreibenden Endpoints, rollenbasierte Zugriffsprüfung auf Controller-Ebene.
 
-**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService. **421 Testmethoden in 32 Testklassen** — parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung. Cypress E2E: 5 Testdateien, 113+ Testfälle.
+**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService. **386 Testmethoden in 35 Testklassen** — parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung. Cypress E2E: 5 Testdateien, 73 Testfälle.
 
 **Deployment:** CI/CD via GitHub Actions. Frontend und Backend laufen produktiv auf Azure App Service (Details im Deployment-Abschnitt).
 
@@ -1177,7 +1177,7 @@ Die folgenden Erweiterungen sind priorisiert, um die Lösung von einem funktiona
 *Features die in der Live-Demo den Human-in-the-Loop Ansatz greifbar machen.*
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
-| B-24 | **Manueller Risk Score Override (Auditor)** | Auditor überschreibt den AI-generierten Risk Score mit Pflichtkommentar — zeigt Human-in-the-Loop live in der Demo. Feld `overrideRiskScore` auf AuditReport, Inline-Edit im Frontend. | 2–3h |
+| B-24 | **Evidence-Validierung durch Auditor** | Manuell vom Fund Manager eingereichte Evidence erhält Status `PENDING_VALIDATION` und fliesst erst nach expliziter Freigabe durch den Auditor in den Risk Score ein. Verhindert Manipulation des Scores durch selektiv positive Eigenbelege. Neues Feld `manuallySubmitted: boolean` auf Evidence, neuer Validierungs-Endpoint für Auditoren. | 2–3 Tage |
 | B-03 | **Longitudinales Risk Tracking** | Sentiment-Zeitreihe pro Holding als Timeseries-Chart. | 1–2 Tage |
 | B-16 | **Realtime-Updates via SSE/WebSocket** | Statuswechsel (`AI_ANALYZING` → `PENDING_REVIEW`) ohne Page-Reload sichtbar. | 1–2 Tage |
 

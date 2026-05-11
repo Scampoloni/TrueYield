@@ -351,6 +351,51 @@ class AiAnalysisServiceTest {
         assertEquals(10, result.score());
     }
 
+    // ── isPremiumSource ──────────────────────────────────────────────────────
+
+    @Test
+    void isPremiumSource_returnsTrue_whenModelAnswersYes() {
+        ChatResponse mockResponse = mockChatResponse("yes");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+
+        assertTrue(aiAnalysisService.isPremiumSource("Reuters"));
+    }
+
+    @Test
+    void isPremiumSource_returnsFalse_whenModelAnswersNo() {
+        ChatResponse mockResponse = mockChatResponse("no");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+
+        assertFalse(aiAnalysisService.isPremiumSource("SomeBlog"));
+    }
+
+    @Test
+    void isPremiumSource_returnsFalse_whenNotAvailable() {
+        AiAnalysisService service = new AiAnalysisService();
+        ReflectionTestUtils.setField(service, "chatModel", null);
+        ReflectionTestUtils.setField(service, "apiKey", "");
+
+        assertFalse(service.isPremiumSource("Reuters"));
+        verifyNoInteractions(chatModel);
+    }
+
+    @Test
+    void isPremiumSource_returnsFalse_whenSourceIsNull() {
+        assertFalse(aiAnalysisService.isPremiumSource(null));
+    }
+
+    @Test
+    void isPremiumSource_returnsFalse_whenSourceIsBlank() {
+        assertFalse(aiAnalysisService.isPremiumSource("   "));
+    }
+
+    @Test
+    void isPremiumSource_returnsFalse_whenChatModelThrows() {
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("AI error"));
+
+        assertFalse(aiAnalysisService.isPremiumSource("Bloomberg"));
+    }
+
     // ── Helper ───────────────────────────────────────────────────────────────
 
     private ChatResponse mockChatResponse(String text) {
