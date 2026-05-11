@@ -188,7 +188,7 @@ Schnelle, kostengünstige und regulatorisch akzeptable ESG-Verifikation von Inve
 **3. Portfolio-Submission-Flow (Fund Manager)**
 - Holdings werden manuell per Formular (Symbol, ISIN, Name, Gewichtung) hinzugefügt
 - CSV/Excel-Upload mit Drag & Drop *(geplant, noch nicht implementiert — siehe Backlog B-07)*
-- Beschreibungs-Felder: Portfolio-Name, ESG-Zielsetzung, Ziel-Artikel (8 oder 9)
+- Beschreibungs-Felder: Portfolio-Name, Beschreibung (optional); ESG-Zielsetzung und Ziel-Artikel 8/9 *(geplant)*
 - Audit-Trigger → Status wechselt zu `AI_ANALYZING`
 
 **4. Audit-Dashboard (Auditor)**
@@ -942,6 +942,19 @@ Bevor ein News-Artikel als Evidence gespeichert wird, prüft `AiAnalysisService.
 
 Artikel mit einem Score unter dem **Schwellenwert 0.35** werden verworfen und nicht als Evidence gespeichert. Dies reduziert Rauschen durch irrelevante Artikel erheblich.
 
+#### Funktion 4: Portfolio-Risk-Score (RAG-Ansatz)
+
+Nach der Evidence-Sammlung ruft `AuditReportService` `AiAnalysisService.generatePortfolioRiskScore()` auf. Die Methode übergibt Holdings-Namen und die relevantesten News-Snippets als Kontext an Claude Haiku und erhält zwei Werte zurück:
+
+- **`aiRiskScore`** (Integer 0–10): Aggregierter Risiko-Score für das gesamte Portfolio; 0 = kein ESG-Risiko, 10 = kritisch
+- **`aiRiskRationale`** (String): Kurze Begründung auf Basis der übergebenen News-Snippets
+
+Beide Felder werden im `AuditReport` persistiert und sind für den Auditor auf der Detailseite farbcodiert sichtbar (grün ≤ 3, amber 4–6, rot > 6). Im Audit-Dashboard-Queue wird `aiRiskScore` als `/10`-Wert pro Report-Zeile angezeigt.
+
+#### Funktion 5: Premium-Quellenprüfung (KI-gestützt)
+
+`AiAnalysisService.isPremiumSource()` ergänzt die hardcodierte Liste bekannter Premium-Quellen (`isKnownPremiumSource()`: Reuters, Bloomberg, Financial Times, WSJ, Guardian) um eine KI-basierte Einschätzung: Claude Haiku antwortet auf eine Ja/Nein-Frage, ob eine Quelle als verlässliche Finanz- oder ESG-Nachrichtenquelle gilt. Das Ergebnis beeinflusst das Source-Reliability-Weighting: Premium-Quellen (erkannt durch Hardcode **oder** KI) werden voll gewichtet, andere mit Faktor 0.5 gedämpft.
+
 #### Fallback-Verhalten
 
 Ist kein Anthropic API-Key konfiguriert (oder der API-Aufruf schlägt fehl), verhält sich `AiAnalysisService` graceful:
@@ -949,6 +962,8 @@ Ist kein Anthropic API-Key konfiguriert (oder der API-Aufruf schlägt fehl), ver
 - `generateRiskSummary()` liefert `"AI analysis unavailable."` — Audit-Workflow wird nicht blockiert
 - `analyzeSentiment()` liefert `0.0` (neutral) — Evidence wird trotzdem gespeichert
 - `analyzeRelevance()` liefert `1.0` (relevant) — kein Artikel wird fälschlicherweise gefiltert
+- `generatePortfolioRiskScore()` liefert `{score: 5, rationale: "AI analysis unavailable."}` — neutraler Mittelwert
+- `isPremiumSource()` liefert `false` — konservatives Fallback (kein falsches Premium-Gewicht)
 
 #### KI-Chat-Assistent (`/chat`)
 
@@ -976,7 +991,7 @@ TrueYield implementiert folgende Qualitätskriterien für News-Quellen, um die N
 | **ESG-Relevanz** | Zweistufiger KI-Filter: Guardian-Abfragen enthalten `ESG` als Pflicht-Keyword; alle Artikel durchlaufen anschliessend `analyzeRelevance()` (Claude Haiku, Schwellenwert 0.35) |
 | **Firmennamen-Normalisierung** | Rechtliche Suffixe (`Inc.`, `PLC`, `Ltd.`, `AG`, `SE`, etc.) werden vor der Suche entfernt für bessere Trefferqualität |
 | **Duplikatkontrolle** | URL-basierte Deduplizierung in-memory (cross-provider) und gegen DB (`existsByHoldingIdAndSourceUrl`) vor AI-Calls |
-| **Mengenbegrenzung** | Maximal 5 Artikel pro Provider-Abfrage (`MAX_ARTICLES = 5`); nach Deduplizierung und Relevanzfilter werden bis zu 10 Evidence-Einträge pro Holding gespeichert (cap nach Relevanz-Score priorisiert) |
+| **Mengenbegrenzung** | Maximal 10 Artikel pro Provider-Abfrage (`MAX_ARTICLES = 10`); nach Deduplizierung und Relevanzfilter werden bis zu 10 Evidence-Einträge pro Holding gespeichert (cap nach Relevanz-Score priorisiert) |
 | **Nachvollziehbarkeit** | Jeder Evidence-Eintrag speichert Quellenname, URL, Publikationsdatum und Snippet |
 
 **Bekannte Einschränkungen (Coverage Limits):**
@@ -1120,11 +1135,7 @@ Das Backend basiert auf Spring Boot 3.4.5 mit MongoDB Atlas und Auth0 JWT-Authen
 Alle Kernfunktionen — Portfolio-Verwaltung, Holdings, Evidence-Erfassung, Audit-Workflow und
 KI-gestützte Risikoanalyse — sind vollständig umgesetzt und getestet; Deployment ist vorbereitet (siehe Deployment-Sektion).
 
-**KI-Integration (Spring AI):** Spring AI 1.0.0 (`spring-ai-starter-model-anthropic`) mit `AnthropicChatModel`
-und Claude Haiku analysiert beim Erstellen eines Audit-Berichts das Portfolio und generiert automatisch eine
-ESG-Risikozusammenfassung (`AI_ANALYZING → PENDING_REVIEW`). Evidence-Einträge erhalten KI-basierte Sentimentwerte
-(-1.0 bis +1.0), die Greenwashing-relevante Nachrichten klassifizieren und als Risk-Score (0–10)
-sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert werden.
+**KI-Integration (Spring AI) — 5 Funktionen:** Spring AI 1.0.0 (`spring-ai-starter-model-anthropic`) mit `AnthropicChatModel` und Claude Haiku (`claude-haiku-4-5-20251001`) implementiert fünf KI-Funktionen: (1) `generateRiskSummary()` — ESG-Risikozusammenfassung beim Audit-Erstellen (`AI_ANALYZING → PENDING_REVIEW`); (2) `analyzeSentiment()` — Sentimentwert (-1.0 bis +1.0) pro Evidence-Eintrag, visualisiert als Risk-Score (0–10) und Sentiment-Badge; (3) `analyzeRelevance()` — ESG-Relevanzfilter für News-Artikel (Schwellenwert 0.35); (4) `generatePortfolioRiskScore()` — RAG-Ansatz: Holdings + News-Snippets → aggregierter `aiRiskScore` (0–10) und `aiRiskRationale` pro AuditReport, farbcodiert im Audit-Detail und Queue; (5) `isPremiumSource()` — KI-basierte Ergänzung der hardcodierten Premium-Quellen-Liste (Reuters, Bloomberg, FT, WSJ, Guardian) zur korrekten Source-Reliability-Gewichtung. Alle Methoden haben graceful Fallbacks wenn kein API-Key konfiguriert ist.
 
 **Drittsystem-Integration (Multi-Provider News):** TrueYield aggregiert ESG-Nachrichten aus vier Quellen parallel: The Guardian API, NewsAPI.org, Newsdata.io und Alpha Vantage. Alle Artikel durchlaufen einen zweistufigen KI-Filter: zuerst ESG-Relevanz-Scoring (Schwellenwert 0.35, Claude Haiku), dann Sentiment-Analyse. Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian) werden mit vollem Gewicht gewertet, andere mit Faktor 0.5 gedämpft. URL-Deduplizierung verhindert doppelte Evidence cross-provider. Evidence-Cap bei 10 Einträgen pro Holding, nach Relevanz priorisiert.
 
@@ -1146,7 +1157,7 @@ sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert w
 
 **Code-Qualität:** `DRAFT`-Status existiert nicht im `AuditStatus`-Enum und wurde bereinigt. SonarCloud aktiv auf `main` (non-blocking, `continue-on-error: true`). ReDoS-Risiken in News-Provider-Regex eliminiert. Security-Hardening: Ownership-Checks auf allen schreibenden Endpoints, rollenbasierte Zugriffsprüfung auf Controller-Ebene.
 
-**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService. **421 Testmethoden in 32 Testklassen** — parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung. Cypress E2E: 5 Testdateien, 113+ Testfälle.
+**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService. **432 Testmethoden in 32 Testklassen** — parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung inkl. vollständiger Abdeckung aller 5 `AiAnalysisService`-Methoden und beider `fetchNewsForSymbol`-Provider-Implementierungen. Cypress E2E: 5 Testdateien, 113+ Testfälle.
 
 **Deployment:** CI/CD via GitHub Actions. Frontend und Backend laufen produktiv auf Azure App Service (Details im Deployment-Abschnitt).
 
@@ -1172,6 +1183,7 @@ Die folgenden Erweiterungen sind priorisiert, um die Lösung von einem funktiona
 | B-10 | **KPI-Karten für Fund Manager** | Drei Dashboard-Cards (Total / Pending Review / Approved) auf der Portfolios-Übersicht; Daten live aus AuditReport-Status via erweitertem PortfolioResponseDTO |
 | B-25 | **Evidence Confidence Badge** | HIGH / MEDIUM / LOW Badge auf jeder Evidence-Karte (Grün/Amber/Rot) — berechnet aus Quell-Tier und Sentiment-Stärke; sichtbar auf Holding-Detail und Audit-Report |
 | B-26 | **SFDR-Ampel auf Portfolio-Liste** | Farbiger Dot + Label ("Art. 9" / "Art. 8" / "—") direkt auf der Tabellenzeile; parallel fetch von `/api/compliance/sfdr`; nur für Fund Manager und Compliance Officer |
+| B-27 | **Portfolio-Risk-Score (KI, RAG)** | `generatePortfolioRiskScore()` berechnet einen aggregierten Risiko-Score (0–10) und eine KI-Begründung (`aiRiskRationale`) aus Holdings + News-Snippets. Farbcodierte Anzeige im Audit-Detail und Audit-Queue |
 
 ### Offen: Demo-Impact (Abgabe 24.05.2026)
 *Features die in der Live-Demo den Human-in-the-Loop Ansatz greifbar machen.*

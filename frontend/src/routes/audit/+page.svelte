@@ -22,7 +22,7 @@
             portfolio: r.portfolioName || r.portfolioId,
             auditor: r.auditorId ?? '—',
             status: r.auditStatus,
-            score: null,
+            score: r.aiRiskScore ?? null,
             date: r.createdAt ? r.createdAt.slice(0, 10) : '—'
           }));
         }
@@ -82,11 +82,6 @@
     return s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
-  function scoreClass(n: number) {
-    if (n >= 80) return 'high';
-    if (n >= 60) return 'medium';
-    return 'low';
-  }
 </script>
 
 <div class="topbar">
@@ -186,8 +181,8 @@
               <td><span class="pf-id">{r.auditor}</span></td>
               <td><span class="badge {badgeClass(r.status)}">{badgeLabel(r.status)}</span></td>
               <td>
-                {#if r.score}
-                  <span class="score {scoreClass(r.score)}">{r.score}%</span>
+                {#if r.score != null}
+                  <span style="font-weight:600;color:{r.score<=3?'#4ade80':r.score<=6?'#fbbf24':'#f87171'}">{r.score}/10</span>
                 {:else}
                   <span class="text-muted">—</span>
                 {/if}
