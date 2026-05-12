@@ -6,6 +6,10 @@
   const portfolioId = page.params.id;
   const holdingId = page.params.hid;
 
+  const roles = $derived(page.data.user?.user_roles ?? []);
+  const canCreate = $derived(roles.includes('auditor') || roles.includes('compliance-officer'));
+  $effect(() => { if (!canCreate) goto('/portfolios'); });
+
   let contentSnippet = $state('');
   let sourceUrl = $state('');
   let loading = $state(false);
