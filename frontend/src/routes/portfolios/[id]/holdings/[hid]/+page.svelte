@@ -7,7 +7,7 @@
   const holdingId = page.params.hid;
   const isFundManager = $derived((page.data.user?.user_roles ?? []).includes('fund-manager'));
   const canAddEvidence = $derived((page.data.user?.user_roles ?? [])
-    .some(r => r === 'auditor' || r === 'compliance-officer'));
+    .some((r: string) => r === 'auditor' || r === 'compliance-officer'));
   const returnTo = $derived(page.url.searchParams.get('returnTo') ?? `/portfolios/${portfolioId}`);
 
   let evidence: any[] = $state([]);
