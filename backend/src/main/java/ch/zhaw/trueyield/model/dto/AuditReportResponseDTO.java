@@ -18,6 +18,7 @@ public class AuditReportResponseDTO {
     private String aiRiskSummary;
     private Integer aiRiskScore;
     private String aiRiskRationale;
+    private Double aiTrainingSentiment;
     private String auditorId;
     private LocalDateTime createdAt;
 
@@ -30,6 +31,7 @@ public class AuditReportResponseDTO {
                 report.getAiRiskSummary(),
                 report.getAiRiskScore(),
                 report.getAiRiskRationale(),
+                report.getAiTrainingSentiment(),
                 report.getAuditorId(),
                 report.getCreatedAt()
         );

@@ -22,7 +22,7 @@
             portfolio: r.portfolioName || r.portfolioId,
             auditor: r.auditorId ?? '—',
             status: r.auditStatus,
-            score: null,
+            score: r.aiRiskScore ?? null,
             date: r.createdAt ? r.createdAt.slice(0, 10) : '—'
           }));
         }
@@ -34,16 +34,25 @@
           const dashRes = await fetch(`/api/service/auditreport/dashboard?portfolioId=${p.id}`);
           if (!dashRes.ok) continue;
           const agg: any[] = await dashRes.json();
-          for (const a of agg) {
-            for (const itemId of (a.itemIds || [])) {
+          const allIds: string[] = agg.flatMap((a: any) => a.itemIds || []);
+          const reportDetails = await Promise.all(
+            allIds.map((itemId: string) =>
+              fetch(`/api/service/auditreport/${itemId}`)
+                .then(r => r.ok ? r.json() : null)
+                .catch(() => null)
+            )
+          );
+          for (const agg_item of agg) {
+            for (const itemId of (agg_item.itemIds || [])) {
+              const detail = reportDetails.find((r: any) => r?.id === itemId);
               rows.push({
                 id: itemId,
                 reportId: itemId.slice(-8).toUpperCase(),
                 portfolio: p.name,
-                auditor: '—',
-                status: a.id,
-                score: null,
-                date: '—'
+                auditor: detail?.auditorId ?? '—',
+                status: agg_item.id,
+                score: detail?.aiRiskScore ?? null,
+                date: detail?.createdAt ? detail.createdAt.slice(0, 10) : '—'
               });
             }
           }
@@ -83,8 +92,8 @@
   }
 
   function scoreClass(n: number) {
-    if (n >= 80) return 'high';
-    if (n >= 60) return 'medium';
+    if (n >= 7) return 'high';
+    if (n >= 4) return 'medium';
     return 'low';
   }
 </script>
@@ -186,8 +195,8 @@
               <td><span class="pf-id">{r.auditor}</span></td>
               <td><span class="badge {badgeClass(r.status)}">{badgeLabel(r.status)}</span></td>
               <td>
-                {#if r.score}
-                  <span class="score {scoreClass(r.score)}">{r.score}%</span>
+                {#if r.score != null}
+                  <span class="score {scoreClass(r.score)}">{r.score}/10</span>
                 {:else}
                   <span class="text-muted">—</span>
                 {/if}
