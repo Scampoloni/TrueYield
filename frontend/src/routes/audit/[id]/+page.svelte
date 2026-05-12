@@ -241,6 +241,7 @@
     {/if}
 
     {#if report.aiRiskSummary}
+      {@const allEvidence = Object.values(evidenceByHolding).flat()}
       <div class="ai-summary">
         <div class="ai-icon">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -248,9 +249,25 @@
             <path d="M6 8h4M8 6v4" stroke="#4f8ef7" stroke-width="1.3" stroke-linecap="round"/>
           </svg>
         </div>
-        <div>
+        <div style="flex:1;min-width:0;">
           <div class="ai-summary-title">AI Analysis Summary</div>
+          <div class="ai-summary-section-lbl">Claude Training Knowledge</div>
           <div class="ai-summary-text">{report.aiRiskSummary}</div>
+          {#if allEvidence.length > 0}
+            <div class="ai-summary-section-lbl" style="margin-top:14px;">Evidence Articles ({allEvidence.length})</div>
+            <div class="ai-evidence-list">
+              {#each allEvidence.slice(0, 10) as e}
+                <div class="ai-evidence-item">
+                  <span class="badge {e.sentiment === 'POSITIVE' ? 'badge-approved' : e.sentiment === 'NEUTRAL' ? 'badge-pending' : 'badge-rejected'}" style="font-size:10px;padding:1px 5px;">{e.sentiment}</span>
+                  <span class="ai-evidence-headline">{e.headline}</span>
+                  {#if e.sourceName}<span class="badge-source-sm">{e.sourceName}</span>{/if}
+                </div>
+              {/each}
+              {#if allEvidence.length > 10}
+                <div class="ai-evidence-more">+{allEvidence.length - 10} more (see Holdings below)</div>
+              {/if}
+            </div>
+          {/if}
         </div>
       </div>
     {/if}
@@ -546,5 +563,37 @@
     background: rgba(239, 68, 68, 0.15);
     color: #ef4444;
     border-color: rgba(239, 68, 68, 0.3);
+  }
+  .ai-summary-section-lbl {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-3, #7a90aa);
+    margin-bottom: 6px;
+  }
+  .ai-evidence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ai-evidence-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .ai-evidence-headline {
+    font-size: 12px;
+    color: var(--text-2, #b4c6de);
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
+  }
+  .ai-evidence-more {
+    font-size: 11px;
+    color: var(--text-3, #7a90aa);
+    font-style: italic;
+    margin-top: 2px;
   }
 </style>

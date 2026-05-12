@@ -73,23 +73,43 @@ public class ComplianceService {
         List<Holding> holdings = holdingRepository.findByPortfolioId(portfolio.getId());
         List<String> holdingIds = holdings.stream().map(Holding::getId).toList();
 
-        List<Double> scores = holdingIds.stream()
+        List<Double> evidenceScores = holdingIds.stream()
                 .flatMap(hid -> evidenceRepository.findByHoldingId(hid).stream())
                 .map(Evidence::getAiSentimentScore)
                 .filter(s -> s != null)
                 .toList();
 
-        if (scores.isEmpty()) {
+        // Derive training-based sentiment from aiRiskScore (reliable, always set by generatePortfolioRiskScore)
+        // Formula: sentiment = 1 - (score / 5), maps 0→+1.0, 5→0.0, 10→-1.0
+        Double trainingSentiment = auditReportRepository
+                .findByPortfolioIdOrderByCreatedAtDesc(portfolio.getId())
+                .stream()
+                .filter(r -> r.getAiRiskScore() != null)
+                .findFirst()
+                .map(r -> 1.0 - (r.getAiRiskScore() / 5.0))
+                .orElse(null);
+
+        if (evidenceScores.isEmpty() && trainingSentiment == null) {
             return new SfdrPortfolioScoreDTO(
                     portfolio.getId(), portfolio.getName(),
                     SfdrClassification.INSUFFICIENT_DATA, 0.0, 0);
         }
 
-        double avg = scores.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
-        SfdrClassification classification = classify(avg);
+        double blended;
+        if (trainingSentiment != null && !evidenceScores.isEmpty()) {
+            double evidenceAvg = evidenceScores.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+            // 70% training knowledge (AI risk score), 30% evidence sentiment
+            blended = (trainingSentiment * 0.7) + (evidenceAvg * 0.3);
+        } else if (trainingSentiment != null) {
+            blended = trainingSentiment;
+        } else {
+            blended = evidenceScores.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        }
+
+        SfdrClassification classification = classify(blended);
         return new SfdrPortfolioScoreDTO(
                 portfolio.getId(), portfolio.getName(), classification,
-                Math.round(avg * 1000.0) / 1000.0, scores.size());
+                Math.round(blended * 1000.0) / 1000.0, evidenceScores.size());
     }
 
     private static SfdrClassification classify(double avgSentiment) {

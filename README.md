@@ -611,7 +611,7 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
                                       │
                                       ▼
                               ┌───────────────┐
-                              │ AI_ANALYZING  │  (KI generiert aiRiskSummary)
+                              │ AI_ANALYZING  │  (KI generiert aiRiskSummary, aiRiskScore, aiRiskRationale)
                               └───────┬───────┘
                                       │  KI fertig
                                       ▼
@@ -734,9 +734,9 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 |---|---|
 | **Akteur** | System (KI/API) |
 | **Vorbedingung** | News-Daten wurden abgerufen (UC-07). Spring AI ist konfiguriert. |
-| **Normalablauf** | 1. System übergibt News-Texte an Spring AI (Claude/OpenAI). 2. KI-Modell bewertet die ESG-Risiken (Sentiment, Schweregrad, Kategorie). 3. KI generiert eine strukturierte Zusammenfassung (`aiRiskSummary`) pro AuditReport. 4. System speichert die Zusammenfassung als `aiRiskSummary` im AuditReport. |
+| **Normalablauf** | 1. System übergibt News-Texte an Spring AI (Claude/OpenAI). 2. KI-Modell bewertet die ESG-Risiken (Sentiment, Schweregrad, Kategorie). 3. KI generiert eine strukturierte Zusammenfassung (`aiRiskSummary`), einen numerischen Risikowert (`aiRiskScore`) und eine Begründung (`aiRiskRationale`) pro AuditReport. 4. System speichert alle drei Felder im AuditReport. |
 | **Ausnahmen** | KI-API nicht erreichbar → Fehlermeldung, AuditReport bleibt ohne Summary. |
-| **Nachbedingung** | `AuditReport.aiRiskSummary` enthält die KI-generierte Einschätzung. |
+| **Nachbedingung** | `AuditReport.aiRiskSummary`, `aiRiskScore` und `aiRiskRationale` enthalten die KI-generierte Einschätzung. |
 
 ---
 

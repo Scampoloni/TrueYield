@@ -109,6 +109,13 @@ public class AuditReportService {
             log.warn("Portfolio risk score generation failed for portfolio '{}': {}", dto.getPortfolioId(), e.getMessage());
         }
 
+        try {
+            double trainingSentiment = aiAnalysisService.generatePortfolioSentiment(holdingNames);
+            report.setAiTrainingSentiment(trainingSentiment);
+        } catch (Exception e) {
+            log.warn("Portfolio training sentiment generation failed for portfolio '{}': {}", dto.getPortfolioId(), e.getMessage());
+        }
+
         report.setAuditStatus(AuditStatus.PENDING_REVIEW);
         return auditReportRepository.save(report);
     }
@@ -195,6 +202,16 @@ public class AuditReportService {
                 .stream()
                 .map(AuditReportResponseDTO::fromEntity)
                 .toList();
+    }
+
+    public AuditReportResponseDTO getLatestAuditReportByPortfolioId(String portfolioId) {
+        accessControlService.requirePortfolioAccess(portfolioId);
+        return auditReportRepository.findByPortfolioIdOrderByCreatedAtDesc(portfolioId)
+                .stream()
+                .findFirst()
+                .map(AuditReportResponseDTO::fromEntity)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No audit report found for portfolio: " + portfolioId));
     }
 
     public List<AuditReportAggregationDTO> getAuditReportDashboard(String portfolioId) {

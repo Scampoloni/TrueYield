@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -72,6 +73,8 @@ class AuditReportServiceTest {
             .thenReturn("Mock AI risk summary.");
         lenient().when(aiAnalysisService.generatePortfolioRiskScore(anyList(), anyList()))
             .thenReturn(new AiAnalysisService.PortfolioRiskResult(5, "Mock risk rationale."));
+        lenient().when(aiAnalysisService.generatePortfolioSentiment(anyList()))
+            .thenReturn(0.0);
     }
 
     // ── getAuditReportById ───────────────────────────────────────────────────
@@ -473,5 +476,104 @@ class AuditReportServiceTest {
         verify(auditReportRepository, times(2)).save(any(AuditReport.class));
     }
 
+    @Test
+    void createAuditReport_continuesGracefully_whenPortfolioNameLoadFails() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        when(portfolioService.getPortfolioByIdForAuditor("portfolio-001"))
+                .thenThrow(new RuntimeException("DB unavailable"));
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+    }
+
+    @Test
+    void createAuditReport_continuesGracefully_whenHoldingsLoadFails() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001"))
+                .thenThrow(new RuntimeException("DB offline"));
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+    }
+
+    @Test
+    void createAuditReport_continuesGracefully_whenTrainingSentimentFails() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
+        when(aiAnalysisService.generatePortfolioSentiment(anyList()))
+                .thenThrow(new RuntimeException("AI sentiment unavailable"));
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+        verify(auditReportRepository, times(2)).save(any(AuditReport.class));
+    }
+
+    // ── getAuditorQueue ──────────────────────────────────────────────────────
+
+    @Test
+    void getAuditorQueue_returnsResponseDTOs_whenReportsExist() {
+        AuditReport report = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
+        report.setId("report-001");
+        when(auditReportRepository.findByAuditStatusOrAuditorId(AuditStatus.PENDING_REVIEW, "auditor-001"))
+                .thenReturn(List.of(report));
+
+        var result = auditReportService.getAuditorQueue("auditor-001");
+
+        assertEquals(1, result.size());
+        assertEquals("portfolio-001", result.get(0).getPortfolioId());
+        assertEquals(AuditStatus.PENDING_REVIEW, result.get(0).getAuditStatus());
+    }
+
+    @Test
+    void getAuditorQueue_returnsEmptyList_whenNoReports() {
+        when(auditReportRepository.findByAuditStatusOrAuditorId(AuditStatus.PENDING_REVIEW, "auditor-001"))
+                .thenReturn(List.of());
+
+        var result = auditReportService.getAuditorQueue("auditor-001");
+
+        assertTrue(result.isEmpty());
+    }
+
+    // ── getLatestAuditReportByPortfolioId ────────────────────────────────────
+
+    @Test
+    void getLatestAuditReportByPortfolioId_returnsDTO_whenReportFound() {
+        AuditReport report = new AuditReport("portfolio-001", AuditStatus.APPROVED);
+        report.setId("report-001");
+        doNothing().when(accessControlService).requirePortfolioAccess("portfolio-001");
+        when(auditReportRepository.findByPortfolioIdOrderByCreatedAtDesc("portfolio-001"))
+                .thenReturn(List.of(report));
+
+        var result = auditReportService.getLatestAuditReportByPortfolioId("portfolio-001");
+
+        assertEquals("portfolio-001", result.getPortfolioId());
+        assertEquals(AuditStatus.APPROVED, result.getAuditStatus());
+    }
+
+    @Test
+    void getLatestAuditReportByPortfolioId_throwsNotFound_whenNoReport() {
+        doNothing().when(accessControlService).requirePortfolioAccess("portfolio-001");
+        when(auditReportRepository.findByPortfolioIdOrderByCreatedAtDesc("portfolio-001"))
+                .thenReturn(List.of());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> auditReportService.getLatestAuditReportByPortfolioId("portfolio-001"));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
 
 }

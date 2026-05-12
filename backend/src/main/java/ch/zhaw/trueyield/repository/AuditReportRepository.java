@@ -18,6 +18,8 @@ public interface AuditReportRepository extends MongoRepository<AuditReport, Stri
 
     List<AuditReport> findByAuditStatusOrAuditorId(AuditStatus status, String auditorId);
 
+    List<AuditReport> findByPortfolioIdOrderByCreatedAtDesc(String portfolioId);
+
     @Aggregation(pipeline = {
         "{ $match: { portfolioId: ?0 } }",
         "{ $group: { _id: '$auditStatus', count: { $sum: 1 }, itemIds: { $push: '$_id' } } }"
