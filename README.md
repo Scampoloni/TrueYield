@@ -10,7 +10,7 @@ Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch ge
 - Backend CI führt `mvn verify` aus (inkl. Unit- und Integrationstests mit Testcontainers).
 - JaCoCo HTML-Report wird unter `backend/target/site/jacoco/index.html` erzeugt.
 - Coverage-Gate: Build failt wenn Instruction Coverage der Core Services (`PortfolioService`, `HoldingService`, `AuditReportService`, `AuditCommentService`, `EvidenceService`, `UserService`, `ComplianceService`) unter **90%** fällt.
-- Aktueller Stand: alle Core Services ≥ 90% abgedeckt (Gate aktiv und grün). Gesamt-Projektabdeckung inkl. Controller, Modelle und Konfigurationsklassen: siehe Badge oben (~94%).
+- Aktueller Stand: alle Core Services ≥ 90% abgedeckt (Gate aktiv und grün). Gesamt-Projektabdeckung inkl. Controller, Modelle und Konfigurationsklassen: siehe Badge oben (lokal zuletzt **93.1%** Instruction Coverage).
 
 ## Deployment
 
@@ -29,8 +29,8 @@ Deployment ist aktiv auf Azure App Service (Docker + GitHub Actions). Erfolgreic
 | Backend | https://trueyield-backend.azurewebsites.net |
 | API Health | https://trueyield-backend.azurewebsites.net/actuator/health |
 | SonarCloud | https://sonarcloud.io/project/overview?id=Scampoloni_trueyield |
-| Roadmap History | [PENDING — aus GitHub Project → Roadmap → History abrufen] |
-| GitHub Insights Chart | [PENDING — aus GitHub → Insights → Charts abrufen] |
+| Roadmap History | https://github.com/users/Scampoloni/projects *(Project-History im GitHub Project; mit entsprechender Berechtigung sichtbar)* |
+| GitHub Insights Chart | https://github.com/Scampoloni/trueyield/pulse |
 
 ## Inhaltsverzeichnis
 - [Einleitung](#einleitung)
@@ -967,7 +967,7 @@ TrueYield nutzt **Spring AI 1.0.0** (`spring-ai-starter-model-anthropic`) mit **
 
 **Signatur:** `generatePortfolioSentiment(List<String> holdingNames) → double`  
 **Fallback:** `0.0`  
-**Kontext:** Claude Haiku bewertet das ESG-Sentiment des Portfolios auf Basis seines Trainingswissens (−1.0 bis +1.0), ohne News-Evidence. Der Wert wird als `aiTrainingSentiment` im AuditReport gespeichert. **Hinweis zur SFDR-Blending-Logik:** `ComplianceService.scorePortfolio()` leitet den Trainings-Sentiment jedoch nicht aus `aiTrainingSentiment` ab, sondern aus `aiRiskScore` via Formel `sentiment = 1 − (aiRiskScore / 5)`. Das Blending erfolgt 70 % Trainings-Sentiment + 30 % Evidence-Durchschnitt und bestimmt die SFDR-Klassifikation (>0.3 → ARTICLE_9, >−0.1 → ARTICLE_8, sonst NON_SFDR).  
+**Kontext:** Claude Haiku bewertet das ESG-Sentiment des Portfolios auf Basis seines Trainingswissens (−1.0 bis +1.0), ohne News-Evidence. Der Wert wird als `aiTrainingSentiment` im AuditReport gespeichert. **Hinweis zur aktuellen SFDR-Logik:** `ComplianceService.scorePortfolio()` verwendet derzeit als Trainings-Sentiment die aus `aiRiskScore` abgeleitete Formel `sentiment = 1 − (aiRiskScore / 5)` (nicht `aiTrainingSentiment`). Das Blending erfolgt 70 % Trainings-Sentiment + 30 % Evidence-Durchschnitt und bestimmt die SFDR-Klassifikation (>0.3 → ARTICLE_9, >−0.1 → ARTICLE_8, sonst NON_SFDR).  
 **Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 139–170](backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L139-L170) | Blending: [`backend/src/main/java/ch/zhaw/trueyield/service/ComplianceService.java`, Zeilen 72–119](backend/src/main/java/ch/zhaw/trueyield/service/ComplianceService.java#L72-L119)
 
 #### Fallback-Verhalten (Zusammenfassung)
@@ -1183,7 +1183,7 @@ sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert w
 
 **Code-Qualität:** `DRAFT`-Status existiert nicht im `AuditStatus`-Enum und wurde bereinigt. SonarCloud aktiv auf `main` (non-blocking, `continue-on-error: true`). ReDoS-Risiken in News-Provider-Regex eliminiert. Security-Hardening: Ownership-Checks auf allen schreibenden Endpoints, rollenbasierte Zugriffsprüfung auf Controller-Ebene.
 
-**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService. **386 Testmethoden in 35 Testklassen** — parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung. Cypress E2E: 5 Testdateien, 73 Testfälle.
+**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService. **479 Testmethoden in 36 Testklassen** (lokaler `surefire-reports` Stand) — parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung. Cypress E2E: 5 Testdateien, 73 Testfälle.
 
 **Deployment:** CI/CD via GitHub Actions. Frontend und Backend laufen produktiv auf Azure App Service (Details im Deployment-Abschnitt).
 
@@ -1214,7 +1214,7 @@ Die folgenden Erweiterungen sind priorisiert, um die Lösung von einem funktiona
 *Features die in der Live-Demo den Human-in-the-Loop Ansatz greifbar machen.*
 | # | Feature | Mehrwert | Aufwand |
 |---|---------|----------|---------|
-| B-24 | **Evidence-Validierung durch Auditor** | Manuell vom Fund Manager eingereichte Evidence erhält Status `PENDING_VALIDATION` und fliesst erst nach expliziter Freigabe durch den Auditor in den Risk Score ein. Verhindert Manipulation des Scores durch selektiv positive Eigenbelege. Neues Feld `manuallySubmitted: boolean` auf Evidence, neuer Validierungs-Endpoint für Auditoren. | 2–3 Tage |
+| B-24 | **Evidence-Validierung durch Auditor** | Manuell ergänzte Evidence (aktuell durch Auditoren/Compliance-Officers) erhält Status `PENDING_VALIDATION` und fliesst erst nach expliziter Freigabe durch den Auditor in den Risk Score ein. Verhindert Manipulation des Scores durch selektiv positive Eigenbelege. Neues Feld `manuallySubmitted: boolean` auf Evidence, neuer Validierungs-Endpoint für Auditoren. | 2–3 Tage |
 | B-03 | **Longitudinales Risk Tracking** | Sentiment-Zeitreihe pro Holding als Timeseries-Chart. | 1–2 Tage |
 | B-16 | **Realtime-Updates via SSE/WebSocket** | Statuswechsel (`AI_ANALYZING` → `PENDING_REVIEW`) ohne Page-Reload sichtbar. | 1–2 Tage |
 
