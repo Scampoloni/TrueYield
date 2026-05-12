@@ -75,6 +75,15 @@ public class AuditReportServiceController {
         return new ResponseEntity<>(auditReportService.getAuditorQueue(auditorId), HttpStatus.OK);
     }
 
+    @GetMapping("/latest")
+    @PreAuthorize("hasAnyRole('fund-manager','compliance-officer')")
+    public ResponseEntity<AuditReportResponseDTO> getLatestByPortfolio(
+            @RequestParam String portfolioId) {
+        AuditReportResponseDTO result =
+                auditReportService.getLatestAuditReportByPortfolioId(portfolioId);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
     @GetMapping("/dashboard")
     @PreAuthorize("hasAnyRole('fund-manager','compliance-officer')")
     public ResponseEntity<List<AuditReportAggregationDTO>> getDashboard(

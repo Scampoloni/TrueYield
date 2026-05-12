@@ -72,6 +72,8 @@ class AuditReportServiceTest {
             .thenReturn("Mock AI risk summary.");
         lenient().when(aiAnalysisService.generatePortfolioRiskScore(anyList(), anyList()))
             .thenReturn(new AiAnalysisService.PortfolioRiskResult(5, "Mock risk rationale."));
+        lenient().when(aiAnalysisService.generatePortfolioSentiment(anyList()))
+            .thenReturn(0.0);
     }
 
     // ── getAuditReportById ───────────────────────────────────────────────────
