@@ -6,6 +6,8 @@
   const portfolioId = page.params.id;
   const holdingId = page.params.hid;
   const isFundManager = $derived((page.data.user?.user_roles ?? []).includes('fund-manager'));
+  const canAddEvidence = $derived((page.data.user?.user_roles ?? [])
+    .some(r => r === 'auditor' || r === 'compliance-officer'));
   const returnTo = $derived(page.url.searchParams.get('returnTo') ?? `/portfolios/${portfolioId}`);
 
   let evidence: any[] = $state([]);
@@ -117,6 +119,8 @@
       <button onclick={fetchNews} disabled={fetchingNews} class="btn btn-ghost" style="border: 1px solid rgba(255,255,255,0.1);">
         {fetchingNews ? (fetchNewsStatus || 'Fetching…') : 'Fetch AI News'}
       </button>
+    {/if}
+    {#if canAddEvidence}
       <a href={`/portfolios/${portfolioId}/holdings/${holdingId}/create`} class="btn btn-primary">+ Add Evidence</a>
     {/if}
     <a href={returnTo} class="btn btn-ghost">← Back</a>

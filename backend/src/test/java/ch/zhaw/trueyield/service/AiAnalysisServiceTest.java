@@ -396,6 +396,41 @@ class AiAnalysisServiceTest {
         assertFalse(aiAnalysisService.isPremiumSource("Bloomberg"));
     }
 
+    // ── generatePortfolioSentiment ───────────────────────────────────────────
+
+    @Test
+    void generatePortfolioSentiment_returnsValue_whenModelResponds() {
+        ChatResponse mockResponse = mockChatResponse("-0.6");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+
+        double result = aiAnalysisService.generatePortfolioSentiment(List.of("Shell PLC", "Exxon Mobil"));
+
+        assertEquals(-0.6, result, 0.001);
+        verify(chatModel, times(1)).call(any(Prompt.class));
+    }
+
+    @Test
+    void generatePortfolioSentiment_returnsZero_whenResponseIsNotParseable() {
+        ChatResponse mockResponse = mockChatResponse("nicht eine Zahl");
+        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+
+        double result = aiAnalysisService.generatePortfolioSentiment(List.of("Apple Inc."));
+
+        assertEquals(0.0, result);
+    }
+
+    @Test
+    void generatePortfolioSentiment_returnsZero_whenNotAvailable() {
+        AiAnalysisService service = new AiAnalysisService();
+        ReflectionTestUtils.setField(service, "chatModel", null);
+        ReflectionTestUtils.setField(service, "apiKey", "");
+
+        double result = service.generatePortfolioSentiment(List.of("Apple Inc."));
+
+        assertEquals(0.0, result);
+        verifyNoInteractions(chatModel);
+    }
+
     // ── Helper ───────────────────────────────────────────────────────────────
 
     private ChatResponse mockChatResponse(String text) {
