@@ -639,9 +639,9 @@ textarea.form-input { resize: vertical; min-height: 100px; line-height: 1.6; }
 
 /* ── SCORE ──────────────────────────────────────────────────── */
 .score { font-weight: 700; font-size: 13px; }
-.score.high { color: var(--green-light); }
+.score.high { color: var(--red); }
 .score.medium { color: var(--amber); }
-.score.low { color: var(--red); }
+.score.low { color: var(--green-light); }
 
 /* ── STATUS LARGE BADGE ─────────────────────────────────────── */
 .status-large {
