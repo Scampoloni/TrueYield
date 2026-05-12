@@ -79,13 +79,14 @@ public class ComplianceService {
                 .filter(s -> s != null)
                 .toList();
 
-        // Look up training-based sentiment from latest audit report
+        // Derive training-based sentiment from aiRiskScore (reliable, always set by generatePortfolioRiskScore)
+        // Formula: sentiment = 1 - (score / 5), maps 0→+1.0, 5→0.0, 10→-1.0
         Double trainingSentiment = auditReportRepository
                 .findByPortfolioIdOrderByCreatedAtDesc(portfolio.getId())
                 .stream()
-                .filter(r -> r.getAiTrainingSentiment() != null)
+                .filter(r -> r.getAiRiskScore() != null)
                 .findFirst()
-                .map(AuditReport::getAiTrainingSentiment)
+                .map(r -> 1.0 - (r.getAiRiskScore() / 5.0))
                 .orElse(null);
 
         if (evidenceScores.isEmpty() && trainingSentiment == null) {
@@ -97,8 +98,8 @@ public class ComplianceService {
         double blended;
         if (trainingSentiment != null && !evidenceScores.isEmpty()) {
             double evidenceAvg = evidenceScores.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
-            // Blend: 50% training knowledge, 50% evidence
-            blended = (trainingSentiment + evidenceAvg) / 2.0;
+            // 70% training knowledge (AI risk score), 30% evidence sentiment
+            blended = (trainingSentiment * 0.7) + (evidenceAvg * 0.3);
         } else if (trainingSentiment != null) {
             blended = trainingSentiment;
         } else {

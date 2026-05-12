@@ -183,6 +183,82 @@ class ComplianceServiceTest {
         assertTrue(scores.isEmpty());
     }
 
+    @Test
+    void getSfdrScores_usesTrainingSentimentOnly_whenNoEvidence() {
+        Portfolio p = makePortfolio("p1", "AI Fund");
+        Holding h = makeHolding("h1", "p1");
+        AuditReport report = makeReportWithRiskScore("p1", 0); // sentiment = 1.0 - (0/5.0) = 1.0
+        when(portfolioRepository.findAll()).thenReturn(List.of(p));
+        when(holdingRepository.findByPortfolioId("p1")).thenReturn(List.of(h));
+        when(evidenceRepository.findByHoldingId("h1")).thenReturn(List.of());
+        when(auditReportRepository.findByPortfolioIdOrderByCreatedAtDesc("p1")).thenReturn(List.of(report));
+
+        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+
+        assertEquals(SfdrClassification.ARTICLE_9, scores.get(0).classification()); // 1.0 > 0.3
+        assertEquals(0, scores.get(0).evidenceCount());
+    }
+
+    @Test
+    void getSfdrScores_blendsTrainingAndEvidence_whenBothPresent() {
+        Portfolio p = makePortfolio("p1", "Blend Fund");
+        Holding h = makeHolding("h1", "p1");
+        // aiRiskScore=0 → trainingSentiment=1.0; evidenceAvg=0.5
+        // blended = (1.0*0.7) + (0.5*0.3) = 0.85 → ARTICLE_9
+        AuditReport report = makeReportWithRiskScore("p1", 0);
+        Evidence e = makeEvidence("h1", 0.5);
+        when(portfolioRepository.findAll()).thenReturn(List.of(p));
+        when(holdingRepository.findByPortfolioId("p1")).thenReturn(List.of(h));
+        when(evidenceRepository.findByHoldingId("h1")).thenReturn(List.of(e));
+        when(auditReportRepository.findByPortfolioIdOrderByCreatedAtDesc("p1")).thenReturn(List.of(report));
+
+        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+
+        assertEquals(SfdrClassification.ARTICLE_9, scores.get(0).classification()); // 0.85 > 0.3
+        assertEquals(1, scores.get(0).evidenceCount());
+        assertEquals(0.85, scores.get(0).averageSentiment(), 0.001);
+    }
+
+    @Test
+    void getSfdrScores_returnsInsufficientData_whenNoEvidenceAndNoRiskScore() {
+        Portfolio p = makePortfolio("p1", "Empty Fund");
+        Holding h = makeHolding("h1", "p1");
+        AuditReport reportWithNullScore = makeReport(AuditStatus.PENDING_REVIEW); // aiRiskScore = null
+        when(portfolioRepository.findAll()).thenReturn(List.of(p));
+        when(holdingRepository.findByPortfolioId("p1")).thenReturn(List.of(h));
+        when(evidenceRepository.findByHoldingId("h1")).thenReturn(List.of());
+        when(auditReportRepository.findByPortfolioIdOrderByCreatedAtDesc("p1")).thenReturn(List.of(reportWithNullScore));
+
+        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+
+        assertEquals(SfdrClassification.INSUFFICIENT_DATA, scores.get(0).classification());
+    }
+
+    // ── getAllPortfolios / getAllReports ──────────────────────────────────────
+
+    @Test
+    void getAllPortfolios_delegatesToRepository() {
+        Portfolio p = makePortfolio("p1", "Fund A");
+        when(portfolioRepository.findAll()).thenReturn(List.of(p));
+
+        List<Portfolio> result = complianceService.getAllPortfolios();
+
+        assertEquals(1, result.size());
+        assertEquals("p1", result.get(0).getId());
+        verify(portfolioRepository).findAll();
+    }
+
+    @Test
+    void getAllReports_delegatesToRepository() {
+        AuditReport r = makeReport(AuditStatus.APPROVED);
+        when(auditReportRepository.findAll()).thenReturn(List.of(r));
+
+        List<AuditReport> result = complianceService.getAllReports();
+
+        assertEquals(1, result.size());
+        verify(auditReportRepository).findAll();
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────────
 
     private AuditReport makeReport(AuditStatus status) {
@@ -207,5 +283,11 @@ class ComplianceServiceTest {
         Evidence e = new Evidence(holdingId);
         e.setAiSentimentScore(sentiment);
         return e;
+    }
+
+    private AuditReport makeReportWithRiskScore(String portfolioId, int aiRiskScore) {
+        AuditReport report = new AuditReport(portfolioId, AuditStatus.APPROVED);
+        report.setAiRiskScore(aiRiskScore);
+        return report;
     }
 }
