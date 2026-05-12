@@ -136,6 +136,39 @@ public class AiAnalysisService {
         }
     }
 
+    public double generatePortfolioSentiment(List<String> holdingNames) {
+        if (!isAvailable()) {
+            return 0.0;
+        }
+        String holdings = holdingNames.isEmpty() ? "no holdings listed" : String.join(", ", holdingNames);
+        log.info("AiAnalysisService: generating training-based ESG sentiment for holdings: [{}]", holdings);
+        String prompt = """
+                You are an ESG analyst. Based solely on your training knowledge about these companies, \
+                rate the overall ESG sentiment of this portfolio as a number between -1.0 and 1.0.
+
+                Companies: %s
+
+                Guidelines:
+                -  1.0: All companies are established ESG leaders, renewable energy, no controversies
+                -  0.3: Mostly positive ESG profile with minor issues
+                -  0.0: Neutral, mixed ESG signals or insufficient knowledge
+                - -0.3: Notable ESG controversies, fossil fuels, governance issues
+                - -1.0: Severe ESG violations, greenwashing, significant environmental damage
+
+                Respond ONLY with a single decimal number between -1.0 and 1.0. No explanation.
+                """.formatted(holdings);
+        try {
+            String text = chatModel.call(new Prompt(prompt))
+                    .getResult().getOutput().getText();
+            double score = Double.parseDouble(text.trim().replace(',', '.'));
+            log.info("AiAnalysisService: training-based sentiment score={}", score);
+            return Math.max(-1.0, Math.min(1.0, score));
+        } catch (Exception e) {
+            log.warn("AiAnalysisService: generatePortfolioSentiment failed: {}", e.getMessage());
+            return 0.0;
+        }
+    }
+
     public double analyzeRelevance(String companyName, String articleText) {
         if (!isAvailable()) {
             return 1.0; // Assume relevant if AI is down to not block ingestion

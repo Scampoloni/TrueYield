@@ -35,6 +35,8 @@ public class AuditReport {
 
     private String aiRiskRationale;
 
+    private Double aiTrainingSentiment;
+
     private String auditorId;
 
     private LocalDateTime createdAt;
