@@ -28,6 +28,9 @@ Deployment ist aktiv auf Azure App Service (Docker + GitHub Actions). Erfolgreic
 | Frontend | https://trueyield-frontend.azurewebsites.net |
 | Backend | https://trueyield-backend.azurewebsites.net |
 | API Health | https://trueyield-backend.azurewebsites.net/actuator/health |
+| SonarCloud | https://sonarcloud.io/project/overview?id=Scampoloni_trueyield |
+| Roadmap History | [PENDING — aus GitHub Project → Roadmap → History abrufen] |
+| GitHub Insights Chart | [PENDING — aus GitHub → Insights → Charts abrufen] |
 
 ## Inhaltsverzeichnis
 - [Einleitung](#einleitung)
@@ -188,7 +191,7 @@ Schnelle, kostengünstige und regulatorisch akzeptable ESG-Verifikation von Inve
 **3. Portfolio-Submission-Flow (Fund Manager)**
 - Holdings werden manuell per Formular (Symbol, ISIN, Name, Gewichtung) hinzugefügt
 - CSV/Excel-Upload mit Drag & Drop *(geplant, noch nicht implementiert — siehe Backlog B-07)*
-- Beschreibungs-Felder: Portfolio-Name, ESG-Zielsetzung, Ziel-Artikel (8 oder 9)
+- Beschreibungs-Felder: Portfolio-Name, Beschreibung
 - Audit-Trigger → Status wechselt zu `AI_ANALYZING`
 
 **4. Audit-Dashboard (Auditor)**
@@ -864,8 +867,8 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 
 | Methode | Endpoint | Beschreibung | Status Codes |
 |---|---|---|---|
-| POST | `/api/evidence` | Evidence erstellen (inkl. KI-Sentiment-Analyse) | 201 Created, 400 Bad Request |
-| GET | `/api/evidence?holdingId={id}` | Evidence einer Holding abrufen | 200 OK |
+| POST | `/api/evidence` | Evidence manuell erstellen (inkl. KI-Sentiment-Analyse) — nur `auditor`, `compliance-officer` | 201 Created, 400 Bad Request, 403 Forbidden |
+| GET | `/api/evidence?holdingId={id}` | Evidence einer Holding abrufen — alle Rollen | 200 OK |
 | GET | `/api/evidence/{id}` | Evidence by ID | 200 OK, 404 Not Found |
 | DELETE | `/api/evidence/{id}` | Evidence löschen | 204 No Content, 403 Forbidden, 404 Not Found |
 
@@ -878,6 +881,7 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 | PUT | `/api/service/auditreport/assign` | AuditReport zuweisen (PENDING_REVIEW → UNDER_REVIEW) | 200 OK, 400 Bad Request |
 | PUT | `/api/service/auditreport/complete` | AuditReport abschliessen (UNDER_REVIEW → APPROVED) | 200 OK, 400 Bad Request |
 | PUT | `/api/service/auditreport/reject` | AuditReport ablehnen (UNDER_REVIEW → REJECTED) | 200 OK, 400 Bad Request |
+| GET | `/api/service/auditreport/latest` | Neuesten Audit-Report eines Portfolios abrufen (?portfolioId=) | fund-manager, compliance-officer |
 | GET | `/api/service/auditreport/dashboard?portfolioId={id}` | Dashboard-Aggregation per Portfolio | 200 OK |
 | GET | `/api/service/auditreport/auditor-queue` | Offene und zugewiesene Reports für eingeloggten Auditor | 200 OK |
 
@@ -913,42 +917,71 @@ Authentifizierte Tests nutzen optional `E2E_TEST_EMAIL` und `E2E_TEST_PASSWORD`.
 
 ### KI-Integration (Spring AI)
 
-TrueYield nutzt **Spring AI 1.0.0** (`spring-ai-starter-model-anthropic`) mit **AnthropicChatModel** und dem Modell **Claude Haiku (`claude-haiku-4-5-20251001`)** für drei KI-Funktionen im ESG-Workflow sowie einen KI-gestützten Chat-Assistenten:
+TrueYield nutzt **Spring AI 1.0.0** (`spring-ai-starter-model-anthropic`) mit **AnthropicChatModel** und dem Modell **Claude Haiku (`claude-haiku-4-5-20251001`)** für sechs KI-Funktionen im ESG-Workflow sowie einen KI-gestützten Chat-Assistenten:
 
-#### Funktion 1: ESG-Risikozusammenfassung beim Audit-Erstellen
+| Methode | Signatur | Fallback |
+|---|---|---|
+| `generateRiskSummary` | `(List<String> holdingNames) → String` | `"AI analysis unavailable."` |
+| `analyzeSentiment` | `(String contentSnippet) → double` | `0.0` |
+| `analyzeRelevance` | `(String companyName, String articleText) → double` | `1.0` |
+| `generatePortfolioRiskScore` | `(List<String> holdingNames, List<String> evidenceSnippets) → PortfolioRiskResult` | `score=5, rationale="AI analysis unavailable."` |
+| `isPremiumSource` | `(String sourceName) → boolean` | `false` |
+| `generatePortfolioSentiment` | `(List<String> holdingNames) → double` | `0.0` |
 
-Wenn ein Fund Manager einen Audit-Report erstellt (`POST /api/service/auditreport`), wechselt der Report zunächst in den Status `AI_ANALYZING`. `AiAnalysisService.generateRiskSummary()` sendet einen Prompt an Claude Haiku:
+#### Methode 1: generateRiskSummary
 
-> *"You are an ESG risk analyst. Provide a concise 2-3 sentence risk summary for the investment portfolio … Focus on potential greenwashing risks and ESG compliance concerns."*
+**Signatur:** `generateRiskSummary(List<String> holdingNames) → String`  
+**Fallback:** `"AI analysis unavailable."`  
+**Kontext:** Wird beim Erstellen eines Audit-Reports aufgerufen (`AuditReportService.createAuditReport()`). Der Report wechselt zunächst in den Status `AI_ANALYZING`; Claude Haiku generiert eine 2–3-satzige ESG-Risikozusammenfassung, die als `aiRiskSummary` persistiert wird. Danach wechselt der Status auf `PENDING_REVIEW`.  
+**Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 31–50](backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L31-L50)
 
-Die generierte Zusammenfassung wird als `aiRiskSummary` im `AuditReport` gespeichert und ist für den Auditor auf der Detailseite sichtbar. Danach wechselt der Status automatisch zu `PENDING_REVIEW`.
+#### Methode 2: analyzeSentiment
 
-#### Funktion 2: Sentiment-Analyse für Evidence
+**Signatur:** `analyzeSentiment(String contentSnippet) → double`  
+**Fallback:** `0.0` (neutral — Evidence wird trotzdem gespeichert)  
+**Kontext:** Wird in `NewsIngestionService` pro gespeicherter Evidence aufgerufen. Claude Haiku bewertet das News-Snippet auf der Skala −1.0 (sehr negativ) bis +1.0 (sehr positiv). Der Score (`aiSentimentScore`) wird persistiert und im Frontend als Risk-Score (0–10, invertiert), Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) und farbige Risk-Bar visualisiert. Premium-Quellen werden mit vollem Gewicht gewertet, andere mit Faktor 0.5 gedämpft.  
+**Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 52–72](backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L52-L72) | Verwendung: [`backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java`, Zeile 124](backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java#L124)
 
-Beim Erstellen eines Evidence-Eintrags (`POST /api/evidence`) analysiert `AiAnalysisService.analyzeSentiment()` das `contentSnippet` und gibt einen Dezimalwert zwischen `-1.0` (sehr negative ESG-Nachricht) und `+1.0` (sehr positiv) zurück. Dieser Wert (`aiSentimentScore`) wird persistiert und im Frontend als:
-- **Risk-Score** (0–10 Skala, invertiert)
-- **Sentiment-Badge** (POSITIVE / NEUTRAL / NEGATIVE)
-- **Farbige Risk-Bar** (grün / gelb / rot)
+#### Methode 3: analyzeRelevance
 
-dargestellt. Dies ermöglicht dem Auditor eine schnelle visuelle Einschätzung der ESG-Nachrichtenlage je Holding.
+**Signatur:** `analyzeRelevance(String companyName, String articleText) → double`  
+**Fallback:** `1.0` (Artikel wird durchgelassen — kein Artikel wird fälschlicherweise gefiltert, wenn KI nicht verfügbar)  
+**Kontext:** Bevor ein News-Artikel als Evidence gespeichert wird, bewertet Claude Haiku die ESG-Relevanz für die konkrete Firma auf einer Skala 0.0–1.0. Artikel unter dem Schwellenwert `RELEVANCE_THRESHOLD = 0.35` werden verworfen und nicht gespeichert.  
+**Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 172–202](backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L172-L202) | Schwellenwert: [`backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java`, Zeile 25](backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java#L25)
 
-#### Funktion 3: ESG-Relevanzfilter für News-Artikel
+#### Methode 4: generatePortfolioRiskScore
 
-Bevor ein News-Artikel als Evidence gespeichert wird, prüft `AiAnalysisService.analyzeRelevance()` ob der Artikel wirklich ESG-relevant für die spezifische Firma ist. Claude Haiku bewertet auf einer Skala von 0.0 bis 1.0:
+**Signatur:** `generatePortfolioRiskScore(List<String> holdingNames, List<String> evidenceSnippets) → PortfolioRiskResult`  
+**Fallback:** `PortfolioRiskResult(score=5, rationale="AI analysis unavailable.")`  
+**Kontext:** RAG-Ansatz — Claude Haiku kombiniert sein Trainingswissen über die Firmen mit konkreten Evidence-Snippets (max. 5 pro Holding). Gibt einen Integer-Score 0–10 und eine Begründung zurück. Der Score wird als `aiRiskScore`, die Begründung als `aiRiskRationale` im AuditReport persistiert. Im Frontend farbcodiert: ≤3 grün, ≤6 amber, >6 rot.  
+**Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 93–137](backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L93-L137) | Score+Rationale setzen: [`backend/src/main/java/ch/zhaw/trueyield/service/AuditReportService.java`, Zeilen 103–110](backend/src/main/java/ch/zhaw/trueyield/service/AuditReportService.java#L103-L110)
 
-- **0.7–1.0:** Artikel behandelt direkt ESG-Risiken, Greenwashing, Governance oder Umweltverstösse dieser Firma
-- **0.3–0.6:** Teilweiser ESG-Bezug oder branchenweite ESG-Themen mit Firmenrelevanz
-- **0.0–0.2:** Nur tangential verwandt, generisches Business-News ohne ESG-Winkel
+#### Methode 5: isPremiumSource
 
-Artikel mit einem Score unter dem **Schwellenwert 0.35** werden verworfen und nicht als Evidence gespeichert. Dies reduziert Rauschen durch irrelevante Artikel erheblich.
+**Signatur:** `isPremiumSource(String sourceName) → boolean`  
+**Fallback:** `false`  
+**Kontext:** Claude Haiku bewertet einen Quellennamen — Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian, AP, BBC etc.) erhalten volles Sentiment-Gewicht (Faktor 1.0), andere werden mit 0.5 gedämpft. Schnell-Pfad via `isKnownPremiumSource()` (hardcoded Lookup ohne KI-Call) prüft zuerst; nur bei unbekannter Quelle wird Claude gefragt.  
+**Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 74–91](backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L74-L91) | Verwendung: [`backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java`, Zeilen 127–131](backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java#L127-L131)
 
-#### Fallback-Verhalten
+#### Methode 6: generatePortfolioSentiment
 
-Ist kein Anthropic API-Key konfiguriert (oder der API-Aufruf schlägt fehl), verhält sich `AiAnalysisService` graceful:
-- `isAvailable()` gibt `false` zurück → kein API-Call
-- `generateRiskSummary()` liefert `"AI analysis unavailable."` — Audit-Workflow wird nicht blockiert
-- `analyzeSentiment()` liefert `0.0` (neutral) — Evidence wird trotzdem gespeichert
-- `analyzeRelevance()` liefert `1.0` (relevant) — kein Artikel wird fälschlicherweise gefiltert
+**Signatur:** `generatePortfolioSentiment(List<String> holdingNames) → double`  
+**Fallback:** `0.0`  
+**Kontext:** Claude Haiku bewertet das ESG-Sentiment des Portfolios auf Basis seines Trainingswissens (−1.0 bis +1.0), ohne News-Evidence. Der Wert wird als `aiTrainingSentiment` im AuditReport gespeichert. **Hinweis zur SFDR-Blending-Logik:** `ComplianceService.scorePortfolio()` leitet den Trainings-Sentiment jedoch nicht aus `aiTrainingSentiment` ab, sondern aus `aiRiskScore` via Formel `sentiment = 1 − (aiRiskScore / 5)`. Das Blending erfolgt 70 % Trainings-Sentiment + 30 % Evidence-Durchschnitt und bestimmt die SFDR-Klassifikation (>0.3 → ARTICLE_9, >−0.1 → ARTICLE_8, sonst NON_SFDR).  
+**Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 139–170](backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L139-L170) | Blending: [`backend/src/main/java/ch/zhaw/trueyield/service/ComplianceService.java`, Zeilen 72–119](backend/src/main/java/ch/zhaw/trueyield/service/ComplianceService.java#L72-L119)
+
+#### Fallback-Verhalten (Zusammenfassung)
+
+Ist kein Anthropic API-Key konfiguriert (oder der API-Aufruf schlägt fehl), verhält sich `AiAnalysisService` graceful — kein API-Call, kein blockierter Workflow:
+
+| Methode | Fallback-Wert | Konsequenz |
+|---|---|---|
+| `generateRiskSummary` | `"AI analysis unavailable."` | Audit-Workflow nicht blockiert |
+| `analyzeSentiment` | `0.0` | Evidence wird trotzdem gespeichert |
+| `analyzeRelevance` | `1.0` | Kein Artikel fälschlicherweise gefiltert |
+| `generatePortfolioRiskScore` | `score=5, rationale="AI analysis unavailable."` | Fallback-Score wird gespeichert |
+| `isPremiumSource` | `false` | Quelle erhält Faktor 0.5 |
+| `generatePortfolioSentiment` | `0.0` | Neutral — kein SFDR-Signal |
 
 #### KI-Chat-Assistent (`/chat`)
 
@@ -976,7 +1009,7 @@ TrueYield implementiert folgende Qualitätskriterien für News-Quellen, um die N
 | **ESG-Relevanz** | Zweistufiger KI-Filter: Guardian-Abfragen enthalten `ESG` als Pflicht-Keyword; alle Artikel durchlaufen anschliessend `analyzeRelevance()` (Claude Haiku, Schwellenwert 0.35) |
 | **Firmennamen-Normalisierung** | Rechtliche Suffixe (`Inc.`, `PLC`, `Ltd.`, `AG`, `SE`, etc.) werden vor der Suche entfernt für bessere Trefferqualität |
 | **Duplikatkontrolle** | URL-basierte Deduplizierung in-memory (cross-provider) und gegen DB (`existsByHoldingIdAndSourceUrl`) vor AI-Calls |
-| **Mengenbegrenzung** | Maximal 5 Artikel pro Provider-Abfrage (`MAX_ARTICLES = 5`); nach Deduplizierung und Relevanzfilter werden bis zu 10 Evidence-Einträge pro Holding gespeichert (cap nach Relevanz-Score priorisiert) |
+| **Mengenbegrenzung** | Maximal 10 Artikel pro Provider-Abfrage (`MAX_ARTICLES = 10`); nach Deduplizierung und Relevanzfilter werden bis zu 10 Evidence-Einträge pro Holding gespeichert (cap nach Relevanz-Score priorisiert) |
 | **Nachvollziehbarkeit** | Jeder Evidence-Eintrag speichert Quellenname, URL, Publikationsdatum und Snippet |
 
 **Bekannte Einschränkungen (Coverage Limits):**
@@ -1047,11 +1080,8 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 **Holdings-Übersicht** — Aggregierte Ansicht aller Holdings über alle Portfolios
 ![Holdings-Übersicht](doc/screenshots/holdings-overview.png)
 
-**Holding-Detail / Evidence & Risk Analysis** — Einzelansicht eines Holdings mit KI-generierten Evidence-Cards (Sentiment-Badge POSITIVE/NEUTRAL/NEGATIVE, Confidence-Badge HIGH/MEDIUM/LOW, Risk-Score 0–10) und Ingest-News-Button
+**Holding-Detail / Evidence & Risk Analysis** — Einzelansicht eines Holdings mit KI-generierten Evidence-Cards (Sentiment-Badge POSITIVE/NEUTRAL/NEGATIVE, Confidence-Badge HIGH/MEDIUM/LOW, Risk-Score 0–10) und Ingest-News-Button (nur Fund Manager). Evidence wird primär automatisch via KI-News-Ingest gesammelt (alle 4 Provider, async beim Audit-Report-Erstellen); Auditoren und Compliance-Officers können Evidence manuell ergänzen.
 ![Evidence & Risk Analysis](doc/screenshots/evidence-page.png)
-
-**Evidence erfassen** — Manuelles Erstellen eines Evidence-Eintrags mit KI-Sentiment-Analyse
-![Evidence erfassen](doc/screenshots/evidence-create.png)
 
 **KI-Chat-Assistent** — Alle Rollen haben Zugang zum Chat unter `/chat`. Der Assistent kann Portfolios und Holdings auflisten, Evidence-Scores abfragen und — für Fund Manager — neue Portfolios und Holdings anlegen. *(Kein Screenshot vorhanden; Feature unter `/chat` nach Login erreichbar.)*
 
@@ -1073,6 +1103,9 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 
 **Audit-Detail: Kommentare** — Auditor-Begründung hinzufügen
 ![Audit-Kommentare](doc/screenshots/audit-detail-comments.png)
+
+**Evidence erfassen** — Manuelles Erstellen eines Evidence-Eintrags mit KI-Sentiment-Analyse (nur Auditoren und Compliance-Officers)
+![Evidence erfassen](doc/screenshots/evidence-create.png)
 
 **Account** — Benutzerprofil mit Rolle (auditor)
 ![Account Auditor](doc/screenshots/account-auditor.png)
@@ -1102,13 +1135,17 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 | Codeanalyse mit SonarQube | SonarCloud aktiv auf `main`-Branch, Analyse via `sonar-maven-plugin` in CI (non-blocking). Token via Secret `SONAR_TOKEN`. |
 | Komplexes Datenmodell (5 Entitäten) | Portfolio, Holding, Evidence, AuditReport, AuditComment — übererfüllt gegenüber Mindestanforderung (3) |
 | Komplexes Frontend | 3 Rollen mit rollenspezifischen Dashboards, State-Machine-Visualisierung, Sentiment-Badges, Risk-Scores, SVG-Donut-Chart (Asset Allocation), KPI-Karten, SFDR-Ampel, Evidence-Confidence-Badges, Symbol-Autocomplete |
-| Zugriff auf Drittsysteme | Multi-Provider News-Aggregation: The Guardian API, NewsAPI.org, Newsdata.io und Alpha Vantage — automatische ESG-News-Abfrage pro Holding, gespeichert als Evidence mit KI-Relevanzfilter und Source-Weighting |
+| Zugriff auf Drittsysteme | Multi-Provider News-Aggregation: The Guardian API, NewsAPI.org, Newsdata.io und Alpha Vantage — automatische ESG-News-Abfrage pro Holding, gespeichert als Evidence mit KI-Relevanzfilter und Source-Weighting. Provider-Loop: [`NewsIngestionService.java`, Zeilen 50–67](backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java#L50-L67) — Provider-Klassen: [`GuardianNewsProvider.java`, Zeile 18](backend/src/main/java/ch/zhaw/trueyield/service/provider/GuardianNewsProvider.java#L18), [`NewsApiOrgProvider.java`, Zeile 17](backend/src/main/java/ch/zhaw/trueyield/service/provider/NewsApiOrgProvider.java#L17), [`NewsdataIoProvider.java`, Zeile 17](backend/src/main/java/ch/zhaw/trueyield/service/provider/NewsdataIoProvider.java#L17), [`AlphaVantageNewsProvider.java`, Zeile 28](backend/src/main/java/ch/zhaw/trueyield/service/provider/AlphaVantageNewsProvider.java#L28) |
 | Komplexe Abfragen auf der Datenbank | MongoDB Aggregation Pipeline für Audit-Dashboard (gruppiert nach Status pro Portfolio) |
 | Komplexe Benutzerverwaltung | 3 RBAC-Rollen (`fund-manager`, `auditor`, `compliance-officer`) mit unterschiedlichen Berechtigungen auf Endpunkt-Ebene (`@PreAuthorize`) und im Frontend (Route Guards) |
 | Detaillierte Dokumentation auf GitHub | Issues mit Beschreibungen und überprüfbaren Anforderungen, 3+ Labels, Sprints als Iterations, SCRUM-Board mit Ready/In Progress/Done |
 | Mehrere Branches sinnvoll verwendet | Jedes Feature in eigenem `feature/issue-<nr>-<titel>`-Branch entwickelt und via Pull Request gemerged |
 | End-to-End Tests (Cypress) | 5 Testdateien, 73 Testfälle: auth.cy.js, portfolio.cy.js, audit.cy.js, evidence.cy.js, compliance.cy.js — ausgeführt in CI |
-| **MCP Server (Anforderung 22)** | Spring AI MCP Server exponiert drei ESG-Analyse-Tools (`generateEsgRiskSummary`, `analyseEsgSentiment`, `fetchEsgNews`) via SSE — verbindbar mit Claude Desktop oder jedem MCP-Client |
+| ESG-Relevanzfilter | `analyzeRelevance()` filtert nicht-ESG-spezifische Artikel vor der Speicherung. Threshold: [`NewsIngestionService.java`, Zeile 25](backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java#L25) — Methode: [`AiAnalysisService.java`, Zeilen 172–202](backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L172-L202) |
+| Quellen-Gewichtung (Premium vs. Non-Premium) | Premium-Quellen (Reuters, Bloomberg etc.) voll gewichtet, andere mit Faktor 0.5. `isKnownPremiumSource` + `isPremiumSource` Aufruf: [`NewsIngestionService.java`, Zeilen 127–131](backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java#L127-L131) — `isPremiumSource`-Methode: [`AiAnalysisService.java`, Zeilen 74–91](backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L74-L91) |
+| SFDR-Klassifikation | SFDR Article 8/9/Non-SFDR basierend auf geblendeten Sentiment-Scores. `scorePortfolio`: [`ComplianceService.java`, Zeilen 72–113](backend/src/main/java/ch/zhaw/trueyield/service/ComplianceService.java#L72-L113) — `classify`: [`ComplianceService.java`, Zeilen 115–119](backend/src/main/java/ch/zhaw/trueyield/service/ComplianceService.java#L115-L119) |
+| AI-gestützter Portfolio-Risikoscore | RAG-basierter Score 0–10 mit Begründung. `generatePortfolioRiskScore`: [`AiAnalysisService.java`, Zeilen 93–137](backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L93-L137) — Score+Rationale setzen: [`AuditReportService.java`, Zeilen 103–110](backend/src/main/java/ch/zhaw/trueyield/service/AuditReportService.java#L103-L110) |
+| **MCP Server (Anforderung 22)** | Spring AI MCP Server exponiert drei ESG-Analyse-Tools (`generateEsgRiskSummary`, `analyseEsgSentiment`, `fetchEsgNews`) via SSE — verbindbar mit Claude Desktop oder jedem MCP-Client. Bean-Konfiguration: [`McpConfig.java`, Zeilen 12–17](backend/src/main/java/ch/zhaw/trueyield/config/McpConfig.java#L12-L17) — Tools: [`EsgMcpTools.java`, Zeile 20](backend/src/main/java/ch/zhaw/trueyield/mcp/EsgMcpTools.java#L20) |
 | **Dritte Rolle: Compliance Officer (Anforderung 23)** | RBAC-Rolle `compliance-officer` mit systemweitem Lesezugriff. Eigene Endpoints: `/api/compliance/overview`, `/sfdr`, `/portfolios`, `/reports`. Frontend-Dashboard unter `/compliance` mit Tabs (Overview / Portfolios / Audit Reports). Rollenbasierte Sidebar-Navigation. |
 
 ---

@@ -3,6 +3,7 @@ package ch.zhaw.trueyield.controller;
 import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.AuditCommentService;
 import ch.zhaw.trueyield.service.AuditReportService;
+import ch.zhaw.trueyield.service.EvidenceService;
 import ch.zhaw.trueyield.service.HoldingService;
 import ch.zhaw.trueyield.service.PortfolioService;
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,9 @@ class CrossRoleAccessTest {
     @MockitoBean
     private UserService userService;
 
+    @MockitoBean
+    private EvidenceService evidenceService;
+
     private static final String STATE_CHANGE_BODY =
             "{\"auditReportId\":\"report-001\",\"auditorId\":\"auditor-001\"}";
 
@@ -97,6 +101,16 @@ class CrossRoleAccessTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(STATE_CHANGE_BODY))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getEvidence_asFundManager_returnsOk() throws Exception {
+        when(evidenceService.getEvidenceByHoldingId(anyString())).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/evidence")
+                        .param("holdingId", "holding-001")
+                        .with(user("manager").roles("fund-manager")))
+                .andExpect(status().isOk());
     }
 
     @Test
