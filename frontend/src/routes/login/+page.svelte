@@ -6,7 +6,6 @@
     role: string;
     label: string;
     email: string;
-    password: string;
     accent: 'blue' | 'green' | 'amber';
     description: string;
   };
@@ -16,7 +15,6 @@
       role: 'Fund Manager',
       label: 'Portfolio owner',
       email: 'fund.manager@trueyield.demo',
-      password: '***REMOVED_FROM_GIT_HISTORY***',
       accent: 'blue',
       description: 'Creates portfolios and manages holdings.'
     },
@@ -24,7 +22,6 @@
       role: 'ESG Auditor',
       label: 'Review and decision',
       email: 'esg.auditor@trueyield.demo',
-      password: '***REMOVED_FROM_GIT_HISTORY***',
       accent: 'green',
       description: 'Reviews evidence and closes audit reports.'
     },
@@ -32,7 +29,6 @@
       role: 'Compliance Officer',
       label: 'Oversight and reporting',
       email: 'compliance.officer@trueyield.demo',
-      password: '***REMOVED_FROM_GIT_HISTORY***',
       accent: 'amber',
       description: 'Views the full compliance overview.'
     }
@@ -181,7 +177,7 @@
           <div>
             <div class="card-kicker">Demo access</div>
             <div class="form-card-title">Preconfigured roles</div>
-            <div class="form-card-desc">Copy email and password directly for each demo role.</div>
+            <div class="form-card-desc">Copy email directly for each demo role.</div>
           </div>
           {#if copied}
             <div class="copy-toast">Copied {copied}</div>
@@ -207,16 +203,11 @@
                     <span>Email</span>
                     <strong>{account.email}</strong>
                   </div>
-                  <div class="credential-item">
-                    <span>Password</span>
-                    <strong>••••••••••••</strong>
-                  </div>
                 </div>
               </div>
 
               <div class="demo-actions">
                 <button class="mini-btn mini-btn-ghost" type="button" onclick={() => copyText(account.email, `${account.role} email`)}>Copy email</button>
-                <button class="mini-btn mini-btn-primary" type="button" onclick={() => copyText(account.password, `${account.role} password`)}>Copy password</button>
               </div>
             </article>
           {/each}
