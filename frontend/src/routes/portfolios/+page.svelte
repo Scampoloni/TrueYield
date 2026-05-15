@@ -19,12 +19,14 @@
   function sfdrDotColor(cls: string): string {
     if (cls === 'ARTICLE_9') return '#10b981';
     if (cls === 'ARTICLE_8') return '#f59e0b';
+    if (cls === 'NON_SFDR') return '#ef4444';
     return '#3d4a5e';
   }
 
   function sfdrLabel(cls: string): string {
     if (cls === 'ARTICLE_9') return 'Art. 9';
     if (cls === 'ARTICLE_8') return 'Art. 8';
+    if (cls === 'NON_SFDR') return 'Non-SFDR';
     return '—';
   }
 
