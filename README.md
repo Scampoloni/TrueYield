@@ -29,8 +29,8 @@ Deployment ist aktiv auf Azure App Service (Docker + GitHub Actions). Erfolgreic
 | Backend | https://trueyield-backend.azurewebsites.net |
 | API Health | https://trueyield-backend.azurewebsites.net/actuator/health |
 | SonarCloud | https://sonarcloud.io/project/overview?id=Scampoloni_trueyield |
-| Roadmap History | https://github.com/users/Scampoloni/projects *(Project-History im GitHub Project; mit entsprechender Berechtigung sichtbar)* |
-| GitHub Insights Chart | https://github.com/Scampoloni/trueyield/pulse |
+| Roadmap History | https://github.com/users/Scampoloni/projects/2/views/7?groupedBy%5BcolumnId%5D=259592131 |
+| GitHub Insights Chart | https://github.com/users/Scampoloni/projects/2/insights/2 |
 
 ## Inhaltsverzeichnis
 - [Einleitung](#einleitung)
@@ -456,8 +456,8 @@ Wenn ein Fonds später als "Greenwashing" entlarvt wird, muss die Bank beweisen 
 - Target: 5 Paid Pilots im Jahr 1, 15-20 Kunden im Jahr 2
 - Benchmark: Annual Recurring Revenue (ARR) von CHF 500.000 im Jahr 2
 
-**5. Audit-Abschlussrate (APPROVED vs. REJECTED vs. REVISION)**
-- Target: 70% Approved, 20% Revision, 10% Rejected
+**5. Audit-Abschlussrate (APPROVED vs. REJECTED)**
+- Target: 70% Approved, 30% Rejected
 - Zeigt: Balanciertes System (nicht zu lasch, nicht zu streng)
 
 **6. Customer Retention Rate (Monthly/Annual)**
@@ -881,7 +881,7 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 | PUT | `/api/service/auditreport/assign` | AuditReport zuweisen (PENDING_REVIEW → UNDER_REVIEW) | 200 OK, 400 Bad Request |
 | PUT | `/api/service/auditreport/complete` | AuditReport abschliessen (UNDER_REVIEW → APPROVED) | 200 OK, 400 Bad Request |
 | PUT | `/api/service/auditreport/reject` | AuditReport ablehnen (UNDER_REVIEW → REJECTED) | 200 OK, 400 Bad Request |
-| GET | `/api/service/auditreport/latest` | Neuesten Audit-Report eines Portfolios abrufen (?portfolioId=) | fund-manager, compliance-officer |
+| GET | `/api/service/auditreport/latest` | Neuesten Audit-Report eines Portfolios abrufen (?portfolioId=) — Role: fund-manager, compliance-officer | 200 OK, 404 Not Found |
 | GET | `/api/service/auditreport/dashboard?portfolioId={id}` | Dashboard-Aggregation per Portfolio | 200 OK |
 | GET | `/api/service/auditreport/auditor-queue` | Offene und zugewiesene Reports für eingeloggten Auditor | 200 OK |
 
@@ -968,7 +968,7 @@ TrueYield nutzt **Spring AI 1.0.0** (`spring-ai-starter-model-anthropic`) mit **
 **Signatur:** `generatePortfolioSentiment(List<String> holdingNames) → double`  
 **Fallback:** `0.0`  
 **Kontext:** Claude Haiku bewertet das ESG-Sentiment des Portfolios auf Basis seines Trainingswissens (−1.0 bis +1.0), ohne News-Evidence. Der Wert wird als `aiTrainingSentiment` im AuditReport gespeichert. **Hinweis zur aktuellen SFDR-Logik:** `ComplianceService.scorePortfolio()` verwendet derzeit als Trainings-Sentiment die aus `aiRiskScore` abgeleitete Formel `sentiment = 1 − (aiRiskScore / 5)` (nicht `aiTrainingSentiment`). Das Blending erfolgt 70 % Trainings-Sentiment + 30 % Evidence-Durchschnitt und bestimmt die SFDR-Klassifikation (>0.3 → ARTICLE_9, >−0.1 → ARTICLE_8, sonst NON_SFDR).  
-**Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 139–170](backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L139-L170) | Blending: [`backend/src/main/java/ch/zhaw/trueyield/service/ComplianceService.java`, Zeilen 72–119](backend/src/main/java/ch/zhaw/trueyield/service/ComplianceService.java#L72-L119)
+**Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 139–170](backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L139-L170) | Blending: [`backend/src/main/java/ch/zhaw/trueyield/service/ComplianceService.java`, Zeilen 72–113](backend/src/main/java/ch/zhaw/trueyield/service/ComplianceService.java#L72-L113)
 
 #### Fallback-Verhalten (Zusammenfassung)
 
@@ -1009,7 +1009,7 @@ TrueYield implementiert folgende Qualitätskriterien für News-Quellen, um die N
 | **ESG-Relevanz** | Zweistufiger KI-Filter: Guardian-Abfragen enthalten `ESG` als Pflicht-Keyword; alle Artikel durchlaufen anschliessend `analyzeRelevance()` (Claude Haiku, Schwellenwert 0.35) |
 | **Firmennamen-Normalisierung** | Rechtliche Suffixe (`Inc.`, `PLC`, `Ltd.`, `AG`, `SE`, etc.) werden vor der Suche entfernt für bessere Trefferqualität |
 | **Duplikatkontrolle** | URL-basierte Deduplizierung in-memory (cross-provider) und gegen DB (`existsByHoldingIdAndSourceUrl`) vor AI-Calls |
-| **Mengenbegrenzung** | Maximal 10 Artikel pro Provider-Abfrage (`MAX_ARTICLES = 10`); nach Deduplizierung und Relevanzfilter werden bis zu 10 Evidence-Einträge pro Holding gespeichert (cap nach Relevanz-Score priorisiert) |
+| **Mengenbegrenzung** | Maximal 10 Artikel pro Provider-Abfrage (`MAX_ARTICLES = 10` in den Provider-Klassen); nach Deduplizierung und Relevanzfilter werden bis zu 10 Evidence-Einträge pro Holding gespeichert (`MAX_EVIDENCE_PER_HOLDING = 10` in `NewsIngestionService`, cap nach Relevanz-Score priorisiert) |
 | **Nachvollziehbarkeit** | Jeder Evidence-Eintrag speichert Quellenname, URL, Publikationsdatum und Snippet |
 
 **Bekannte Einschränkungen (Coverage Limits):**
@@ -1062,7 +1062,7 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 **Login**
 ![Login](doc/screenshots/login-page.png)
 
-**Portfolio-Übersicht** — Tabelle aller eigenen Portfolios mit Status-Badge (PENDING_REVIEW / UNDER_REVIEW / APPROVED / REJECTED), SFDR-Ampel (Art. 9 / Art. 8 / —) direkt pro Zeile, und drei KPI-Cards (Total / Pending Review / Approved) oben
+**Portfolio-Übersicht** — Tabelle aller eigenen Portfolios mit Status-Badge (PENDING_REVIEW / UNDER_REVIEW / APPROVED / REJECTED), SFDR-Ampel (Art. 9 / Art. 8 / Non-SFDR / —) direkt pro Zeile, und drei KPI-Cards (Total / Pending Review / Approved) oben
 ![Portfolio-Übersicht](doc/screenshots/portfolios-list.png)
 
 **Portfolio erstellen** — Formular für neues Portfolio (Name, Beschreibung)
@@ -1171,7 +1171,7 @@ sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert w
 
 **Dashboard KPI-Karten (Fund Manager):** Drei Cards (Total / Pending Review / Approved) auf der Portfolios-Übersicht zeigen den Audit-Status aller Portfolios auf einen Blick. `auditStatus` wird über erweitertes `PortfolioResponseDTO` direkt aus dem verknüpften `AuditReport` mitgeliefert.
 
-**SFDR-Ampel (Portfolio-Liste):** Farbiger Dot + Label ("Art. 9" / "Art. 8" / "—") direkt auf jeder Portfolio-Tabellenzeile — sichtbar für Fund Manager und Compliance Officer, ohne ins Portfolio klicken zu müssen. Daten kommen aus `/api/compliance/sfdr` parallel zum Portfolio-Fetch.
+**SFDR-Ampel (Portfolio-Liste):** Farbiger Dot + Label ("Art. 9" / "Art. 8" / "Non-SFDR" / "—") direkt auf jeder Portfolio-Tabellenzeile — sichtbar für Fund Manager und Compliance Officer, ohne ins Portfolio klicken zu müssen. Art. 9 = grün, Art. 8 = amber, Non-SFDR = rot, "—" = unzureichende Daten. Daten kommen aus `/api/compliance/sfdr` parallel zum Portfolio-Fetch.
 
 **Evidence Confidence Badge:** Jede Evidence-Karte zeigt ein Konfidenz-Badge (HIGH / MEDIUM / LOW) in Grün/Amber/Rot — berechnet aus Quell-Tier (Premium vs. Other) und Sentiment-Stärke. Sichtbar auf der Holding-Detailseite und im Audit-Report.
 
@@ -1183,11 +1183,11 @@ sowie Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) im Frontend visualisiert w
 
 **Code-Qualität:** `DRAFT`-Status existiert nicht im `AuditStatus`-Enum und wurde bereinigt. SonarCloud aktiv auf `main` (non-blocking, `continue-on-error: true`). ReDoS-Risiken in News-Provider-Regex eliminiert. Security-Hardening: Ownership-Checks auf allen schreibenden Endpoints, rollenbasierte Zugriffsprüfung auf Controller-Ebene.
 
-**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService. **479 Testmethoden in 36 Testklassen** (lokaler `surefire-reports` Stand) — parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung. Cypress E2E: 5 Testdateien, 73 Testfälle.
+**Testabdeckung:** JUnit 5 + Mockito für alle Core-Services mit JaCoCo-Gate >= 90 % auf PortfolioService, HoldingService, AuditReportService, AuditCommentService, EvidenceService, UserService und ComplianceService. **479 Testmethoden in 36 Testklassen** (lokaler `surefire-reports` Stand) — parametrisierte Tests (`@ParameterizedTest`, `@CsvSource`, `@ValueSource`) und Spring MVC MockMvc-Tests für alle Controller mit rollenbasierter Zugriffsprüfung. Cypress E2E: 5 Testdateien, 73 Testfälle (64 aktiv, 9 skipped).
 
 **Deployment:** CI/CD via GitHub Actions. Frontend und Backend laufen produktiv auf Azure App Service (Details im Deployment-Abschnitt).
 
-**Stand der Implementation:** Alle Kernfunktionen (Portfolio-Verwaltung, Holdings, Evidence-Erfassung, Audit-Workflow, KI-Risikoanalyse, SFDR-Compliance, 3-Rollen-RBAC, Chat-Assistent) sind vollständig umgesetzt, getestet und deployed. Offene Backlog-Items für die Weiterentwicklung: [B-24 Manueller Risk Score Override](#backlog--nächste-schritte), [B-03 Longitudinales Risk Tracking (Timeseries-Chart)](#backlog--nächste-schritte) und [B-16 Realtime-Updates via SSE](#backlog--nächste-schritte).
+**Stand der Implementation:** Alle Kernfunktionen (Portfolio-Verwaltung, Holdings, Evidence-Erfassung, Audit-Workflow, KI-Risikoanalyse, SFDR-Compliance, 3-Rollen-RBAC, Chat-Assistent) sind vollständig umgesetzt, getestet und deployed. Offene Backlog-Items für die Weiterentwicklung: [B-24 Evidence-Validierung durch Auditor](#backlog--nächste-schritte), [B-03 Longitudinales Risk Tracking (Timeseries-Chart)](#backlog--nächste-schritte) und [B-16 Realtime-Updates via SSE](#backlog--nächste-schritte).
 
 ---
 

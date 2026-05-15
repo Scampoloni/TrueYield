@@ -186,16 +186,23 @@ class EvidenceControllerTest {
     // ── DELETE /api/evidence/{id} ────────────────────────────────────────────
 
     @Test
-    void deleteEvidence_asFundManager_returnsNoContent() throws Exception {
+    void deleteEvidence_asAuditor_returnsNoContent() throws Exception {
         mockMvc.perform(delete("/api/evidence/evidence-001")
-                        .with(user("manager").roles("fund-manager")))
+                        .with(user("auditor").roles("auditor")))
                 .andExpect(status().isNoContent());
     }
 
     @Test
-    void deleteEvidence_asAuditor_returnsForbidden() throws Exception {
+    void deleteEvidence_asComplianceOfficer_returnsNoContent() throws Exception {
         mockMvc.perform(delete("/api/evidence/evidence-001")
-                        .with(user("auditor").roles("auditor")))
+                        .with(user("officer").roles("compliance-officer")))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void deleteEvidence_asFundManager_returnsForbidden() throws Exception {
+        mockMvc.perform(delete("/api/evidence/evidence-001")
+                        .with(user("manager").roles("fund-manager")))
                 .andExpect(status().isForbidden());
     }
 
@@ -211,7 +218,7 @@ class EvidenceControllerTest {
                 .when(evidenceService).deleteEvidence("not-found");
 
         mockMvc.perform(delete("/api/evidence/not-found")
-                        .with(user("manager").roles("fund-manager")))
+                        .with(user("auditor").roles("auditor")))
                 .andExpect(status().isNotFound());
     }
 }

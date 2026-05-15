@@ -52,7 +52,7 @@ public class EvidenceController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('fund-manager')")
+    @PreAuthorize("hasAnyRole('auditor','compliance-officer')")
     public ResponseEntity<Void> deleteEvidence(@PathVariable String id) {
         evidenceService.deleteEvidence(id);
         return ResponseEntity.noContent().build();
