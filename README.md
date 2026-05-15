@@ -10,7 +10,7 @@ Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch ge
 - Backend CI führt `mvn verify` aus (inkl. Unit- und Integrationstests mit Testcontainers).
 - JaCoCo HTML-Report wird unter `backend/target/site/jacoco/index.html` erzeugt.
 - Coverage-Gate: Build failt wenn Instruction Coverage der Core Services (`PortfolioService`, `HoldingService`, `AuditReportService`, `AuditCommentService`, `EvidenceService`, `UserService`, `ComplianceService`) unter **90%** fällt.
-- Aktueller Stand: alle Core Services ≥ 90% abgedeckt (Gate aktiv und grün). Gesamt-Projektabdeckung inkl. Controller, Modelle und Konfigurationsklassen: siehe Badge oben (lokal zuletzt **93.1%** Instruction Coverage).
+- Aktueller Stand: alle Core Services ≥ 90% abgedeckt (Gate aktiv und grün). Gesamt-Projektabdeckung inkl. Controller, Modelle und Konfigurationsklassen: siehe Badge oben (lokal zuletzt **92.9%** Instruction Coverage).
 
 ## Deployment
 
@@ -870,7 +870,7 @@ Alle Endpoints sind mit Beispiel-Requests und -Responses dokumentiert.
 | POST | `/api/evidence` | Evidence manuell erstellen (inkl. KI-Sentiment-Analyse) — nur `auditor`, `compliance-officer` | 201 Created, 400 Bad Request, 403 Forbidden |
 | GET | `/api/evidence?holdingId={id}` | Evidence einer Holding abrufen — alle Rollen | 200 OK |
 | GET | `/api/evidence/{id}` | Evidence by ID | 200 OK, 404 Not Found |
-| DELETE | `/api/evidence/{id}` | Evidence löschen | 204 No Content, 403 Forbidden, 404 Not Found |
+| DELETE | `/api/evidence/{id}` | Evidence löschen — nur `auditor`, `compliance-officer` | 204 No Content, 403 Forbidden, 404 Not Found |
 
 #### AuditReport Service (`/api/service/auditreport`)
 
@@ -1208,7 +1208,7 @@ Die folgenden Erweiterungen sind priorisiert, um die Lösung von einem funktiona
 | B-23 | **Portfolio Asset Allocation (Donut-Chart)** | Reines SVG-Donut-Chart auf der Portfolio-Detailseite; Hover-Effekt, Tooltip und Legende; grauer "Ungewichtet"-Slice für Holdings ohne Gewichtung |
 | B-10 | **KPI-Karten für Fund Manager** | Drei Dashboard-Cards (Total / Pending Review / Approved) auf der Portfolios-Übersicht; Daten live aus AuditReport-Status via erweitertem PortfolioResponseDTO |
 | B-25 | **Evidence Confidence Badge** | HIGH / MEDIUM / LOW Badge auf jeder Evidence-Karte (Grün/Amber/Rot) — berechnet aus Quell-Tier und Sentiment-Stärke; sichtbar auf Holding-Detail und Audit-Report |
-| B-26 | **SFDR-Ampel auf Portfolio-Liste** | Farbiger Dot + Label ("Art. 9" / "Art. 8" / "—") direkt auf der Tabellenzeile; parallel fetch von `/api/compliance/sfdr`; nur für Fund Manager und Compliance Officer |
+| B-26 | **SFDR-Ampel auf Portfolio-Liste** | Farbiger Dot + Label ("Art. 9" / "Art. 8" / "Non-SFDR" / "—") direkt auf der Tabellenzeile; parallel fetch von `/api/compliance/sfdr`; nur für Fund Manager und Compliance Officer |
 
 ### Offen: Demo-Impact (Abgabe 24.05.2026)
 *Features die in der Live-Demo den Human-in-the-Loop Ansatz greifbar machen.*
