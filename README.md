@@ -997,6 +997,8 @@ Alle drei Rollen haben Zugriff auf einen KI-gestützten Chat-Assistenten unter `
 
 Schreibende Operationen sind durch eine Rollenprüfung in `EsgChatTools` abgesichert (`AccessDeniedException` für Nicht-Fund-Manager). Ist kein API-Key konfiguriert, gibt der Chat `"Chat is currently unavailable."` zurück.
 
+**Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/chat/ChatService.java`, Zeilen 15–46](backend/src/main/java/ch/zhaw/trueyield/chat/ChatService.java#L15-L46) (System-Prompt und `chat()`-Methode mit `ChatClient.builder`) | Tool-Methoden: [`backend/src/main/java/ch/zhaw/trueyield/chat/EsgChatTools.java`, Zeilen 47–175](backend/src/main/java/ch/zhaw/trueyield/chat/EsgChatTools.java#L47-L175) (`@Tool`-annotierte Methoden für Portfolio-, Holding- und Evidence-Zugriff)
+
 ---
 
 ### News-Datenqualität & Quellenvertrauen (Pitch-Feedback 6)
@@ -1083,7 +1085,8 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 **Holding-Detail / Evidence & Risk Analysis** — Einzelansicht eines Holdings mit KI-generierten Evidence-Cards (Sentiment-Badge POSITIVE/NEUTRAL/NEGATIVE, Confidence-Badge HIGH/MEDIUM/LOW, Risk-Score 0–10) und Ingest-News-Button (nur Fund Manager). Evidence wird primär automatisch via KI-News-Ingest gesammelt (alle 4 Provider, async beim Audit-Report-Erstellen); Auditoren und Compliance-Officers können Evidence manuell ergänzen.
 ![Evidence & Risk Analysis](doc/screenshots/evidence-page.png)
 
-**KI-Chat-Assistent** — Alle Rollen haben Zugang zum Chat unter `/chat`. Der Assistent kann Portfolios und Holdings auflisten, Evidence-Scores abfragen und — für Fund Manager — neue Portfolios und Holdings anlegen. *(Kein Screenshot vorhanden; Feature unter `/chat` nach Login erreichbar.)*
+**KI-Chat-Assistent** — Alle Rollen haben Zugang zum Chat unter `/chat`. Der Assistent kann Portfolios und Holdings auflisten, Evidence-Scores abfragen und — für Fund Manager — neue Portfolios und Holdings anlegen.
+![KI-Chat-Assistent](doc/screenshots/chat-page.png)
 
 **Account** — Benutzerprofil mit Rolle (fund-manager)
 ![Account Fund Manager](doc/screenshots/account-manager.png)
