@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - name: Reject whitespace errors
         run: git diff --check HEAD^ HEAD
 
@@ -57,7 +59,13 @@ jobs:
         run: npm run check
 
       - name: Build frontend container
-        run: docker build -t trueyield-frontend-ci .
+        run: |
+          docker build \
+            --build-arg API_BASE_URL="$API_BASE_URL" \
+            --build-arg AUTH0_DOMAIN="$AUTH0_DOMAIN" \
+            --build-arg AUTH0_CLIENT_ID="$AUTH0_CLIENT_ID" \
+            --build-arg AUTH0_AUDIENCE="$AUTH0_AUDIENCE" \
+            -t trueyield-frontend-ci .
 
   e2e-tests:
     name: E2E Tests (unauthenticated)
