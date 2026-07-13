@@ -7,12 +7,21 @@ on:
       - "feature/**"
       - "fix/**"
       - "chore/**"
+      - "codex/**"
   pull_request:
     branches:
       - main
   workflow_dispatch:
 
 jobs:
+  repository-hygiene:
+    name: Repository Hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject whitespace errors
+        run: git diff --check HEAD^ HEAD
+
   frontend-checks:
     name: Frontend Check + Build
     runs-on: ubuntu-latest
@@ -41,11 +50,14 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Build frontend
+        run: npm run build
+
       - name: Run frontend checks
         run: npm run check
 
-      - name: Build frontend
-        run: npm run build
+      - name: Build frontend container
+        run: docker build -t trueyield-frontend-ci .
 
   e2e-tests:
     name: E2E Tests (unauthenticated)
@@ -126,6 +138,9 @@ jobs:
 
       - name: Verify (tests + JaCoCo report + threshold check)
         run: ./mvnw --batch-mode verify
+
+      - name: Build backend container
+        run: docker build -t trueyield-backend-ci .
 
       - name: Compute coverage summary and warn below 80%
         run: |
