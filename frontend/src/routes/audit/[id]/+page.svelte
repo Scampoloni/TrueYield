@@ -12,11 +12,12 @@
   let showApproveModal = $state(false);
   let showRejectModal = $state(false);
   let openAccordions: Record<string, boolean> = $state({});
-  let portfolioRiskScore: number | null = $state(null); // legacy evidence-based score, kept for fallback
   let comments: any[] = $state([]);
   let newComment = $state('');
+  let decisionRationale = $state('');
   let submittingComment = $state(false);
   let evidenceByHolding: Record<string, any[]> = $state({});
+  let history: any[] = $state([]);
 
   const isAuditor = $derived((page.data.user?.user_roles ?? []).includes('auditor'));
 
@@ -41,15 +42,14 @@
         const map: Record<string, any[]> = {};
         holdings.forEach((h: any, i: number) => { map[h.id] = evidencePerHolding[i]; });
         evidenceByHolding = map;
-        const allEvidence = evidencePerHolding.flat();
-        if (allEvidence.length > 0) {
-          const avg = allEvidence.reduce((sum: number, e: any) => sum + e.riskScore, 0) / allEvidence.length;
-          portfolioRiskScore = Math.round(avg * 10) / 10;
-        }
       }
 
-      const cRes = await fetch(`/api/service/auditcomment?auditReportId=${reportId}`);
+      const [cRes, historyRes] = await Promise.all([
+        fetch(`/api/service/auditcomment?auditReportId=${reportId}`),
+        fetch(`/api/service/auditreport/${reportId}/history`)
+      ]);
       if (cRes.ok) comments = await cRes.json();
+      if (historyRes.ok) history = await historyRes.json();
     } finally {
       loading = false;
     }
@@ -99,10 +99,11 @@
       const res = await fetch('/api/service/auditreport/complete', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ auditReportId: reportId })
+        body: JSON.stringify({ auditReportId: reportId, rationale: decisionRationale.trim() })
       });
       if (!res.ok) throw new Error();
       report = { ...report, auditStatus: 'APPROVED' };
+      decisionRationale = '';
       showApproveModal = false;
       showToast('Report approved successfully');
     } catch {
@@ -115,10 +116,11 @@
       const res = await fetch('/api/service/auditreport/reject', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ auditReportId: reportId })
+        body: JSON.stringify({ auditReportId: reportId, rationale: decisionRationale.trim() })
       });
       if (!res.ok) throw new Error();
       report = { ...report, auditStatus: 'REJECTED' };
+      decisionRationale = '';
       showRejectModal = false;
       showToast('Report rejected');
     } catch {
@@ -181,11 +183,11 @@
         {#if report.auditStatus === 'PENDING_REVIEW'}
           <button class="btn btn-primary" onclick={assignReport}>Assign to me</button>
         {:else if report.auditStatus === 'UNDER_REVIEW'}
-          {#if comments.length === 0}
-            <span class="comment-required-hint">Add a comment before approving or rejecting</span>
+          {#if !decisionRationale.trim()}
+            <span class="comment-required-hint">A decision rationale is required</span>
           {/if}
-          <button class="btn btn-success" onclick={() => showApproveModal = true} disabled={comments.length === 0} title={comments.length === 0 ? 'Add a comment first' : ''}>Approve</button>
-          <button class="btn btn-danger"  onclick={() => showRejectModal = true} disabled={comments.length === 0} title={comments.length === 0 ? 'Add a comment first' : ''}>Reject</button>
+          <button class="btn btn-success" onclick={() => showApproveModal = true} disabled={!decisionRationale.trim()} title={!decisionRationale.trim() ? 'Enter a decision rationale first' : ''}>Approve</button>
+          <button class="btn btn-danger"  onclick={() => showRejectModal = true} disabled={!decisionRationale.trim()} title={!decisionRationale.trim() ? 'Enter a decision rationale first' : ''}>Reject</button>
         {/if}
       {/if}
     </div>
@@ -228,16 +230,6 @@
       {#if report.aiRiskRationale}
         <div class="ai-rationale">{report.aiRiskRationale}</div>
       {/if}
-    {:else if portfolioRiskScore !== null}
-      <div class="risk-score-banner">
-        <div class="risk-score-label">Overall Portfolio Risk Score</div>
-        <div class="risk-score-value" style="color:{portfolioRiskScore < 4 ? 'var(--green,#4ade80)' : portfolioRiskScore < 7 ? 'var(--amber,#fbbf24)' : 'var(--red,#f87171)'}">
-          {portfolioRiskScore}<span style="font-size:14px;opacity:0.6">/10</span>
-        </div>
-        <div class="risk-score-bar">
-          <div class="risk-score-fill" style="width:{portfolioRiskScore * 10}%;background:{portfolioRiskScore < 4 ? 'var(--green,#4ade80)' : portfolioRiskScore < 7 ? 'var(--amber,#fbbf24)' : 'var(--red,#f87171)'}"></div>
-        </div>
-      </div>
     {/if}
 
     {#if report.aiRiskSummary}
@@ -251,8 +243,18 @@
         </div>
         <div style="flex:1;min-width:0;">
           <div class="ai-summary-title">AI Analysis Summary</div>
-          <div class="ai-summary-section-lbl">Claude Training Knowledge</div>
+          <div class="ai-summary-section-lbl">Evidence-grounded advisory output</div>
           <div class="ai-summary-text">{report.aiRiskSummary}</div>
+          {#if report.aiAnalysisMetadata}
+            <div class="ai-summary-section-lbl" style="margin-top:14px;">Analysis metadata</div>
+            <div class="ai-summary-text">{report.aiAnalysisMetadata.analysisState}; {report.aiAnalysisMetadata.inputEvidenceCount} evidence items; {Math.round((report.aiAnalysisMetadata.evidenceCoverage ?? 0) * 100)}% cited coverage</div>
+            <div class="ai-summary-text" style="margin-top:6px;">Model: {report.aiAnalysisMetadata.modelId ?? 'not used'}; Prompt: {report.aiAnalysisMetadata.promptVersion ?? 'not available'}; Analysed: {formatDate(report.aiAnalysisMetadata.analyzedAt)}</div>
+            {#if (report.aiAnalysisMetadata.citedEvidenceIds ?? []).length > 0}
+              <div class="ai-summary-text" style="margin-top:6px;">Cited evidence IDs: {report.aiAnalysisMetadata.citedEvidenceIds.join(', ')}</div>
+            {/if}
+          {:else}
+            <div class="ai-summary-text" style="margin-top:12px;opacity:.7">Legacy report — no analysis provenance available.</div>
+          {/if}
           {#if allEvidence.length > 0}
             <div class="ai-summary-section-lbl" style="margin-top:14px;">Evidence Articles ({allEvidence.length})</div>
             <div class="ai-evidence-list">
@@ -328,6 +330,22 @@
       {/if}
     </div>
 
+    <div class="section-hd"><span class="section-title">Review timeline</span></div>
+    <div class="table-wrap table-comments" style="margin-bottom:24px;">
+      {#if history.length === 0}
+        <div class="empty" style="padding:20px;"><div class="e-sub">Legacy report — no analysis provenance available.</div></div>
+      {:else}
+        <div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+          {#each history as event}
+            <div class="comment-card">
+              <div class="comment-meta"><span class="comment-author">{event.type.replace(/_/g, ' ')}</span><span class="comment-date">{formatDate(event.createdAt)}</span></div>
+              <div class="comment-text">{event.detail}{event.actorId ? ` · ${event.actorId}` : ''}</div>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+
     <div class="section-hd">
       <span class="section-title">Comments</span>
     </div>
@@ -353,6 +371,10 @@
 
       {#if isAuditor && report.auditStatus === 'UNDER_REVIEW'}
         <div class="comment-form">
+          <label for="decision-rationale" class="ai-summary-section-lbl">Decision rationale (required)</label>
+          <textarea id="decision-rationale" class="comment-input" bind:value={decisionRationale} placeholder="Explain the approval or rejection decision..." rows="3"></textarea>
+        </div>
+        <div class="comment-form">
           <textarea
             class="comment-input"
             bind:value={newComment}
@@ -375,7 +397,7 @@
 {#if showApproveModal}
   <ConfirmModal
     title="Approve Report"
-    description="Confirm ESG compliance for this portfolio? This action is final and cannot be reversed."
+    description="Confirm the auditor decision? This academic prototype does not certify compliance."
     confirmLabel="Approve"
     onConfirm={approveReport}
     onCancel={() => showApproveModal = false}
@@ -385,7 +407,7 @@
 {#if showRejectModal}
   <ConfirmModal
     title="Reject Report"
-    description="Reject this audit report? The portfolio will be flagged as non-compliant."
+    description="Reject this audit report? The auditor rationale will be retained in the review history."
     confirmLabel="Reject"
     danger={true}
     onConfirm={rejectReport}

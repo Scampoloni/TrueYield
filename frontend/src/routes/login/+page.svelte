@@ -84,22 +84,22 @@
         </div>
         <div>
           <div class="brand-name">TrueYield</div>
-          <div class="brand-sub">ESG Compliance Engine</div>
+          <div class="brand-sub">ESG Evidence Review Prototype</div>
         </div>
       </div>
 
       <div class="hero-copy hero-copy-compact">
-        <div class="eyebrow">Human-in-the-loop compliance</div>
+        <div class="eyebrow">Human-reviewed evidence workflow</div>
         <h1>Sign in.</h1>
         <p>
-          Review portfolios, inspect evidence, and complete approvals in the demo environment.
+          Review portfolios, inspect evidence, and record audit decisions in an academic demo environment.
         </p>
       </div>
 
       <div class="hero-points hero-points-inline">
         <div class="hero-point">
           <span class="point-bullet"></span>
-          Explainability first, no black-box decisions.
+          Evidence-linked advisory output, not a black-box decision.
         </div>
         <div class="hero-point">
           <span class="point-bullet"></span>
@@ -107,8 +107,9 @@
         </div>
         <div class="hero-point">
           <span class="point-bullet"></span>
-          Audit trail ready for the presentation and the real workflow.
+          Review history for the prototype workflow; no regulatory certification.
         </div>
+        <a class="about-link" href="/about">Read the prototype scope and limitations →</a>
       </div>
     </section>
 
