@@ -3,9 +3,9 @@ package ch.zhaw.trueyield.controller;
 import ch.zhaw.trueyield.model.AuditReport;
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.ComplianceOverviewDTO;
-import ch.zhaw.trueyield.model.dto.SfdrPortfolioScoreDTO;
+import ch.zhaw.trueyield.model.dto.EsgEvidenceSignalDTO;
 import ch.zhaw.trueyield.model.enums.AuditStatus;
-import ch.zhaw.trueyield.model.enums.SfdrClassification;
+import ch.zhaw.trueyield.model.enums.EsgEvidenceSignal;
 import ch.zhaw.trueyield.service.ComplianceService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,41 +54,37 @@ class ComplianceControllerTest {
         return r;
     }
 
-    // ── /sfdr ────────────────────────────────────────────────────────────────
+    // ── /esg-signals ─────────────────────────────────────────────────────────
 
     @Test
-    void getSfdr_asComplianceOfficer_returnsOk() throws Exception {
-        when(complianceService.getSfdrScores()).thenReturn(
-                List.of(new SfdrPortfolioScoreDTO("p1", "Green Alpha Fund", SfdrClassification.ARTICLE_9, 0.5, 3)));
+    void getEsgSignals_asComplianceOfficer_returnsOk() throws Exception {
+        when(complianceService.getEsgEvidenceSignals()).thenReturn(
+                List.of(new EsgEvidenceSignalDTO("p1", "Green Alpha Fund", EsgEvidenceSignal.FAVOURABLE, 0.5, 3)));
 
-        mockMvc.perform(get("/api/compliance/sfdr")
+        mockMvc.perform(get("/api/compliance/esg-signals")
                         .with(user("officer").roles("compliance-officer")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].portfolioId").value("p1"))
-                .andExpect(jsonPath("$[0].classification").value("ARTICLE_9"));
+                .andExpect(jsonPath("$[0].signal").value("FAVOURABLE"));
     }
 
     @Test
-    void getSfdr_asFundManager_returnsOk() throws Exception {
-        when(complianceService.getSfdrScores()).thenReturn(
-                List.of(new SfdrPortfolioScoreDTO("p1", "Green Alpha Fund", SfdrClassification.ARTICLE_8, 0.1, 2)));
-
-        mockMvc.perform(get("/api/compliance/sfdr")
+    void getEsgSignals_asFundManager_returnsForbidden() throws Exception {
+        mockMvc.perform(get("/api/compliance/esg-signals")
                         .with(user("manager").roles("fund-manager")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].portfolioId").value("p1"));
+                .andExpect(status().isForbidden());
     }
 
     @Test
-    void getSfdr_asAuditor_returnsForbidden() throws Exception {
-        mockMvc.perform(get("/api/compliance/sfdr")
+    void getEsgSignals_asAuditor_returnsForbidden() throws Exception {
+        mockMvc.perform(get("/api/compliance/esg-signals")
                         .with(user("auditor").roles("auditor")))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void getSfdr_unauthenticated_returnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/compliance/sfdr"))
+    void getEsgSignals_unauthenticated_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/compliance/esg-signals"))
                 .andExpect(status().isUnauthorized());
     }
 

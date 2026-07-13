@@ -101,7 +101,7 @@
 <div class="topbar">
   <div>
     <div class="pg-ttl">Audit Dashboard</div>
-    <div class="pg-sub">Manage ESG compliance audits</div>
+    <div class="pg-sub">Manage ESG evidence reviews</div>
   </div>
 </div>
 

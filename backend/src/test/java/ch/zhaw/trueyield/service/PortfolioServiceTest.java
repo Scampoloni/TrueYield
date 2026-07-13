@@ -7,6 +7,8 @@ import ch.zhaw.trueyield.model.dto.PortfolioUpdateDTO;
 import ch.zhaw.trueyield.model.enums.AuditStatus;
 import ch.zhaw.trueyield.repository.AuditReportRepository;
 import ch.zhaw.trueyield.repository.PortfolioRepository;
+import ch.zhaw.trueyield.repository.HoldingRepository;
+import ch.zhaw.trueyield.repository.EvidenceRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +38,12 @@ class PortfolioServiceTest {
 
     @Mock
     private AuditReportRepository auditReportRepository;
+
+    @Mock
+    private HoldingRepository holdingRepository;
+
+    @Mock
+    private EvidenceRepository evidenceRepository;
 
     @InjectMocks
     private PortfolioService portfolioService;
@@ -212,6 +220,37 @@ class PortfolioServiceTest {
         assertDoesNotThrow(() -> portfolioService.deletePortfolio("portfolio-1", "manager-001"));
 
         verify(portfolioRepository, times(1)).deleteById("portfolio-1");
+    }
+
+    @Test
+    void deletePortfolio_removesEvidenceAndHoldings_whenNoAuditReportExists() {
+        portfolio.setId("portfolio-1");
+        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-1", "ABC");
+        holding.setId("holding-1");
+        ch.zhaw.trueyield.model.Evidence evidence = new ch.zhaw.trueyield.model.Evidence("holding-1");
+        when(portfolioRepository.findById("portfolio-1")).thenReturn(Optional.of(portfolio));
+        when(auditReportRepository.findByPortfolioId("portfolio-1")).thenReturn(List.of());
+        when(holdingRepository.findByPortfolioId("portfolio-1")).thenReturn(List.of(holding));
+        when(evidenceRepository.findByHoldingId("holding-1")).thenReturn(List.of(evidence));
+
+        portfolioService.deletePortfolio("portfolio-1", "manager-001");
+
+        verify(evidenceRepository).deleteAll(List.of(evidence));
+        verify(holdingRepository).deleteAll(List.of(holding));
+        verify(portfolioRepository).deleteById("portfolio-1");
+    }
+
+    @Test
+    void deletePortfolio_preservesEvidence_whenAuditReportsExist() {
+        when(portfolioRepository.findById("portfolio-1")).thenReturn(Optional.of(portfolio));
+        when(auditReportRepository.findByPortfolioId("portfolio-1")).thenReturn(List.of(mock(AuditReport.class)));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> portfolioService.deletePortfolio("portfolio-1", "manager-001"));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        verifyNoInteractions(holdingRepository, evidenceRepository);
+        verify(portfolioRepository, never()).deleteById(anyString());
     }
 
     @Test

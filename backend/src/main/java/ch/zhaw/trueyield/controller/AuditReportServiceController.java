@@ -6,6 +6,7 @@ import ch.zhaw.trueyield.model.AuditReport;
 import ch.zhaw.trueyield.model.dto.AuditReportAggregationDTO;
 import ch.zhaw.trueyield.model.dto.AuditReportCreateDTO;
 import ch.zhaw.trueyield.model.dto.AuditReportResponseDTO;
+import ch.zhaw.trueyield.model.dto.AuditEventResponseDTO;
 import ch.zhaw.trueyield.model.dto.StateChangeDTO;
 import ch.zhaw.trueyield.security.UserService;
 import ch.zhaw.trueyield.service.AuditReportService;
@@ -45,6 +46,13 @@ public class AuditReportServiceController {
     public ResponseEntity<AuditReportResponseDTO> getAuditReportById(@PathVariable String id) {
         AuditReport report = auditReportService.getAuditReportById(id);
         return new ResponseEntity<>(AuditReportResponseDTO.fromEntity(report), HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}/history")
+    @PreAuthorize("hasAnyRole('fund-manager','auditor','compliance-officer')")
+    public ResponseEntity<List<AuditEventResponseDTO>> getAuditHistory(@PathVariable String id) {
+        return ResponseEntity.ok(auditReportService.getAuditHistory(id).stream()
+                .map(AuditEventResponseDTO::fromEntity).toList());
     }
 
     @PutMapping("/reject")

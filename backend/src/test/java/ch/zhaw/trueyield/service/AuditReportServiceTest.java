@@ -5,6 +5,7 @@ import ch.zhaw.trueyield.model.enums.AuditStatus;
 import ch.zhaw.trueyield.model.dto.AuditReportCreateDTO;
 import ch.zhaw.trueyield.model.dto.StateChangeDTO;
 import ch.zhaw.trueyield.repository.AuditReportRepository;
+import ch.zhaw.trueyield.repository.AuditEventRepository;
 import ch.zhaw.trueyield.security.AccessControlService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ class AuditReportServiceTest {
 
     @Mock
     private AuditReportRepository auditReportRepository;
+
+    @Mock
+    private AuditEventRepository auditEventRepository;
 
     @Mock
     private AccessControlService accessControlService;
@@ -69,12 +73,7 @@ class AuditReportServiceTest {
 
         dto = mock(StateChangeDTO.class);
         lenient().when(dto.getAuditReportId()).thenReturn("report-001");
-        lenient().when(aiAnalysisService.generateRiskSummary(anyList()))
-            .thenReturn("Mock AI risk summary.");
-        lenient().when(aiAnalysisService.generatePortfolioRiskScore(anyList(), anyList()))
-            .thenReturn(new AiAnalysisService.PortfolioRiskResult(5, "Mock risk rationale."));
-        lenient().when(aiAnalysisService.generatePortfolioSentiment(anyList()))
-            .thenReturn(0.0);
+        lenient().when(dto.getRationale()).thenReturn("Auditor decision rationale.");
     }
 
     // ── getAuditReportById ───────────────────────────────────────────────────
@@ -133,10 +132,10 @@ class AuditReportServiceTest {
     // Spalten: statusName, expectedHttpStatus
     @ParameterizedTest
     @CsvSource({
-        "AI_ANALYZING,   BAD_REQUEST",
-        "UNDER_REVIEW,   BAD_REQUEST",
-        "APPROVED,       BAD_REQUEST",
-        "REJECTED,       BAD_REQUEST"
+        "AI_ANALYZING,   CONFLICT",
+        "UNDER_REVIEW,   CONFLICT",
+        "APPROVED,       CONFLICT",
+        "REJECTED,       CONFLICT"
     })
     void assignAuditReport_throwsBadRequest_forNonPendingStatus(ArgumentsAccessor args) {
         AuditStatus status = AuditStatus.valueOf(args.getString(0).trim());
@@ -177,7 +176,7 @@ class AuditReportServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.rejectAuditReport(dto));
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verify(auditReportRepository, never()).save(any());
     }
 
@@ -192,7 +191,7 @@ class AuditReportServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.rejectAuditReport(dto));
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         verify(auditReportRepository, never()).save(any());
     }
 
@@ -220,7 +219,7 @@ class AuditReportServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.completeAuditReport(dto));
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verify(auditReportRepository, never()).save(any());
     }
 
@@ -235,7 +234,7 @@ class AuditReportServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> auditReportService.completeAuditReport(dto));
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         verify(auditReportRepository, never()).save(any());
     }
 
@@ -287,8 +286,6 @@ class AuditReportServiceTest {
         doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-        when(aiAnalysisService.generateRiskSummary(anyList())).thenReturn("AI analysis unavailable.");
-
         AuditReport result = auditReportService.createAuditReport(createDTO);
 
         assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
@@ -427,18 +424,17 @@ class AuditReportServiceTest {
     }
 
     @Test
-    void createAuditReport_continuesGracefully_whenRiskScoreGenerationThrows() {
+    void createAuditReport_marksInsufficientEvidence_beforeCheckingModelAvailability() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
         doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-        when(aiAnalysisService.generatePortfolioRiskScore(anyList(), anyList()))
-                .thenThrow(new RuntimeException("AI timeout"));
-
         AuditReport result = auditReportService.createAuditReport(createDTO);
 
         assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+        assertEquals(ch.zhaw.trueyield.model.enums.AnalysisState.INSUFFICIENT_EVIDENCE,
+                result.getAiAnalysisMetadata().getAnalysisState());
         verify(auditReportRepository, times(2)).save(any(AuditReport.class));
     }
 
@@ -461,18 +457,17 @@ class AuditReportServiceTest {
     }
 
     @Test
-    void createAuditReport_transitionsToPendingReview_whenAiThrowsUnexpectedException() {
+    void createAuditReport_marksInsufficientEvidence_whenNoEvidenceExists() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
         doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-        when(aiAnalysisService.generateRiskSummary(anyList()))
-                .thenThrow(new RuntimeException("Anthropic API timeout"));
-
         AuditReport result = auditReportService.createAuditReport(createDTO);
 
         assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+        assertEquals(ch.zhaw.trueyield.model.enums.AnalysisState.INSUFFICIENT_EVIDENCE,
+                result.getAiAnalysisMetadata().getAnalysisState());
         verify(auditReportRepository, times(2)).save(any(AuditReport.class));
     }
 
@@ -507,19 +502,105 @@ class AuditReportServiceTest {
     }
 
     @Test
-    void createAuditReport_continuesGracefully_whenTrainingSentimentFails() {
+    void createAuditReport_neverUsesTrainingSentimentFallback() {
         AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
         when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
         doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
         AuditReport saved = new AuditReport("portfolio-001", AuditStatus.PENDING_REVIEW);
         when(auditReportRepository.save(any(AuditReport.class))).thenReturn(saved);
-        when(aiAnalysisService.generatePortfolioSentiment(anyList()))
-                .thenThrow(new RuntimeException("AI sentiment unavailable"));
-
         AuditReport result = auditReportService.createAuditReport(createDTO);
 
         assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
         verify(auditReportRepository, times(2)).save(any(AuditReport.class));
+    }
+
+    @Test
+    void createAuditReport_persistsCitedEvidenceProvenance_whenStructuredOutputIsValid() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        AuditReport saved = new AuditReport("portfolio-001", AuditStatus.AI_ANALYZING);
+        saved.setId("report-001");
+        when(auditReportRepository.save(any(AuditReport.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "SHEL");
+        holding.setId("holding-001");
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(List.of(holding));
+        when(evidenceService.countByHoldingId("holding-001")).thenReturn(10L);
+        ch.zhaw.trueyield.model.Evidence evidence = new ch.zhaw.trueyield.model.Evidence("holding-001");
+        evidence.setId("evidence-001");
+        evidence.setContentSnippet("A sourced ESG controversy was reported.");
+        when(evidenceService.getEvidenceByHoldingId("holding-001")).thenReturn(List.of(evidence));
+        when(aiAnalysisService.isAvailable()).thenReturn(true);
+        when(aiAnalysisService.analyzeEvidence(anyList())).thenReturn(
+                new AiAnalysisService.EvidenceAnalysisResult(7, "Cited summary", "Cited rationale", List.of("evidence-001")));
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertEquals(AuditStatus.PENDING_REVIEW, result.getAuditStatus());
+        assertEquals(7, result.getAiRiskScore());
+        assertEquals(ch.zhaw.trueyield.model.enums.AnalysisState.COMPLETED,
+                result.getAiAnalysisMetadata().getAnalysisState());
+        assertEquals(List.of("evidence-001"), result.getAiAnalysisMetadata().getCitedEvidenceIds());
+        assertEquals(1.0, result.getAiAnalysisMetadata().getEvidenceCoverage());
+        verify(auditEventRepository, times(2)).save(any());
+    }
+
+    @Test
+    void createAuditReport_rejectsUnknownEvidenceCitations() {
+        AuditReportCreateDTO createDTO = mock(AuditReportCreateDTO.class);
+        when(createDTO.getPortfolioId()).thenReturn("portfolio-001");
+        doNothing().when(accessControlService).requireFundManagerPortfolioAccess("portfolio-001");
+        when(auditReportRepository.save(any(AuditReport.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        ch.zhaw.trueyield.model.Holding holding = new ch.zhaw.trueyield.model.Holding("portfolio-001", "SHEL");
+        holding.setId("holding-001");
+        when(holdingService.getHoldingsByPortfolioId("portfolio-001")).thenReturn(List.of(holding));
+        when(evidenceService.countByHoldingId("holding-001")).thenReturn(10L);
+        ch.zhaw.trueyield.model.Evidence evidence = new ch.zhaw.trueyield.model.Evidence("holding-001");
+        evidence.setId("evidence-001");
+        evidence.setContentSnippet("Source text");
+        when(evidenceService.getEvidenceByHoldingId("holding-001")).thenReturn(List.of(evidence));
+        when(aiAnalysisService.isAvailable()).thenReturn(true);
+        when(aiAnalysisService.analyzeEvidence(anyList())).thenReturn(
+                new AiAnalysisService.EvidenceAnalysisResult(8, "Summary", "Rationale", List.of("unknown-id")));
+
+        AuditReport result = auditReportService.createAuditReport(createDTO);
+
+        assertNull(result.getAiRiskScore());
+        assertEquals(ch.zhaw.trueyield.model.enums.AnalysisState.INSUFFICIENT_EVIDENCE,
+                result.getAiAnalysisMetadata().getAnalysisState());
+        assertTrue(result.getAiAnalysisMetadata().getCitedEvidenceIds().isEmpty());
+    }
+
+    @Test
+    void completeAuditReport_requiresNonBlankDecisionRationale() {
+        StateChangeDTO missingRationale = mock(StateChangeDTO.class);
+        when(missingRationale.getAuditReportId()).thenReturn("report-001");
+        when(missingRationale.getRationale()).thenReturn(" ");
+        when(auditReportRepository.findById("report-001")).thenReturn(Optional.of(underReviewReport));
+        when(accessControlService.requireAuditorId()).thenReturn("auditor-001");
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> auditReportService.completeAuditReport(missingRationale));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(auditReportRepository, never()).save(any());
+    }
+
+    @Test
+    void getAuditHistory_returnsPersistedEvents_afterResourceAccessCheck() {
+        pendingReport.setId("report-001");
+        when(auditReportRepository.findById("report-001")).thenReturn(Optional.of(pendingReport));
+        doNothing().when(accessControlService).requireAuditReportAccess(pendingReport);
+        ch.zhaw.trueyield.model.AuditEvent event = new ch.zhaw.trueyield.model.AuditEvent(
+                "report-001", ch.zhaw.trueyield.model.enums.AuditEventType.REPORT_CREATED,
+                null, AuditStatus.AI_ANALYZING, "SYSTEM", "Audit report created");
+        when(auditEventRepository.findByAuditReportIdOrderByCreatedAtAsc("report-001")).thenReturn(List.of(event));
+
+        List<ch.zhaw.trueyield.model.AuditEvent> history = auditReportService.getAuditHistory("report-001");
+
+        assertEquals(1, history.size());
+        assertEquals(ch.zhaw.trueyield.model.enums.AuditEventType.REPORT_CREATED, history.get(0).getType());
     }
 
     // ── getAuditorQueue ──────────────────────────────────────────────────────

@@ -5,9 +5,9 @@ import ch.zhaw.trueyield.model.Evidence;
 import ch.zhaw.trueyield.model.Holding;
 import ch.zhaw.trueyield.model.Portfolio;
 import ch.zhaw.trueyield.model.dto.ComplianceOverviewDTO;
-import ch.zhaw.trueyield.model.dto.SfdrPortfolioScoreDTO;
+import ch.zhaw.trueyield.model.dto.EsgEvidenceSignalDTO;
 import ch.zhaw.trueyield.model.enums.AuditStatus;
-import ch.zhaw.trueyield.model.enums.SfdrClassification;
+import ch.zhaw.trueyield.model.enums.EsgEvidenceSignal;
 import ch.zhaw.trueyield.repository.AuditReportRepository;
 import ch.zhaw.trueyield.repository.EvidenceRepository;
 import ch.zhaw.trueyield.repository.HoldingRepository;
@@ -118,33 +118,33 @@ class ComplianceServiceTest {
         verify(auditReportRepository, times(1)).findAll();
     }
 
-    // ── getSfdrScores ────────────────────────────────────────────────────────
+    // ── getEsgEvidenceSignals ─────────────────────────────────────────────────
 
     @Test
-    void getSfdrScores_returnsInsufficientData_whenNoEvidence() {
+    void getEsgEvidenceSignals_returnsInsufficientEvidence_whenNoEvidence() {
         Portfolio p = makePortfolio("p1", "Green Fund");
         Holding h = makeHolding("h1", "p1");
         when(portfolioRepository.findAll()).thenReturn(List.of(p));
         when(holdingRepository.findByPortfolioId("p1")).thenReturn(List.of(h));
         when(evidenceRepository.findByHoldingId("h1")).thenReturn(List.of());
 
-        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+        List<EsgEvidenceSignalDTO> scores = complianceService.getEsgEvidenceSignals();
 
         assertEquals(1, scores.size());
-        assertEquals(SfdrClassification.INSUFFICIENT_DATA, scores.get(0).classification());
+        assertEquals(EsgEvidenceSignal.INSUFFICIENT_EVIDENCE, scores.get(0).signal());
         assertEquals(0, scores.get(0).evidenceCount());
     }
 
     @ParameterizedTest
     @CsvSource({
-        "0.5,  ARTICLE_9",
-        "0.31, ARTICLE_9",
-        "0.1,  ARTICLE_8",
-        "-0.09, ARTICLE_8",
-        "-0.2,  NON_SFDR",
-        "-1.0,  NON_SFDR"
+        "0.5,  FAVOURABLE",
+        "0.31, FAVOURABLE",
+        "0.1,  MIXED",
+        "-0.09, MIXED",
+        "-0.2,  ADVERSE",
+        "-1.0,  ADVERSE"
     })
-    void getSfdrScores_classifiesCorrectly(double sentiment, SfdrClassification expected) {
+    void getEsgEvidenceSignals_classifiesEvidenceOnly(double sentiment, EsgEvidenceSignal expected) {
         Portfolio p = makePortfolio("p1", "Test Fund");
         Holding h = makeHolding("h1", "p1");
         Evidence e = makeEvidence("h1", sentiment);
@@ -152,14 +152,14 @@ class ComplianceServiceTest {
         when(holdingRepository.findByPortfolioId("p1")).thenReturn(List.of(h));
         when(evidenceRepository.findByHoldingId("h1")).thenReturn(List.of(e));
 
-        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+        List<EsgEvidenceSignalDTO> scores = complianceService.getEsgEvidenceSignals();
 
-        assertEquals(expected, scores.get(0).classification());
+        assertEquals(expected, scores.get(0).signal());
         assertEquals(1, scores.get(0).evidenceCount());
     }
 
     @Test
-    void getSfdrScores_aggregatesAcrossMultipleHoldings() {
+    void getEsgEvidenceSignals_aggregatesAcrossMultipleHoldings() {
         Portfolio p = makePortfolio("p1", "Multi Fund");
         Holding h1 = makeHolding("h1", "p1");
         Holding h2 = makeHolding("h2", "p1");
@@ -168,70 +168,63 @@ class ComplianceServiceTest {
         when(evidenceRepository.findByHoldingId("h1")).thenReturn(List.of(makeEvidence("h1", 0.4)));
         when(evidenceRepository.findByHoldingId("h2")).thenReturn(List.of(makeEvidence("h2", -0.2)));
 
-        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+        List<EsgEvidenceSignalDTO> scores = complianceService.getEsgEvidenceSignals();
 
         assertEquals(2, scores.get(0).evidenceCount());
-        assertEquals(SfdrClassification.ARTICLE_8, scores.get(0).classification()); // avg = 0.1
+        assertEquals(EsgEvidenceSignal.MIXED, scores.get(0).signal()); // avg = 0.1
     }
 
     @Test
-    void getSfdrScores_returnsEmptyList_whenNoPortfolios() {
+    void getEsgEvidenceSignals_returnsEmptyList_whenNoPortfolios() {
         when(portfolioRepository.findAll()).thenReturn(List.of());
 
-        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+        List<EsgEvidenceSignalDTO> scores = complianceService.getEsgEvidenceSignals();
 
         assertTrue(scores.isEmpty());
     }
 
     @Test
-    void getSfdrScores_usesTrainingSentimentOnly_whenNoEvidence() {
+    void getEsgEvidenceSignals_doesNotUseAuditScores_whenNoEvidence() {
         Portfolio p = makePortfolio("p1", "AI Fund");
         Holding h = makeHolding("h1", "p1");
-        AuditReport report = makeReportWithRiskScore("p1", 0); // sentiment = 1.0 - (0/5.0) = 1.0
         when(portfolioRepository.findAll()).thenReturn(List.of(p));
         when(holdingRepository.findByPortfolioId("p1")).thenReturn(List.of(h));
         when(evidenceRepository.findByHoldingId("h1")).thenReturn(List.of());
-        when(auditReportRepository.findByPortfolioIdOrderByCreatedAtDesc("p1")).thenReturn(List.of(report));
 
-        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+        List<EsgEvidenceSignalDTO> scores = complianceService.getEsgEvidenceSignals();
 
-        assertEquals(SfdrClassification.ARTICLE_9, scores.get(0).classification()); // 1.0 > 0.3
+        assertEquals(EsgEvidenceSignal.INSUFFICIENT_EVIDENCE, scores.get(0).signal());
         assertEquals(0, scores.get(0).evidenceCount());
     }
 
     @Test
-    void getSfdrScores_blendsTrainingAndEvidence_whenBothPresent() {
+    void getEsgEvidenceSignals_usesEvidenceOnly_whenAuditScoreAlsoExists() {
         Portfolio p = makePortfolio("p1", "Blend Fund");
         Holding h = makeHolding("h1", "p1");
-        // aiRiskScore=0 → trainingSentiment=1.0; evidenceAvg=0.5
-        // blended = (1.0*0.7) + (0.5*0.3) = 0.85 → ARTICLE_9
         AuditReport report = makeReportWithRiskScore("p1", 0);
         Evidence e = makeEvidence("h1", 0.5);
         when(portfolioRepository.findAll()).thenReturn(List.of(p));
         when(holdingRepository.findByPortfolioId("p1")).thenReturn(List.of(h));
         when(evidenceRepository.findByHoldingId("h1")).thenReturn(List.of(e));
-        when(auditReportRepository.findByPortfolioIdOrderByCreatedAtDesc("p1")).thenReturn(List.of(report));
 
-        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+        List<EsgEvidenceSignalDTO> scores = complianceService.getEsgEvidenceSignals();
 
-        assertEquals(SfdrClassification.ARTICLE_9, scores.get(0).classification()); // 0.85 > 0.3
+        assertEquals(EsgEvidenceSignal.FAVOURABLE, scores.get(0).signal());
         assertEquals(1, scores.get(0).evidenceCount());
-        assertEquals(0.85, scores.get(0).averageSentiment(), 0.001);
+        assertEquals(0.5, scores.get(0).averageEvidenceSentiment(), 0.001);
     }
 
     @Test
-    void getSfdrScores_returnsInsufficientData_whenNoEvidenceAndNoRiskScore() {
+    void getEsgEvidenceSignals_returnsInsufficientEvidence_whenNoEvidenceAndNoRiskScore() {
         Portfolio p = makePortfolio("p1", "Empty Fund");
         Holding h = makeHolding("h1", "p1");
-        AuditReport reportWithNullScore = makeReport(AuditStatus.PENDING_REVIEW); // aiRiskScore = null
         when(portfolioRepository.findAll()).thenReturn(List.of(p));
         when(holdingRepository.findByPortfolioId("p1")).thenReturn(List.of(h));
         when(evidenceRepository.findByHoldingId("h1")).thenReturn(List.of());
-        when(auditReportRepository.findByPortfolioIdOrderByCreatedAtDesc("p1")).thenReturn(List.of(reportWithNullScore));
 
-        List<SfdrPortfolioScoreDTO> scores = complianceService.getSfdrScores();
+        List<EsgEvidenceSignalDTO> scores = complianceService.getEsgEvidenceSignals();
 
-        assertEquals(SfdrClassification.INSUFFICIENT_DATA, scores.get(0).classification());
+        assertEquals(EsgEvidenceSignal.INSUFFICIENT_EVIDENCE, scores.get(0).signal());
     }
 
     // ── getAllPortfolios / getAllReports ──────────────────────────────────────

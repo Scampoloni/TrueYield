@@ -20,6 +20,12 @@ describe('unauthenticated redirects', () => {
 });
 
 describe('login page', () => {
+  it('links to the public academic prototype description', () => {
+    cy.visit('/about');
+    cy.contains('Academic portfolio prototype').should('be.visible');
+    cy.contains('does not certify SFDR').should('be.visible');
+  });
+
   it('renders email and password inputs', () => {
     cy.visit('/login');
     cy.get('#email').should('be.visible');

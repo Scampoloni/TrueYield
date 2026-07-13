@@ -7,7 +7,6 @@ import ch.zhaw.trueyield.service.provider.NewsArticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -35,12 +34,10 @@ public class NewsIngestionService {
 
     private record ScoredArticle(NewsArticle article, String snippet, double relevance) {}
 
-    @Async
     public void ingestNewsForHolding(String holdingId, String companyName) {
         ingestNewsForHolding(holdingId, companyName, null);
     }
 
-    @Async
     public void ingestNewsForHolding(String holdingId, String companyName, String symbol) {
         log.info("NewsIngestion: starting multi-provider news fetch for '{}' (symbol: {})",
                 sanitize(companyName), sanitize(symbol != null ? symbol : "none"));
