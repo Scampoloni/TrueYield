@@ -7,10 +7,13 @@ import java.util.stream.Collectors;
 
 import ch.zhaw.trueyield.model.AuditReport;
 import ch.zhaw.trueyield.model.Portfolio;
+import ch.zhaw.trueyield.model.Holding;
 import ch.zhaw.trueyield.model.dto.PortfolioCreateDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioUpdateDTO;
 import ch.zhaw.trueyield.repository.AuditReportRepository;
 import ch.zhaw.trueyield.repository.PortfolioRepository;
+import ch.zhaw.trueyield.repository.HoldingRepository;
+import ch.zhaw.trueyield.repository.EvidenceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,6 +27,12 @@ public class PortfolioService {
 
     @Autowired
     private AuditReportRepository auditReportRepository;
+
+    @Autowired
+    private HoldingRepository holdingRepository;
+
+    @Autowired
+    private EvidenceRepository evidenceRepository;
 
     // CREATE
     public Portfolio createPortfolio(PortfolioCreateDTO dto, String fundManagerId) {
@@ -77,6 +86,15 @@ public class PortfolioService {
     // DELETE (mit Ownership Check!)
     public void deletePortfolio(String id, String requestingUserId) {
         Portfolio portfolio = getPortfolioById(id, requestingUserId);
+        if (!auditReportRepository.findByPortfolioId(id).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Portfolios with audit reports are retained to preserve review evidence");
+        }
+        List<Holding> holdings = holdingRepository.findByPortfolioId(id);
+        for (Holding holding : holdings) {
+            evidenceRepository.deleteAll(evidenceRepository.findByHoldingId(holding.getId()));
+        }
+        holdingRepository.deleteAll(holdings);
         portfolioRepository.deleteById(id);
     }
 
