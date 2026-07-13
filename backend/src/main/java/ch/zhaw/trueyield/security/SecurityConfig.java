@@ -47,9 +47,9 @@ public class SecurityConfig {
         }
 
         http.authorizeHttpRequests(authorize -> authorize
-            .requestMatchers("/api/chat").authenticated()
+                .requestMatchers("/actuator/health", "/error").permitAll()
                 .requestMatchers("/api/**").authenticated()
-                .anyRequest().permitAll()
+                .anyRequest().denyAll()
         )
         .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
                 jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
