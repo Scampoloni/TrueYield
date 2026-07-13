@@ -8,13 +8,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class AiAnalysisService {
 
-    public record PortfolioRiskResult(int score, String rationale) {}
+    public record PortfolioRiskResult(Integer score, String rationale) {}
+    public record EvidenceInput(String id, String snippet) {}
+    public record EvidenceAnalysisResult(Integer score, String summary, String rationale, List<String> citedEvidenceIds) {}
 
     private static final Logger log = LoggerFactory.getLogger(AiAnalysisService.class);
 
@@ -24,8 +28,51 @@ public class AiAnalysisService {
     @Value("${spring.ai.anthropic.api-key:}")
     private String apiKey;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     public boolean isAvailable() {
         return chatModel != null && apiKey != null && !apiKey.isBlank();
+    }
+
+    /**
+     * Advisory output only: every statement must be grounded in one of the supplied evidence IDs.
+     * Invalid model output is represented as an empty result; callers must not invent a score.
+     */
+    public EvidenceAnalysisResult analyzeEvidence(List<EvidenceInput> evidence) {
+        if (!isAvailable() || evidence == null || evidence.isEmpty()) {
+            return new EvidenceAnalysisResult(null, null, null, List.of());
+        }
+        String context = evidence.stream()
+                .map(item -> "[" + item.id() + "] " + item.snippet())
+                .collect(Collectors.joining("\n"));
+        String prompt = """
+                You are an advisory ESG evidence reviewer. Use ONLY the evidence below. Do not use
+                training knowledge, make regulatory determinations, or claim that greenwashing is proven.
+                Return valid JSON only, with this schema:
+                {"score": integer 0-10, "summary": "short evidence-grounded summary",
+                 "rationale": "short explanation", "citedEvidenceIds": ["id"]}
+                Cite at least one supplied evidence ID. If the evidence is insufficient, return
+                {"score":null,"summary":"Insufficient evidence.","rationale":"...","citedEvidenceIds":[]}.
+
+                Evidence:
+                %s
+                """.formatted(context);
+        try {
+            String response = chatModel.call(new Prompt(prompt)).getResult().getOutput().getText();
+            JsonNode json = objectMapper.readTree(response);
+            Integer score = json.hasNonNull("score") ? json.get("score").asInt(Integer.MIN_VALUE) : null;
+            if (score != null && (score < 0 || score > 10)) return new EvidenceAnalysisResult(null, null, null, List.of());
+            String summary = json.path("summary").asText(null);
+            String rationale = json.path("rationale").asText(null);
+            List<String> cited = new java.util.ArrayList<>();
+            if (json.path("citedEvidenceIds").isArray()) {
+                json.path("citedEvidenceIds").forEach(node -> cited.add(node.asText()));
+            }
+            return new EvidenceAnalysisResult(score, summary, rationale, cited);
+        } catch (Exception e) {
+            log.warn("AiAnalysisService: evidence analysis failed: {}", e.getMessage());
+            return new EvidenceAnalysisResult(null, null, null, List.of());
+        }
     }
 
     public String generateRiskSummary(List<String> holdingNames) {
@@ -92,7 +139,7 @@ public class AiAnalysisService {
 
     public PortfolioRiskResult generatePortfolioRiskScore(List<String> holdingNames, List<String> evidenceSnippets) {
         if (!isAvailable()) {
-            return new PortfolioRiskResult(5, "AI analysis unavailable.");
+            return new PortfolioRiskResult(null, "AI analysis unavailable.");
         }
         String holdings = holdingNames.isEmpty() ? "no holdings listed" : String.join(", ", holdingNames);
         String evidence = evidenceSnippets.isEmpty()
@@ -132,7 +179,7 @@ public class AiAnalysisService {
             return new PortfolioRiskResult(score, rationale);
         } catch (Exception e) {
             log.warn("AiAnalysisService: generatePortfolioRiskScore failed: {}", e.getMessage());
-            return new PortfolioRiskResult(5, "AI analysis unavailable.");
+            return new PortfolioRiskResult(null, "AI analysis unavailable.");
         }
     }
 

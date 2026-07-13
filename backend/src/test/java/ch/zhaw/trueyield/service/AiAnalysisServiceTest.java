@@ -310,7 +310,7 @@ class AiAnalysisServiceTest {
         AiAnalysisService.PortfolioRiskResult result = aiAnalysisService.generatePortfolioRiskScore(
                 List.of("Shell PLC"), List.of("Some snippet"));
 
-        assertEquals(5, result.score());
+        assertNull(result.score());
         assertEquals("AI analysis unavailable.", result.rationale());
     }
 
@@ -335,7 +335,7 @@ class AiAnalysisServiceTest {
         AiAnalysisService.PortfolioRiskResult result = service.generatePortfolioRiskScore(
                 List.of("Apple Inc."), List.of("Snippet"));
 
-        assertEquals(5, result.score());
+        assertNull(result.score());
         assertEquals("AI analysis unavailable.", result.rationale());
         verifyNoInteractions(chatModel);
     }

@@ -12,4 +12,6 @@ public class StateChangeDTO {
     private String auditReportId;
 
     private String auditorId;
+
+    private String rationale;
 }
