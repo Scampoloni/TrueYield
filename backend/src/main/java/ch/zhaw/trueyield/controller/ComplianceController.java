@@ -3,7 +3,7 @@ package ch.zhaw.trueyield.controller;
 import ch.zhaw.trueyield.model.dto.AuditReportResponseDTO;
 import ch.zhaw.trueyield.model.dto.ComplianceOverviewDTO;
 import ch.zhaw.trueyield.model.dto.PortfolioResponseDTO;
-import ch.zhaw.trueyield.model.dto.SfdrPortfolioScoreDTO;
+import ch.zhaw.trueyield.model.dto.EsgEvidenceSignalDTO;
 import ch.zhaw.trueyield.service.ComplianceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,11 +30,12 @@ public class ComplianceController {
         return ResponseEntity.ok(complianceService.getOverview());
     }
 
-    @GetMapping("/sfdr")
-    @PreAuthorize("hasRole('compliance-officer') or hasRole('fund-manager')")
-    public ResponseEntity<List<SfdrPortfolioScoreDTO>> getSfdrScores() {
-        return ResponseEntity.ok(complianceService.getSfdrScores());
+    @GetMapping("/esg-signals")
+    @PreAuthorize("hasRole('compliance-officer')")
+    public ResponseEntity<List<EsgEvidenceSignalDTO>> getEsgEvidenceSignals() {
+        return ResponseEntity.ok(complianceService.getEsgEvidenceSignals());
     }
+
 
     @GetMapping("/portfolios")
     @PreAuthorize("hasRole('compliance-officer')")

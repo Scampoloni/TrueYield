@@ -13,11 +13,11 @@
     reportsByStatus: Record<string, number>;
   }
 
-  interface SfdrScore {
+  interface EsgEvidenceSignal {
     portfolioId: string;
     portfolioName: string;
-    classification: 'ARTICLE_9' | 'ARTICLE_8' | 'NON_SFDR' | 'INSUFFICIENT_DATA';
-    averageSentiment: number;
+    signal: 'FAVOURABLE' | 'MIXED' | 'ADVERSE' | 'INSUFFICIENT_EVIDENCE';
+    averageEvidenceSentiment: number;
     evidenceCount: number;
   }
 
@@ -39,7 +39,7 @@
 
   let activeTab = $state<'overview' | 'portfolios' | 'reports'>('overview');
   let overview: ComplianceOverview | null = $state(null);
-  let sfdrScores: SfdrScore[] = $state([]);
+  let evidenceSignals: EsgEvidenceSignal[] = $state([]);
   let portfolios: Portfolio[] = $state([]);
   let reports: AuditReport[] = $state([]);
   let loading = $state(true);
@@ -61,18 +61,18 @@
     REJECTED: 'badge-rejected'
   };
 
-  const SFDR_LABELS: Record<string, string> = {
-    ARTICLE_9: 'Art. 9',
-    ARTICLE_8: 'Art. 8',
-    NON_SFDR: 'Non-SFDR',
-    INSUFFICIENT_DATA: 'No Data'
+  const SIGNAL_LABELS: Record<string, string> = {
+    FAVOURABLE: 'Favourable',
+    MIXED: 'Mixed',
+    ADVERSE: 'Adverse',
+    INSUFFICIENT_EVIDENCE: 'Insufficient evidence'
   };
 
-  const SFDR_COLORS: Record<string, string> = {
-    ARTICLE_9: 'badge-approved',
-    ARTICLE_8: 'badge-under-review',
-    NON_SFDR: 'badge-rejected',
-    INSUFFICIENT_DATA: 'badge-pending'
+  const SIGNAL_COLORS: Record<string, string> = {
+    FAVOURABLE: 'badge-approved',
+    MIXED: 'badge-under-review',
+    ADVERSE: 'badge-rejected',
+    INSUFFICIENT_EVIDENCE: 'badge-pending'
   };
 
   function formatDate(dt: string) {
@@ -87,15 +87,15 @@
       return;
     }
     try {
-      const [overviewRes, sfdrRes, portfoliosRes, reportsRes] = await Promise.all([
+      const [overviewRes, signalsRes, portfoliosRes, reportsRes] = await Promise.all([
         fetch('/api/compliance/overview', { cache: 'no-store' }),
-        fetch('/api/compliance/sfdr', { cache: 'no-store' }),
+        fetch('/api/compliance/esg-signals', { cache: 'no-store' }),
         fetch('/api/compliance/portfolios', { cache: 'no-store' }),
         fetch('/api/compliance/reports', { cache: 'no-store' })
       ]);
       if (!overviewRes.ok) throw new Error(`HTTP ${overviewRes.status}`);
       overview = await overviewRes.json();
-      if (sfdrRes.ok) sfdrScores = await sfdrRes.json();
+      if (signalsRes.ok) evidenceSignals = await signalsRes.json();
       if (portfoliosRes.ok) portfolios = await portfoliosRes.json();
       if (reportsRes.ok) reports = await reportsRes.json();
     } catch (e) {
@@ -218,32 +218,32 @@
         </table>
       </div>
 
-      {#if sfdrScores.length > 0}
+      {#if evidenceSignals.length > 0}
         <div class="sec-head" style="margin-top:2rem;">
-          <span class="sec-name">SFDR Classification by Portfolio</span>
-          <span class="sec-meta" style="font-size:11px;color:var(--text-muted);">Based on AI sentiment scores across Evidence entries</span>
+          <span class="sec-name">ESG Evidence Signals by Portfolio</span>
+          <span class="sec-meta" style="font-size:11px;color:var(--text-muted);">Descriptive evidence aggregation; not a regulatory classification</span>
         </div>
         <div class="glass-table">
           <table>
             <thead>
               <tr>
                 <th>Portfolio</th>
-                <th>SFDR Class</th>
-                <th class="text-right">Avg Sentiment</th>
+                <th>Evidence Signal</th>
+                <th class="text-right">Avg Evidence Sentiment</th>
                 <th class="text-right">Evidence</th>
               </tr>
             </thead>
             <tbody>
-              {#each sfdrScores as s}
+              {#each evidenceSignals as s}
                 <tr>
                   <td><strong>{s.portfolioName}</strong></td>
                   <td>
-                    <span class="badge {SFDR_COLORS[s.classification]}">
-                      {SFDR_LABELS[s.classification]}
+                    <span class="badge {SIGNAL_COLORS[s.signal]}">
+                      {SIGNAL_LABELS[s.signal]}
                     </span>
                   </td>
                   <td class="text-right" style="font-variant-numeric:tabular-nums;">
-                    {s.classification === 'INSUFFICIENT_DATA' ? '—' : s.averageSentiment.toFixed(3)}
+                    {s.signal === 'INSUFFICIENT_EVIDENCE' ? '—' : s.averageEvidenceSentiment.toFixed(3)}
                   </td>
                   <td class="text-right">{s.evidenceCount}</td>
                 </tr>
@@ -251,10 +251,10 @@
             </tbody>
           </table>
         </div>
-        <div class="sfdr-legend">
-          <span><span class="badge badge-approved">Art. 9</span> avg &gt; 0.3 — sustainable investment objective</span>
-          <span><span class="badge badge-under-review">Art. 8</span> avg &gt; −0.1 — promotes ESG characteristics</span>
-          <span><span class="badge badge-rejected">Non-SFDR</span> avg ≤ −0.1 — predominant ESG risk signal</span>
+        <div class="signal-legend">
+          <span><span class="badge badge-approved">Favourable</span> average evidence sentiment &gt; 0.3</span>
+          <span><span class="badge badge-under-review">Mixed</span> average evidence sentiment &gt; −0.1</span>
+          <span><span class="badge badge-rejected">Adverse</span> average evidence sentiment ≤ −0.1</span>
         </div>
       {/if}
     {/if}
@@ -273,19 +273,19 @@
                 <th>Portfolio</th>
                 <th>Description</th>
                 <th>Fund Manager</th>
-                <th class="text-right">SFDR</th>
+                <th class="text-right">Evidence Signal</th>
               </tr>
             </thead>
             <tbody>
               {#each portfolios as p}
-                {@const sfdr = sfdrScores.find(s => s.portfolioId === p.id)}
+                {@const signal = evidenceSignals.find(s => s.portfolioId === p.id)}
                 <tr>
                   <td><strong>{p.name}</strong></td>
                   <td style="color:var(--text-muted,#94a3b8);font-size:12px;">{p.description || '—'}</td>
                   <td style="font-size:12px;color:var(--text-muted,#94a3b8);">{p.fundManagerId}</td>
                   <td class="text-right">
-                    {#if sfdr}
-                      <span class="badge {SFDR_COLORS[sfdr.classification]}">{SFDR_LABELS[sfdr.classification]}</span>
+                    {#if signal}
+                      <span class="badge {SIGNAL_COLORS[signal.signal]}">{SIGNAL_LABELS[signal.signal]}</span>
                     {:else}
                       <span class="badge badge-pending">No Data</span>
                     {/if}
@@ -385,7 +385,7 @@
     padding: 1px 6px;
     border-radius: 10px;
   }
-  .sfdr-legend {
+  .signal-legend {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
@@ -393,7 +393,7 @@
     font-size: 11px;
     color: var(--text-muted, #94a3b8);
   }
-  .sfdr-legend span {
+  .signal-legend span {
     display: flex;
     align-items: center;
     gap: 0.4rem;
