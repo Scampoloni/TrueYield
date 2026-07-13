@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import ch.zhaw.trueyield.model.AiAnalysisMetadata;
 
 @Data
 @AllArgsConstructor
@@ -19,8 +20,17 @@ public class AuditReportResponseDTO {
     private Integer aiRiskScore;
     private String aiRiskRationale;
     private Double aiTrainingSentiment;
+    private AiAnalysisMetadata aiAnalysisMetadata;
     private String auditorId;
     private LocalDateTime createdAt;
+
+    /** Backwards-compatible constructor for existing API consumers and fixtures. */
+    public AuditReportResponseDTO(String id, String portfolioId, String portfolioName, AuditStatus auditStatus,
+            String aiRiskSummary, Integer aiRiskScore, String aiRiskRationale, Double aiTrainingSentiment,
+            String auditorId, LocalDateTime createdAt) {
+        this(id, portfolioId, portfolioName, auditStatus, aiRiskSummary, aiRiskScore, aiRiskRationale,
+                aiTrainingSentiment, null, auditorId, createdAt);
+    }
 
     public static AuditReportResponseDTO fromEntity(AuditReport report) {
         return new AuditReportResponseDTO(
@@ -32,6 +42,7 @@ public class AuditReportResponseDTO {
                 report.getAiRiskScore(),
                 report.getAiRiskRationale(),
                 report.getAiTrainingSentiment(),
+                report.getAiAnalysisMetadata(),
                 report.getAuditorId(),
                 report.getCreatedAt()
         );

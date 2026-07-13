@@ -37,6 +37,8 @@ public class AuditReport {
 
     private Double aiTrainingSentiment;
 
+    private AiAnalysisMetadata aiAnalysisMetadata;
+
     private String auditorId;
 
     private LocalDateTime createdAt;
