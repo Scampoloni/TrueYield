@@ -1,0 +1,10 @@
+# Copy to application-local.properties for a local-only Spring profile.
+# Do not commit the copied file; it is ignored by .gitignore.
+spring.data.mongodb.uri=mongodb://localhost:27017/trueyield
+cors.allowed-origins=http://localhost:5173
+spring.security.oauth2.resourceserver.jwt.issuer-uri=https://example.eu.auth0.com/
+spring.ai.anthropic.api-key=replace_with_anthropic_api_key
+news.api.guardian.key=replace_with_guardian_api_key
+news.api.newsdata.key=replace_with_newsdata_api_key
+news.api.newsapiorg.key=replace_with_newsapiorg_api_key
+news.api.alphavantage.key=replace_with_alphavantage_api_key
