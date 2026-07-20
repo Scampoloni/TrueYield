@@ -30,30 +30,26 @@ This is a workflow prototype. It does not determine regulatory eligibility, veri
 
 ## Workflow at a glance
 
+**Role-gated access via Auth0:** each participant signs in before the backend authorizes the actions assigned to their role.
+
 ```mermaid
 flowchart LR
-    Auth["Auth0 access<br/>JWT + role claim"]
-    FM["Fund manager<br/>Portfolio · holdings · audit request"]
-    AU["Auditor<br/>Assign · review · approve / reject"]
-    CO["Compliance officer<br/>Cross-portfolio oversight"]
+    FM["Fund manager<br/>Portfolio and holdings<br/>Request audit"]
+    AU["Auditor<br/>Evidence review<br/>Approve or reject"]
+    CO["Compliance officer<br/>Portfolio oversight<br/>Audit history"]
 
-    Auth -->|"fund-manager"| FM
-    FM -->|"Evidence, optional news, and AI summary"| AU
-    AU -->|"Recorded decision and audit history"| CO
-    Auth -. "auditor access" .-> AU
-    Auth -. "compliance access" .-> CO
+    FM ==>|"Evidence and AI context"| AU
+    AU ==>|"Decision and history"| CO
 
-    classDef access fill:#0f3a5c,stroke:#38bdf8,color:#ffffff,stroke-width:2px
     classDef fund fill:#143529,stroke:#34d399,color:#ffffff,stroke-width:2px
-    classDef audit fill:#3c2a10,stroke:#fbbf24,color:#ffffff,stroke-width:2px
-    classDef compliance fill:#2c2448,stroke:#a78bfa,color:#ffffff,stroke-width:2px
-    class Auth access
+    classDef audit fill:#1e355b,stroke:#60a5fa,color:#ffffff,stroke-width:2px
+    classDef compliance fill:#34254d,stroke:#a78bfa,color:#ffffff,stroke-width:2px
     class FM fund
     class AU audit
     class CO compliance
 ```
 
-Fund managers prepare and submit a review, auditors own the human decision, and compliance officers monitor the resulting workflow. Auth0 and backend role checks gate every step; optional AI and news output only supports the auditor's review.
+AI and news integrations enrich the review packet; the auditor remains responsible for the human decision.
 
 ## Key features
 
