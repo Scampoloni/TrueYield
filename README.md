@@ -30,39 +30,7 @@ This is a workflow prototype. It does not determine regulatory eligibility, veri
 
 ## Workflow at a glance
 
-```mermaid
-%%{init: {'flowchart': {'nodeSpacing': 24, 'rankSpacing': 30}} }%%
-flowchart TB
-    Auth["Auth0 access gateway<br/>JWT authentication · backend role enforcement<br/>Fund manager · Auditor · Compliance officer"]
-
-    subgraph Lifecycle["Governed audit lifecycle"]
-        direction LR
-        FM["1 · Fund manager<br/>Portfolio and holdings<br/>Submit audit request"]
-        Evidence["2 · Evidence pipeline<br/>Sources · optional news · AI<br/>Status: PENDING_REVIEW"]
-        Auditor["3 · Auditor<br/>Queue · evidence review<br/>Approve or reject"]
-        Compliance["4 · Compliance officer<br/>Portfolio oversight<br/>Decision and audit trail"]
-
-        FM ==>|"request"| Evidence
-        Evidence ==>|"context"| Auditor
-        Auditor ==>|"decision"| Compliance
-    end
-
-    Auth -. "fund-manager role" .-> FM
-    Auth -. "auditor role" .-> Auditor
-    Auth -. "compliance role" .-> Compliance
-
-    classDef access fill:#12314a,stroke:#38bdf8,color:#ffffff,stroke-width:2px
-    classDef fund fill:#143529,stroke:#34d399,color:#ffffff,stroke-width:2px
-    classDef evidence fill:#263544,stroke:#94a3b8,color:#ffffff,stroke-width:2px
-    classDef audit fill:#3c2a10,stroke:#fbbf24,color:#ffffff,stroke-width:2px
-    classDef compliance fill:#34254d,stroke:#a78bfa,color:#ffffff,stroke-width:2px
-    class Auth access
-    class FM fund
-    class Evidence evidence
-    class Auditor audit
-    class Compliance compliance
-    style Lifecycle fill:transparent,stroke:#475569,stroke-width:1px,color:#cbd5e1
-```
+![TrueYield role-based audit workflow](docs/assets/workflow-overview.svg)
 
 Every endpoint verifies the signed-in role. News and AI integrations enrich the evidence packet, but only an auditor can record an approval or rejection.
 
