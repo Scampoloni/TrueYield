@@ -14,4 +14,15 @@ GitHub Actions runs frontend check/build, an unauthenticated Cypress pass, and b
 
 ## Local validation record
 
-The pull request for the portfolio cleanup records the exact checks run in its description. Do not infer a pass from this document alone; environment-dependent checks should be rerun after changing dependencies, services, or authentication configuration.
+On 2026-07-20, the following checks were attempted for the portfolio-publication cleanup:
+
+| Check | Result |
+| --- | --- |
+| `npm ci` | Passed; npm reported dependency-audit findings that were not changed as part of this documentation-focused cleanup. |
+| `npm run check` | Passed with 0 errors and 0 warnings. |
+| `npm run build` | Passed. |
+| `backend\\mvnw.cmd --batch-mode verify` | Maven reported `BUILD SUCCESS`, 480 tests with 0 failures/errors, and all JaCoCo coverage checks met. The outer execution harness timed out shortly after Maven printed its success summary, so its process status should not be read as a clean harness exit. |
+| `npm run test:e2e` | Could not run because no frontend server was listening on Cypress's configured `http://localhost:5173` base URL. |
+| Docker builds | Not run because Docker was unavailable in the local environment. |
+
+The pull request records these results as well. Environment-dependent checks should be rerun after changing dependencies, services, or authentication configuration.
