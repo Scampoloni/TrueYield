@@ -930,44 +930,44 @@ TrueYield nutzt **Spring AI 1.0.0** (`spring-ai-starter-model-anthropic`) mit **
 
 #### Methode 1: generateRiskSummary
 
-**Signatur:** `generateRiskSummary(List<String> holdingNames) → String`  
-**Fallback:** `"AI analysis unavailable."`  
-**Kontext:** Wird beim Erstellen eines Audit-Reports aufgerufen (`AuditReportService.createAuditReport()`). Der Report wechselt zunächst in den Status `AI_ANALYZING`; Claude Haiku generiert eine 2–3-satzige ESG-Risikozusammenfassung, die als `aiRiskSummary` persistiert wird. Danach wechselt der Status auf `PENDING_REVIEW`.  
+**Signatur:** `generateRiskSummary(List<String> holdingNames) → String`
+**Fallback:** `"AI analysis unavailable."`
+**Kontext:** Wird beim Erstellen eines Audit-Reports aufgerufen (`AuditReportService.createAuditReport()`). Der Report wechselt zunächst in den Status `AI_ANALYZING`; Claude Haiku generiert eine 2–3-satzige ESG-Risikozusammenfassung, die als `aiRiskSummary` persistiert wird. Danach wechselt der Status auf `PENDING_REVIEW`.
 **Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 31–50](../backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L31-L50)
 
 #### Methode 2: analyzeSentiment
 
-**Signatur:** `analyzeSentiment(String contentSnippet) → double`  
-**Fallback:** `0.0` (neutral — Evidence wird trotzdem gespeichert)  
-**Kontext:** Wird in `NewsIngestionService` pro gespeicherter Evidence aufgerufen. Claude Haiku bewertet das News-Snippet auf der Skala −1.0 (sehr negativ) bis +1.0 (sehr positiv). Der Score (`aiSentimentScore`) wird persistiert und im Frontend als Risk-Score (0–10, invertiert), Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) und farbige Risk-Bar visualisiert. Premium-Quellen werden mit vollem Gewicht gewertet, andere mit Faktor 0.5 gedämpft.  
+**Signatur:** `analyzeSentiment(String contentSnippet) → double`
+**Fallback:** `0.0` (neutral — Evidence wird trotzdem gespeichert)
+**Kontext:** Wird in `NewsIngestionService` pro gespeicherter Evidence aufgerufen. Claude Haiku bewertet das News-Snippet auf der Skala −1.0 (sehr negativ) bis +1.0 (sehr positiv). Der Score (`aiSentimentScore`) wird persistiert und im Frontend als Risk-Score (0–10, invertiert), Sentiment-Badge (POSITIVE / NEUTRAL / NEGATIVE) und farbige Risk-Bar visualisiert. Premium-Quellen werden mit vollem Gewicht gewertet, andere mit Faktor 0.5 gedämpft.
 **Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 52–72](../backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L52-L72) | Verwendung: [`backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java`, Zeile 124](../backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java#L124)
 
 #### Methode 3: analyzeRelevance
 
-**Signatur:** `analyzeRelevance(String companyName, String articleText) → double`  
-**Fallback:** `1.0` (Artikel wird durchgelassen — kein Artikel wird fälschlicherweise gefiltert, wenn KI nicht verfügbar)  
-**Kontext:** Bevor ein News-Artikel als Evidence gespeichert wird, bewertet Claude Haiku die ESG-Relevanz für die konkrete Firma auf einer Skala 0.0–1.0. Artikel unter dem Schwellenwert `RELEVANCE_THRESHOLD = 0.35` werden verworfen und nicht gespeichert.  
+**Signatur:** `analyzeRelevance(String companyName, String articleText) → double`
+**Fallback:** `1.0` (Artikel wird durchgelassen — kein Artikel wird fälschlicherweise gefiltert, wenn KI nicht verfügbar)
+**Kontext:** Bevor ein News-Artikel als Evidence gespeichert wird, bewertet Claude Haiku die ESG-Relevanz für die konkrete Firma auf einer Skala 0.0–1.0. Artikel unter dem Schwellenwert `RELEVANCE_THRESHOLD = 0.35` werden verworfen und nicht gespeichert.
 **Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 172–202](../backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L172-L202) | Schwellenwert: [`backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java`, Zeile 25](../backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java#L25)
 
 #### Methode 4: generatePortfolioRiskScore
 
-**Signatur:** `generatePortfolioRiskScore(List<String> holdingNames, List<String> evidenceSnippets) → PortfolioRiskResult`  
-**Fallback:** `PortfolioRiskResult(score=5, rationale="AI analysis unavailable.")`  
-**Kontext:** RAG-Ansatz — Claude Haiku kombiniert sein Trainingswissen über die Firmen mit konkreten Evidence-Snippets (max. 5 pro Holding). Gibt einen Integer-Score 0–10 und eine Begründung zurück. Der Score wird als `aiRiskScore`, die Begründung als `aiRiskRationale` im AuditReport persistiert. Im Frontend farbcodiert: ≤3 grün, ≤6 amber, >6 rot.  
+**Signatur:** `generatePortfolioRiskScore(List<String> holdingNames, List<String> evidenceSnippets) → PortfolioRiskResult`
+**Fallback:** `PortfolioRiskResult(score=5, rationale="AI analysis unavailable.")`
+**Kontext:** RAG-Ansatz — Claude Haiku kombiniert sein Trainingswissen über die Firmen mit konkreten Evidence-Snippets (max. 5 pro Holding). Gibt einen Integer-Score 0–10 und eine Begründung zurück. Der Score wird als `aiRiskScore`, die Begründung als `aiRiskRationale` im AuditReport persistiert. Im Frontend farbcodiert: ≤3 grün, ≤6 amber, >6 rot.
 **Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 93–137](../backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L93-L137) | Score+Rationale setzen: [`backend/src/main/java/ch/zhaw/trueyield/service/AuditReportService.java`, Zeilen 103–110](../backend/src/main/java/ch/zhaw/trueyield/service/AuditReportService.java#L103-L110)
 
 #### Methode 5: isPremiumSource
 
-**Signatur:** `isPremiumSource(String sourceName) → boolean`  
-**Fallback:** `false`  
-**Kontext:** Claude Haiku bewertet einen Quellennamen — Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian, AP, BBC etc.) erhalten volles Sentiment-Gewicht (Faktor 1.0), andere werden mit 0.5 gedämpft. Schnell-Pfad via `isKnownPremiumSource()` (hardcoded Lookup ohne KI-Call) prüft zuerst; nur bei unbekannter Quelle wird Claude gefragt.  
+**Signatur:** `isPremiumSource(String sourceName) → boolean`
+**Fallback:** `false`
+**Kontext:** Claude Haiku bewertet einen Quellennamen — Premium-Quellen (Reuters, Bloomberg, FT, WSJ, Guardian, AP, BBC etc.) erhalten volles Sentiment-Gewicht (Faktor 1.0), andere werden mit 0.5 gedämpft. Schnell-Pfad via `isKnownPremiumSource()` (hardcoded Lookup ohne KI-Call) prüft zuerst; nur bei unbekannter Quelle wird Claude gefragt.
 **Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 74–91](../backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L74-L91) | Verwendung: [`backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java`, Zeilen 127–131](../backend/src/main/java/ch/zhaw/trueyield/service/NewsIngestionService.java#L127-L131)
 
 #### Methode 6: generatePortfolioSentiment
 
-**Signatur:** `generatePortfolioSentiment(List<String> holdingNames) → double`  
-**Fallback:** `0.0`  
-**Kontext:** Claude Haiku bewertet das ESG-Sentiment des Portfolios auf Basis seines Trainingswissens (−1.0 bis +1.0), ohne News-Evidence. Der Wert wird als `aiTrainingSentiment` im AuditReport gespeichert. **Hinweis zur aktuellen SFDR-Logik:** `ComplianceService.scorePortfolio()` verwendet derzeit als Trainings-Sentiment die aus `aiRiskScore` abgeleitete Formel `sentiment = 1 − (aiRiskScore / 5)` (nicht `aiTrainingSentiment`). Das Blending erfolgt 70 % Trainings-Sentiment + 30 % Evidence-Durchschnitt und bestimmt die SFDR-Klassifikation (>0.3 → ARTICLE_9, >−0.1 → ARTICLE_8, sonst NON_SFDR).  
+**Signatur:** `generatePortfolioSentiment(List<String> holdingNames) → double`
+**Fallback:** `0.0`
+**Kontext:** Claude Haiku bewertet das ESG-Sentiment des Portfolios auf Basis seines Trainingswissens (−1.0 bis +1.0), ohne News-Evidence. Der Wert wird als `aiTrainingSentiment` im AuditReport gespeichert. **Hinweis zur aktuellen SFDR-Logik:** `ComplianceService.scorePortfolio()` verwendet derzeit als Trainings-Sentiment die aus `aiRiskScore` abgeleitete Formel `sentiment = 1 − (aiRiskScore / 5)` (nicht `aiTrainingSentiment`). Das Blending erfolgt 70 % Trainings-Sentiment + 30 % Evidence-Durchschnitt und bestimmt die SFDR-Klassifikation (>0.3 → ARTICLE_9, >−0.1 → ARTICLE_8, sonst NON_SFDR).
 **Code-Referenz:** [`backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java`, Zeilen 139–170](../backend/src/main/java/ch/zhaw/trueyield/service/AiAnalysisService.java#L139-L170) | Blending: [`backend/src/main/java/ch/zhaw/trueyield/service/ComplianceService.java`, Zeilen 72–113](../backend/src/main/java/ch/zhaw/trueyield/service/ComplianceService.java#L72-L113)
 
 #### Fallback-Verhalten (Zusammenfassung)
