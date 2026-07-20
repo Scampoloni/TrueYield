@@ -28,6 +28,23 @@ The prototype asks how a human-in-the-loop workflow could make an evidence-based
 
 This is a workflow prototype. It does not determine regulatory eligibility, verify source accuracy, or replace qualified human judgement.
 
+## Workflow at a glance
+
+```mermaid
+flowchart LR
+    FM[Fund manager] -->|Authenticates| Auth[Auth0 login and role claim]
+    AU[Auditor] -->|Authenticates| Auth
+    CO[Compliance officer] -->|Authenticates| Auth
+    Auth --> Portfolio[Create portfolio and holdings]
+    Portfolio --> Evidence[Add evidence manually or retrieve candidate news]
+    Evidence --> AI[Optional AI-assisted relevance and summary]
+    AI --> Review[Auditor reviews evidence and comments]
+    Review --> Outcome[Human records workflow outcome]
+    Outcome --> Overview[Compliance officer views read-only overview]
+```
+
+Every step is access-controlled. AI and provider outputs can inform the review, but the auditor remains responsible for the recorded outcome.
+
 ## Key features
 
 - Three role-oriented views: fund manager, auditor, and compliance officer.
@@ -220,6 +237,7 @@ docs/        Portfolio-facing technical notes and preserved academic documentati
 - [Testing and quality](docs/testing.md)
 - [Deployment safety](docs/deployment.md)
 - [Preserved academic documentation](docs/academic-documentation.md)
+- [Archived academic artifacts](docs/archive/README.md)
 
 No licence has been added. The repository owner should choose one before making the project public.
 
