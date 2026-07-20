@@ -31,19 +31,63 @@ This is a workflow prototype. It does not determine regulatory eligibility, veri
 ## Workflow at a glance
 
 ```mermaid
-flowchart LR
-    FM[Fund manager] -->|Authenticates| Auth[Auth0 login and role claim]
-    AU[Auditor] -->|Authenticates| Auth
-    CO[Compliance officer] -->|Authenticates| Auth
-    Auth --> Portfolio[Create portfolio and holdings]
-    Portfolio --> Evidence[Add evidence manually or retrieve candidate news]
-    Evidence --> AI[Optional AI-assisted relevance and summary]
-    AI --> Review[Auditor reviews evidence and comments]
-    Review --> Outcome[Human records workflow outcome]
-    Outcome --> Overview[Compliance officer views read-only overview]
+flowchart TB
+    Auth["Auth0 login<br/>JWT and user_roles claim"]
+
+    subgraph FM["Fund manager flow"]
+        direction TB
+        FM1["Create and maintain portfolio"]
+        FM2["Add, update, or remove holdings"]
+        FM3["Review portfolio details and latest audit status"]
+        FM4["Create audit report request"]
+        FM1 --> FM2 --> FM3 --> FM4
+    end
+
+    subgraph System["System-assisted evidence processing"]
+        direction TB
+        SYS1["Audit report enters AI_ANALYZING"]
+        SYS2["Optional news providers retrieve candidate articles"]
+        SYS3["Optional AI relevance filtering and evidence summary"]
+        SYS4["Report becomes PENDING_REVIEW with linked evidence"]
+        SYS1 --> SYS2 --> SYS3 --> SYS4
+    end
+
+    subgraph AU["Auditor review flow"]
+        direction TB
+        AU1["Open auditor queue"]
+        AU2["Assign report to self<br/>PENDING_REVIEW to UNDER_REVIEW"]
+        AU3["Review holdings, evidence, source links, and AI summary"]
+        AU4["Add auditor comments and maintain evidence when needed"]
+        AU5["Record human decision: approve or reject"]
+        AU1 --> AU2 --> AU3 --> AU4 --> AU5
+    end
+
+    subgraph CO["Compliance officer flow"]
+        direction TB
+        CO1["View read-only compliance overview"]
+        CO2["Inspect cross-portfolio reports and evidence"]
+        CO3["Maintain evidence when required by the workflow"]
+        CO1 --> CO2 --> CO3
+    end
+
+    Auth -->|"fund-manager"| FM1
+    Auth -->|"auditor"| AU1
+    Auth -->|"compliance-officer"| CO1
+    FM4 --> SYS1
+    SYS4 --> AU1
+    AU5 --> Outcome["Approved or rejected audit report<br/>with audit history"]
+    Outcome --> CO1
 ```
 
-Every step is access-controlled. AI and provider outputs can inform the review, but the auditor remains responsible for the recorded outcome.
+Every role is authenticated through Auth0, and the backend validates the JWT before applying role checks. AI and provider outputs can inform the review, but only an auditor can assign, approve, or reject an audit report. The compliance dashboard is read-only, while the API permits evidence maintenance for the compliance-officer role.
+
+### Responsibilities and access boundaries
+
+| Role | Primary responsibility | Key workflow permissions | Not responsible for |
+| --- | --- | --- | --- |
+| Fund manager | Maintains the portfolio context and requests a review. | Creates, updates, and removes portfolios/holdings; creates audit-report requests; views report status. | Assigning, approving, or rejecting audit reports. |
+| Auditor | Performs the human review and records the workflow outcome. | Opens the auditor queue, assigns reports to self, reviews evidence and summaries, adds comments, maintains evidence, and approves or rejects. | Automated compliance decisions or investment advice. |
+| Compliance officer | Monitors the wider workflow and investigates report/evidence context. | Views the cross-portfolio compliance overview, reports, and evidence; can maintain evidence where required. | Approving or rejecting an audit report. |
 
 ## Key features
 
