@@ -11,6 +11,7 @@ import java.time.LocalDate;
 public class EvidenceResponseDTO {
 
     private String id;
+    private String holdingId;
     private String headline;
     private String summary;
     private String sentiment;
@@ -26,6 +27,7 @@ public class EvidenceResponseDTO {
 
         return new EvidenceResponseDTO(
                 evidence.getId(),
+                evidence.getHoldingId(),
                 headline,
                 snippet,
                 toSentiment(score),

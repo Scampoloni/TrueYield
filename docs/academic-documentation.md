@@ -17,11 +17,11 @@ Finanzinstitute verkaufen Fonds als «nachhaltig» — doch die regulatorisch ge
 Deployment ist aktiv auf Azure App Service (Docker + GitHub Actions). Erfolgreiche Runs sind als GitHub Actions Screenshots dokumentiert.
 
 **Deployment-Logs (GitHub Actions, 2026-04-18):**
-- Run Overview: ![CD Run Overview](../doc/deployment/deploy-2026-04-18-gh-actions-run-overview.png)
-- Backend Build & Push: ![Backend Build](../doc/deployment/deploy-2026-04-18-gh-actions-backend-build.png)
-- Backend Deploy: ![Backend Deploy](../doc/deployment/deploy-2026-04-18-gh-actions-backend-deploy.png)
-- Frontend Build & Push: ![Frontend Build](../doc/deployment/deploy-2026-04-18-gh-actions-frontend-build.png)
-- Frontend Deploy: ![Frontend Deploy](../doc/deployment/deploy-2026-04-18-gh-actions-frontend-deploy.png)
+- Run Overview: ![CD Run Overview](assets/deployment/deploy-2026-04-18-gh-actions-run-overview.png)
+- Backend Build & Push: ![Backend Build](assets/deployment/deploy-2026-04-18-gh-actions-backend-build.png)
+- Backend Deploy: ![Backend Deploy](assets/deployment/deploy-2026-04-18-gh-actions-backend-deploy.png)
+- Frontend Build & Push: ![Frontend Build](assets/deployment/deploy-2026-04-18-gh-actions-frontend-build.png)
+- Frontend Deploy: ![Frontend Deploy](assets/deployment/deploy-2026-04-18-gh-actions-frontend-deploy.png)
 
 | Service | URL |
 |---------|-----|
@@ -601,7 +601,7 @@ Dieses Kapitel dokumentiert zusammengefasstes Peer-Feedback (anonymisiert) und l
 ## Anforderungen
 
 ### Use Case Diagram
-![Use Case Diagram](../doc/uc-diagram.drawio.svg)
+![Use Case Diagram](assets/uc-diagram.drawio.svg)
 
 > **Hinweis:** Das UC-Diagramm und das ER-Diagramm dokumentieren den ursprünglichen Projektscope mit zwei Primärrollen (Fund Manager, ESG Auditor). Die Rolle **Compliance Officer** wurde nachträglich als optionale Anforderung (Anforderung 23) ergänzt und ist in den Diagrammen nicht enthalten — sie gilt als spätere Erweiterung des Produkts und ist im Abschnitt [Umgesetzte optionale Anforderungen](#umgesetzte-optionale-anforderungen) beschrieben.
 
@@ -760,7 +760,7 @@ Der Lebenszyklus eines `AuditReport`-Dokuments folgt einer strikten Zustandsmasc
 Interaktiver Klick-Prototyp (Figma): [https://bear-disco-77148489.figma.site/](https://bear-disco-77148489.figma.site/)
 
 ### Entity-Relations Diagram
-![ER Diagram](../doc/er-diagram.drawio.svg)
+![ER Diagram](assets/er-diagram.drawio.svg)
 
 ---
 
@@ -1062,72 +1062,72 @@ Nach Neustart von Claude Desktop erscheinen die drei Tools im Tool-Panel.
 #### Rolle: Fund Manager
 
 **Login**
-![Login](../doc/screenshots/login-page.png)
+![Login](assets/screenshots/login-page.png)
 
 **Portfolio-Übersicht** — Tabelle aller eigenen Portfolios mit Status-Badge (PENDING_REVIEW / UNDER_REVIEW / APPROVED / REJECTED), SFDR-Ampel (Art. 9 / Art. 8 / Non-SFDR / —) direkt pro Zeile, und drei KPI-Cards (Total / Pending Review / Approved) oben
-![Portfolio-Übersicht](../doc/screenshots/portfolios-list.png)
+![Portfolio-Übersicht](assets/screenshots/portfolios-list.png)
 
 **Portfolio erstellen** — Formular für neues Portfolio (Name, Beschreibung)
-![Portfolio erstellen](../doc/screenshots/portfolio-create.png)
+![Portfolio erstellen](assets/screenshots/portfolio-create.png)
 
 **Portfolio-Detail** — Holdings-Tabelle, SVG-Donut-Chart für Asset Allocation (Hover-Tooltip, Legende, grauer "Ungewichtet"-Slice), Audit-Report-Trigger-Button
-![Portfolio-Detail](../doc/screenshots/portfolio-detail.png)
+![Portfolio-Detail](assets/screenshots/portfolio-detail.png)
 
 **Portfolio bearbeiten** — Inline-Formular zum Ändern von Portfolio-Name und Beschreibung; nur für den eigenen Fund Manager zugänglich
-![Portfolio bearbeiten](../doc/screenshots/portfolio-edit.png)
+![Portfolio bearbeiten](assets/screenshots/portfolio-edit.png)
 
 **Holding hinzufügen** — Formular mit Symbol-Autocomplete (debounced, 280 ms, Yahoo Finance API — Dropdown filtert auf EQUITY/ETF und füllt Name automatisch aus), ISIN und Gewichtung
-![Holding hinzufügen](../doc/screenshots/holding-create.png)
+![Holding hinzufügen](assets/screenshots/holding-create.png)
 
 **Holdings-Übersicht** — Aggregierte Ansicht aller Holdings über alle Portfolios
-![Holdings-Übersicht](../doc/screenshots/holdings-overview.png)
+![Holdings-Übersicht](assets/screenshots/holdings-overview.png)
 
 **Holding-Detail / Evidence & Risk Analysis** — Einzelansicht eines Holdings mit KI-generierten Evidence-Cards (Sentiment-Badge POSITIVE/NEUTRAL/NEGATIVE, Confidence-Badge HIGH/MEDIUM/LOW, Risk-Score 0–10) und Ingest-News-Button (nur Fund Manager). Evidence wird primär automatisch via KI-News-Ingest gesammelt (alle 4 Provider, async beim Audit-Report-Erstellen); Auditoren und Compliance-Officers können Evidence manuell ergänzen.
-![Evidence & Risk Analysis](../doc/screenshots/evidence-page.png)
+![Evidence & Risk Analysis](assets/screenshots/evidence-page.png)
 
 **KI-Chat-Assistent** — Alle Rollen haben Zugang zum Chat unter `/chat`. Der Assistent kann Portfolios und Holdings auflisten, Evidence-Scores abfragen und — für Fund Manager — neue Portfolios und Holdings anlegen.
-![KI-Chat-Assistent](../doc/screenshots/chat-page.png)
+![KI-Chat-Assistent](assets/screenshots/chat-page.png)
 
 **Account** — Benutzerprofil mit Rolle (fund-manager)
-![Account Fund Manager](../doc/screenshots/account-manager.png)
+![Account Fund Manager](assets/screenshots/account-manager.png)
 
 ---
 
 #### Rolle: ESG Auditor
 
 **Audit-Dashboard** — Metrics-Karten, Filter nach Status, Tabelle aller Reports
-![Audit-Dashboard](../doc/screenshots/audit-dashboard.png)
+![Audit-Dashboard](assets/screenshots/audit-dashboard.png)
 
 **Audit-Detail: AI Risk Summary** — KI-generierte Risikozusammenfassung und Status-Timeline
-![Audit-Detail AI Summary](../doc/screenshots/audit-detail-ai-summary.png)
+![Audit-Detail AI Summary](assets/screenshots/audit-detail-ai-summary.png)
 
 **Audit-Detail: Assign & Actions** — Assign-Button (PENDING_REVIEW → UNDER_REVIEW), Approve/Reject
-![Audit-Detail Actions](../doc/screenshots/audit-detail-actions.png)
+![Audit-Detail Actions](assets/screenshots/audit-detail-actions.png)
 
 **Audit-Detail: Kommentare** — Auditor-Begründung hinzufügen
-![Audit-Kommentare](../doc/screenshots/audit-detail-comments.png)
+![Audit-Kommentare](assets/screenshots/audit-detail-comments.png)
 
 **Evidence erfassen** — Manuelles Erstellen eines Evidence-Eintrags mit KI-Sentiment-Analyse (nur Auditoren und Compliance-Officers)
-![Evidence erfassen](../doc/screenshots/evidence-create.png)
+![Evidence erfassen](assets/screenshots/evidence-create.png)
 
 **Account** — Benutzerprofil mit Rolle (auditor)
-![Account Auditor](../doc/screenshots/account-auditor.png)
+![Account Auditor](assets/screenshots/account-auditor.png)
 
 ---
 
 #### Rolle: Compliance Officer
 
 **Compliance Dashboard — Overview** — Systemweite KPIs, Reports nach Status, SFDR-Klassifizierung
-![Compliance Overview](../doc/screenshots/compliance-dashboard-overview.png)
+![Compliance Overview](assets/screenshots/compliance-dashboard-overview.png)
 
 **Compliance Dashboard — Portfolios** — Alle Portfolios mit SFDR-Badge
-![Compliance Portfolios](../doc/screenshots/compliance-dashboard-portfolios.png)
+![Compliance Portfolios](assets/screenshots/compliance-dashboard-portfolios.png)
 
 **Compliance Dashboard — Audit Reports** — Alle Reports mit Statusbadge und Link zum Audit-Detail
-![Compliance Reports](../doc/screenshots/compliance-dashboard-reports.png)
+![Compliance Reports](assets/screenshots/compliance-dashboard-reports.png)
 
 **Account** — Benutzerprofil mit Rolle (compliance-officer)
-![Account Compliance Officer](../doc/screenshots/account-compliance.png)
+![Account Compliance Officer](assets/screenshots/account-compliance.png)
 
 ---
 

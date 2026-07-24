@@ -1,6 +1,9 @@
 <script lang="ts">
   import { goto, invalidateAll } from '$app/navigation';
   import { onDestroy } from 'svelte';
+  import type { PageData } from './$types';
+
+  let { data }: { data: PageData } = $props();
 
   type DemoAccount = {
     role: string;
@@ -118,7 +121,7 @@
           <div>
             <div class="card-kicker">Secure login</div>
             <div class="form-card-title">Welcome back</div>
-            <div class="form-card-desc">Use a demo role below or sign in with your own account.</div>
+            <div class="form-card-desc">Sign in with an assigned role to enter the controlled demo.</div>
           </div>
         </div>
 
@@ -164,8 +167,12 @@
         </button>
 
         <div class="login-footer">
-          <span>No account yet?</span>
-          <a href="/signup">Sign up</a>
+          {#if data.signupEnabled}
+            <span>No account yet?</span>
+            <a href="/signup">Sign up</a>
+          {:else}
+            <span>Demo access is invitation-only. Credentials are available on request.</span>
+          {/if}
         </div>
       </div>
 

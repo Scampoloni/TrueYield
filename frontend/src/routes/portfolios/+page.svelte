@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import ConfirmModal from '$lib/components/ConfirmModal.svelte';
   import { showToast } from '$lib/toast';
+  import { ApiError, apiRequest } from '$lib/api';
 
   import { page } from '$app/state';
 
@@ -9,6 +10,8 @@
   let portfolios: any[] = $state([]);
   let loading = $state(true);
   let deleteTarget: any = $state(null);
+  let error = $state('');
+  let errorCode = $state('');
 
   const kpiTotal = $derived(portfolios.length);
   const kpiPending = $derived(portfolios.filter(p => p.auditStatus === 'PENDING_REVIEW' || p.auditStatus === 'AI_ANALYZING').length);
@@ -24,37 +27,56 @@
   }
 
   function sfdrLabel(cls: string): string {
-    if (cls === 'ARTICLE_9') return 'Art. 9';
-    if (cls === 'ARTICLE_8') return 'Art. 8';
-    if (cls === 'NON_SFDR') return 'Non-SFDR';
+    if (cls === 'ARTICLE_9') return 'Art. 9 signal';
+    if (cls === 'ARTICLE_8') return 'Art. 8 signal';
+    if (cls === 'NON_SFDR') return 'Risk signal';
     return '—';
   }
 
-  onMount(async () => {
+  async function loadPortfolios() {
+    loading = true;
+    error = '';
+    errorCode = '';
     try {
       const roles: string[] = page.data.user?.user_roles ?? [];
       const canSeeSfdr = roles.includes('fund-manager') || roles.includes('compliance-officer');
-      const [pfRes, sfdrRes] = await Promise.all([
-        fetch('/api/portfolio', { cache: 'no-store' }),
-        canSeeSfdr ? fetch('/api/compliance/sfdr', { cache: 'no-store' }) : Promise.resolve(null)
+      const [portfolioItems, scores] = await Promise.all([
+        apiRequest<any[]>('/api/portfolio'),
+        canSeeSfdr
+          ? apiRequest<any[]>('/api/compliance/sfdr')
+          : Promise.resolve([])
       ]);
-      portfolios = await pfRes.json();
-      if (sfdrRes?.ok) {
-        const scores = await sfdrRes.json();
-        sfdrMap = Object.fromEntries(scores.map((s: any) => [s.portfolioId, s.classification]));
+      portfolios = portfolioItems;
+      sfdrMap = Object.fromEntries(
+        scores.map((score: any) => [score.portfolioId, score.classification])
+      );
+    } catch (caught) {
+      if (caught instanceof ApiError) {
+        error = caught.message;
+        errorCode = caught.code;
+      } else {
+        error = 'The portfolio list could not be loaded. Please retry in a moment.';
+        errorCode = 'REQUEST_FAILED';
       }
     } finally {
       loading = false;
     }
-  });
+  }
+
+  onMount(loadPortfolios);
 
   async function confirmDelete() {
     try {
-      await fetch(`/api/portfolio/${deleteTarget.id}`, { method: 'DELETE' });
+      await apiRequest<void>(`/api/portfolio/${encodeURIComponent(deleteTarget.id)}`, {
+        method: 'DELETE'
+      });
       portfolios = portfolios.filter(p => p.id !== deleteTarget.id);
       showToast('Portfolio deleted successfully');
-    } catch {
-      showToast('Failed to delete portfolio', 'error');
+    } catch (caught) {
+      showToast(
+        caught instanceof ApiError ? caught.message : 'Failed to delete portfolio',
+        'error'
+      );
     } finally {
       deleteTarget = null;
     }
@@ -130,6 +152,17 @@
         <div class="skeleton" style="height:20px;"></div>
         <div class="skeleton" style="height:20px;"></div>
         <div class="skeleton" style="height:20px;"></div>
+      </div>
+    {:else if error}
+      <div class="empty">
+        <div class="e-icon" aria-hidden="true">!</div>
+        <div class="e-ttl">{errorCode === 'SESSION_EXPIRED' ? 'Session expired' : 'Data temporarily unavailable'}</div>
+        <div class="e-sub">{error}</div>
+        {#if errorCode === 'SESSION_EXPIRED'}
+          <a href="/login" class="btn btn-primary">Sign in again</a>
+        {:else}
+          <button class="btn btn-primary" onclick={loadPortfolios}>Retry</button>
+        {/if}
       </div>
     {:else if portfolios.length === 0}
       <div class="empty">

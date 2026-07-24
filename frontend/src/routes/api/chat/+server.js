@@ -1,19 +1,12 @@
-import { json } from '@sveltejs/kit';
-import { getApiBaseUrl } from '$lib/server/env.js';
+import { backendRequest } from '$lib/server/backend.js';
 
-const API_BASE_URL = getApiBaseUrl();
-
-export async function POST({ locals, request }) {
-    const body = await request.json();
-    const res = await fetch(`${API_BASE_URL}/api/chat`, {
+export async function POST(event) {
+    return backendRequest(event, '/api/chat', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${locals.jwt_token}`
+            'Content-Type': event.request.headers.get('content-type') ?? 'application/json'
         },
-        body: JSON.stringify(body)
+        body: await event.request.text(),
+        timeoutMs: 90_000
     });
-
-    const data = await res.json();
-    return json(data, { status: res.status });
 }

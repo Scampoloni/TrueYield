@@ -1,36 +1,21 @@
-import { json } from '@sveltejs/kit';
-import { getApiBaseUrl } from '$lib/server/env.js';
+import { backendRequest } from '$lib/server/backend.js';
 
-const API_BASE_URL = getApiBaseUrl();
-
-export async function GET({ locals, params }) {
-    const res = await fetch(`${API_BASE_URL}/api/portfolio/${params.id}`, {
-        headers: { 'Authorization': `Bearer ${locals.jwt_token}` }
-    });
-    const data = await res.json();
-    return json(data, { status: res.status });
+export async function GET(event) {
+    return backendRequest(event, `/api/portfolio/${encodeURIComponent(event.params.id)}`);
 }
 
-export async function PUT({ locals, params, request }) {
-    const body = await request.json();
-    const res = await fetch(`${API_BASE_URL}/api/portfolio/${params.id}`, {
+export async function PUT(event) {
+    return backendRequest(event, `/api/portfolio/${encodeURIComponent(event.params.id)}`, {
         method: 'PUT',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${locals.jwt_token}`
+            'Content-Type': event.request.headers.get('content-type') ?? 'application/json'
         },
-        body: JSON.stringify(body)
+        body: await event.request.text()
     });
-    const data = await res.json();
-    return json(data, { status: res.status });
 }
 
-export async function DELETE({ locals, params }) {
-    const res = await fetch(`${API_BASE_URL}/api/portfolio/${params.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${locals.jwt_token}` }
+export async function DELETE(event) {
+    return backendRequest(event, `/api/portfolio/${encodeURIComponent(event.params.id)}`, {
+        method: 'DELETE'
     });
-    if (res.status === 204) return new Response(null, { status: 204 });
-    const data = await res.json();
-    return json(data, { status: res.status });
 }

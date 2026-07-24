@@ -1,3 +1,5 @@
+import { loginWithSecrets } from '../support/credentials.js';
+
 const PROTECTED_ROUTES = ['/', '/portfolios', '/holdings', '/audit', '/account', '/compliance'];
 
 describe('unauthenticated redirects', () => {
@@ -36,9 +38,10 @@ describe('login page', () => {
     cy.get('[data-testid="sign-in-button"]').should('be.enabled');
   });
 
-  it('has link to signup page', () => {
+  it('explains that demo access is invitation-only', () => {
     cy.visit('/login');
-    cy.contains('a', 'Sign up').should('have.attr', 'href', '/signup');
+    cy.contains('Demo access is invitation-only').should('be.visible');
+    cy.contains('a', 'Sign up').should('not.exist');
   });
 
   it('shows TrueYield brand', () => {
@@ -48,29 +51,26 @@ describe('login page', () => {
 });
 
 describe('signup page', () => {
-  it('renders create account action', () => {
+  it('redirects to login when self-registration is disabled', () => {
     cy.visit('/signup');
-    cy.contains('button', 'Create Account').should('be.visible');
+    cy.location('pathname').should('eq', '/login');
+    cy.contains('Demo access is invitation-only').should('be.visible');
   });
 
-  it('renders email and password inputs', () => {
-    cy.visit('/signup');
-    cy.get('#email').should('be.visible');
-    cy.get('#password').should('be.visible');
+  it('rejects direct signup requests', () => {
+    cy.request({
+      method: 'POST',
+      url: '/auth/signup',
+      body: { email: 'unassigned@example.com', password: 'NotARealPassword1!' },
+      failOnStatusCode: false
+    }).then(({ status, body }) => {
+      expect(status).to.eq(403);
+      expect(body.error).to.contain('invitation-only');
+    });
   });
 });
 
-const email = Cypress.env('E2E_TEST_EMAIL');
-const password = Cypress.env('E2E_TEST_PASSWORD');
-const hasCredentials = Boolean(email && password);
-
-function loginAs(userEmail, userPassword) {
-  cy.visit('/login');
-  cy.get('#email').type(userEmail);
-  cy.get('#password').type(userPassword);
-  cy.get('[data-testid="sign-in-button"]').click();
-  cy.location('pathname').should('not.include', '/login');
-}
+const hasCredentials = Cypress.expose('hasLegacyCredentials');
 
 describe('authenticated flows', () => {
   if (!hasCredentials) {
@@ -79,12 +79,12 @@ describe('authenticated flows', () => {
   }
 
   it('login with valid credentials redirects to home', () => {
-    loginAs(email, password);
+    loginWithSecrets('E2E_TEST_EMAIL', 'E2E_TEST_PASSWORD');
     cy.location('pathname').should('not.include', '/login');
   });
 
   it('after login: portfolios page is accessible', () => {
-    loginAs(email, password);
+    loginWithSecrets('E2E_TEST_EMAIL', 'E2E_TEST_PASSWORD');
     cy.visit('/portfolios');
     cy.location('pathname').should('eq', '/portfolios');
     cy.contains('Portfolios').should('be.visible');

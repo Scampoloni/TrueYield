@@ -61,3 +61,13 @@ pnpm-debug.log*
 .audit/
 .audit_verify/
 .audit_verify_src/
+
+# Generated project-helper files that do not belong to either build
+/HELP.md
+/package-lock.json
+/backend/package-lock.json
+/backend/build_output.txt
+/backend/classpath.txt
+/backend/jarlist.txt
+/backend/mongojar.txt
+/backend/META-INF/

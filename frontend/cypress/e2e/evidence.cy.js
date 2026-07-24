@@ -1,17 +1,9 @@
-const email = Cypress.env('E2E_TEST_EMAIL');
-const password = Cypress.env('E2E_TEST_PASSWORD');
-const hasCredentials = Boolean(email && password);
+import { loginWithSecrets } from '../support/credentials.js';
+
+const hasCredentials = Cypress.expose('hasLegacyCredentials');
 
 const FAKE_PORTFOLIO_ID = 'test-portfolio-id';
 const FAKE_HOLDING_ID = 'test-holding-id';
-
-function loginAs(userEmail, userPassword) {
-  cy.visit('/login');
-  cy.get('#email').type(userEmail);
-  cy.get('#password').type(userPassword);
-  cy.contains('button', 'Sign In').click();
-  cy.location('pathname').should('not.include', '/login');
-}
 
 describe('evidence routes: unauthenticated redirects', () => {
   it('holdings detail page redirects to /login', () => {
@@ -32,7 +24,7 @@ describe('evidence create form', () => {
   }
 
   beforeEach(() => {
-    loginAs(email, password);
+    loginWithSecrets('E2E_TEST_EMAIL', 'E2E_TEST_PASSWORD');
     cy.visit(`/portfolios/${FAKE_PORTFOLIO_ID}/holdings/${FAKE_HOLDING_ID}/create`);
   });
 

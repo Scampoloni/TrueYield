@@ -1,39 +1,49 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { ApiError, apiRequest } from '$lib/api';
 
   let holdings: { symbol: string; name: string; isin: string; weightPercent: number | null; portfolioId: string; portfolioName: string; id: string }[] = $state([]);
   let loading = $state(true);
   let error = $state('');
+  let errorCode = $state('');
 
-  onMount(async () => {
+  async function loadHoldings() {
+    loading = true;
+    error = '';
+    errorCode = '';
     try {
-      const res = await fetch('/api/portfolio', { cache: 'no-store' });
-      if (!res.ok) throw new Error('Failed to fetch portfolios');
-      const portfolios: any[] = await res.json();
-      const all: typeof holdings = [];
-      for (const p of portfolios) {
-        const hRes = await fetch(`/api/holding?portfolioId=${p.id}`);
-        if (!hRes.ok) continue;
-        const hs: any[] = await hRes.json();
-        for (const h of hs) {
-          all.push({
-            symbol: h.symbol,
-            name: h.name || '',
-            isin: h.isin || '',
-            weightPercent: h.weightPercent ?? null,
-            portfolioId: p.id,
-            portfolioName: p.name,
-            id: h.id
-          });
-        }
+      const portfolios = await apiRequest<any[]>('/api/portfolio');
+      const holdingsByPortfolio = await Promise.all(
+        portfolios.map(async (portfolio) => {
+          const items = await apiRequest<any[]>(
+            `/api/holding?portfolioId=${encodeURIComponent(portfolio.id)}`
+          );
+          return items.map((holding) => ({
+            symbol: holding.symbol,
+            name: holding.name || '',
+            isin: holding.isin || '',
+            weightPercent: holding.weightPercent ?? null,
+            portfolioId: portfolio.id,
+            portfolioName: portfolio.name,
+            id: holding.id
+          }));
+        })
+      );
+      holdings = holdingsByPortfolio.flat();
+    } catch (caught) {
+      if (caught instanceof ApiError) {
+        error = caught.message;
+        errorCode = caught.code;
+      } else {
+        error = 'The holdings view could not be loaded. Please retry in a moment.';
+        errorCode = 'REQUEST_FAILED';
       }
-      holdings = all;
-    } catch {
-      error = 'Could not load holdings. Make sure the backend is running on port 8080.';
     } finally {
       loading = false;
     }
-  });
+  }
+
+  onMount(loadHoldings);
 </script>
 
 <div class="topbar">
@@ -56,8 +66,13 @@
         <div class="e-icon">
           <svg width="24" height="24" viewBox="0 0 16 16" fill="none"><path d="M8 2L14 13H2L8 2Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
         </div>
-        <div class="e-ttl">Connection Error</div>
+        <div class="e-ttl">{errorCode === 'SESSION_EXPIRED' ? 'Session expired' : 'Data temporarily unavailable'}</div>
         <div class="e-sub">{error}</div>
+        {#if errorCode === 'SESSION_EXPIRED'}
+          <a href="/login" class="btn btn-primary">Sign in again</a>
+        {:else}
+          <button class="btn btn-primary" onclick={loadHoldings}>Retry</button>
+        {/if}
       </div>
     {:else if holdings.length === 0}
       <div class="empty">

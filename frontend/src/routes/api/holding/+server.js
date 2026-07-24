@@ -1,27 +1,20 @@
-import { json } from '@sveltejs/kit';
-import { getApiBaseUrl } from '$lib/server/env.js';
+import { backendRequest } from '$lib/server/backend.js';
 
-const API_BASE_URL = getApiBaseUrl();
-
-export async function GET({ locals, url }) {
-    const portfolioId = url.searchParams.get('portfolioId');
-    const res = await fetch(`${API_BASE_URL}/api/holding?portfolioId=${portfolioId}`, {
-        headers: { 'Authorization': `Bearer ${locals.jwt_token}` }
-    });
-    const data = await res.json();
-    return json(data, { status: res.status });
+export async function GET(event) {
+    const portfolioId = event.url.searchParams.get('portfolioId') ?? '';
+    return backendRequest(
+        event,
+        `/api/holding?${new URLSearchParams({ portfolioId })}`
+    );
 }
 
-export async function POST({ locals, request }) {
-    const body = await request.json();
-    const res = await fetch(`${API_BASE_URL}/api/holding`, {
+export async function POST(event) {
+    return backendRequest(event, '/api/holding', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${locals.jwt_token}`
+            'Content-Type': event.request.headers.get('content-type') ?? 'application/json'
         },
-        body: JSON.stringify(body)
+        body: await event.request.text(),
+        timeoutMs: 60_000
     });
-    const data = await res.json();
-    return json(data, { status: res.status });
 }

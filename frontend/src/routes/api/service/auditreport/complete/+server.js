@@ -1,18 +1,11 @@
-import { json } from '@sveltejs/kit';
-import { getApiBaseUrl } from '$lib/server/env.js';
+import { backendRequest } from '$lib/server/backend.js';
 
-const API_BASE_URL = getApiBaseUrl();
-
-export async function PUT({ locals, request }) {
-    const { auditReportId } = await request.json();
-    const res = await fetch(`${API_BASE_URL}/api/service/auditreport/complete`, {
+export async function PUT(event) {
+    return backendRequest(event, '/api/service/auditreport/complete', {
         method: 'PUT',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${locals.jwt_token}`
+            'Content-Type': event.request.headers.get('content-type') ?? 'application/json'
         },
-        body: JSON.stringify({ auditReportId })
+        body: await event.request.text()
     });
-    const data = await res.json();
-    return json(data, { status: res.status });
 }
