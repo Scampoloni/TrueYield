@@ -1,14 +1,6 @@
-const email = Cypress.env('E2E_TEST_EMAIL');
-const password = Cypress.env('E2E_TEST_PASSWORD');
-const hasCredentials = Boolean(email && password);
+import { loginWithSecrets } from '../support/credentials.js';
 
-function loginAs(userEmail, userPassword) {
-  cy.visit('/login');
-  cy.get('#email').type(userEmail);
-  cy.get('#password').type(userPassword);
-  cy.contains('button', 'Sign In').click();
-  cy.location('pathname').should('not.include', '/login');
-}
+const hasCredentials = Cypress.expose('hasLegacyCredentials');
 
 describe('compliance page: unauthenticated redirects', () => {
   it('compliance page redirects to /login when not authenticated', () => {
@@ -24,7 +16,7 @@ describe('compliance page: authenticated', () => {
   }
 
   beforeEach(() => {
-    loginAs(email, password);
+    loginWithSecrets('E2E_TEST_EMAIL', 'E2E_TEST_PASSWORD');
     cy.visit('/compliance');
   });
 

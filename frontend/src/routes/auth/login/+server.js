@@ -1,6 +1,5 @@
-import { signIn } from '$lib/server/auth.service.js';
+import { AuthServiceError, signIn } from '$lib/server/auth.service.js';
 import { json } from '@sveltejs/kit';
-import axios from 'axios';
 
 /**
  * @param {unknown} value
@@ -26,8 +25,8 @@ export async function POST({ request, cookies }) {
         return json({ success: true });
     } catch (e) {
         let message = 'Login failed';
-        if (axios.isAxiosError(e)) {
-            const data = e.response?.data;
+        if (e instanceof AuthServiceError) {
+            const data = e.data;
             message = asMessage(
                 data?.error_description || data?.message || data || e.message,
                 message
@@ -35,6 +34,11 @@ export async function POST({ request, cookies }) {
         } else if (e instanceof Error) {
             message = e.message;
         }
-        return json({ error: message }, { status: 401 });
+        const status = e instanceof AuthServiceError && e.status === 429
+            ? 429
+            : e instanceof AuthServiceError && e.status >= 500
+                ? 503
+                : 401;
+        return json({ error: message }, { status });
     }
 }

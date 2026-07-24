@@ -1,18 +1,10 @@
-const email = Cypress.env('E2E_TEST_EMAIL');
-const password = Cypress.env('E2E_TEST_PASSWORD');
-const role = Cypress.env('E2E_TEST_ROLE');
-const hasCredentials = Boolean(email && password);
+import { loginWithSecrets } from '../support/credentials.js';
+
+const hasCredentials = Cypress.expose('hasLegacyCredentials');
+const role = Cypress.expose('legacyRole');
 
 const FAKE_PORTFOLIO_ID = 'test-portfolio-id';
 const FAKE_HOLDING_ID = 'test-holding-id';
-
-function loginAs(userEmail, userPassword) {
-  cy.visit('/login');
-  cy.get('#email').type(userEmail);
-  cy.get('#password').type(userPassword);
-  cy.contains('button', 'Sign In').click();
-  cy.location('pathname').should('not.include', '/login');
-}
 
 // ── Unauthenticated redirects ────────────────────────────────────────────────
 
@@ -42,7 +34,7 @@ describe('portfolio create form', () => {
   }
 
   beforeEach(() => {
-    loginAs(email, password);
+    loginWithSecrets('E2E_TEST_EMAIL', 'E2E_TEST_PASSWORD');
     cy.visit('/portfolios/create');
   });
 
@@ -100,7 +92,7 @@ describe('portfolios list page', () => {
   });
 
   it('fund-manager role sees New Portfolio button', () => {
-    const isFundManager = (email && email.includes('manager')) || role === 'fund-manager';
+    const isFundManager = role === 'fund-manager';
     if (isFundManager) {
       cy.contains('a', 'New Portfolio').should('be.visible');
     }
@@ -121,7 +113,7 @@ describe('holdings create form', () => {
   }
 
   beforeEach(() => {
-    loginAs(email, password);
+    loginWithSecrets('E2E_TEST_EMAIL', 'E2E_TEST_PASSWORD');
     cy.visit(`/portfolios/${FAKE_PORTFOLIO_ID}/holdings/create`);
   });
 
@@ -180,7 +172,7 @@ describe('holdings page', () => {
   }
 
   it('holdings page renders after login', () => {
-    loginAs(email, password);
+    loginWithSecrets('E2E_TEST_EMAIL', 'E2E_TEST_PASSWORD');
     cy.visit('/holdings');
     cy.location('pathname').should('eq', '/holdings');
     cy.contains('Holdings').should('be.visible');

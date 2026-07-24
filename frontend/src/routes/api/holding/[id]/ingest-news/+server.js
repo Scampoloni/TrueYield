@@ -1,11 +1,9 @@
-import { getApiBaseUrl } from '$lib/server/env.js';
+import { backendRequest } from '$lib/server/backend.js';
 
-const API_BASE_URL = getApiBaseUrl();
-
-export async function POST({ locals, params }) {
-    const res = await fetch(`${API_BASE_URL}/api/holding/${params.id}/ingest-news`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${locals.jwt_token}` }
-    });
-    return new Response(null, { status: res.status });
+export async function POST(event) {
+    return backendRequest(
+        event,
+        `/api/holding/${encodeURIComponent(event.params.id)}/ingest-news`,
+        { method: 'POST', timeoutMs: 60_000 }
+    );
 }

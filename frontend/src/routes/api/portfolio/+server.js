@@ -1,26 +1,15 @@
-import { json } from '@sveltejs/kit';
-import { getApiBaseUrl } from '$lib/server/env.js';
+import { backendRequest } from '$lib/server/backend.js';
 
-const API_BASE_URL = getApiBaseUrl();
-
-export async function GET({ locals }) {
-    const res = await fetch(`${API_BASE_URL}/api/portfolio`, {
-        headers: { 'Authorization': `Bearer ${locals.jwt_token}` }
-    });
-    const data = await res.json();
-    return json(data, { status: res.status });
+export async function GET(event) {
+    return backendRequest(event, '/api/portfolio');
 }
 
-export async function POST({ locals, request }) {
-    const body = await request.json();
-    const res = await fetch(`${API_BASE_URL}/api/portfolio`, {
+export async function POST(event) {
+    return backendRequest(event, '/api/portfolio', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${locals.jwt_token}`
+            'Content-Type': event.request.headers.get('content-type') ?? 'application/json'
         },
-        body: JSON.stringify(body)
+        body: await event.request.text()
     });
-    const data = await res.json();
-    return json(data, { status: res.status });
 }

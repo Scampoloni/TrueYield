@@ -3,6 +3,8 @@
 spring.data.mongodb.uri=mongodb://localhost:27017/trueyield
 cors.allowed-origins=http://localhost:5173
 spring.security.oauth2.resourceserver.jwt.issuer-uri=https://example.eu.auth0.com/
+spring.security.oauth2.resourceserver.jwt.jwk-set-uri=https://example.eu.auth0.com/.well-known/jwks.json
+auth0.audience=https://trueyield.api
 spring.ai.anthropic.api-key=replace_with_anthropic_api_key
 news.api.guardian.key=replace_with_guardian_api_key
 news.api.newsdata.key=replace_with_newsdata_api_key

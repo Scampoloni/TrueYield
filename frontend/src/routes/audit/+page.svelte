@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { page } from '$app/state';
+  import { ApiError, apiRequest } from '$lib/api';
 
   const roles = $derived(page.data.user?.user_roles ?? []);
   const isAuditor = $derived(roles.includes('auditor'));
@@ -9,36 +10,38 @@
   let loading = $state(true);
   let activeFilter = $state('all');
   let search = $state('');
+  let error = $state('');
+  let errorCode = $state('');
 
-  onMount(async () => {
+  async function loadReports() {
+    loading = true;
+    error = '';
+    errorCode = '';
     try {
       if (isAuditor) {
-        const queueRes = await fetch('/api/service/auditreport/auditor-queue');
-        if (queueRes.ok) {
-          const items: any[] = await queueRes.json();
-          reports = items.map((r: any) => ({
-            id: r.id,
-            reportId: (r.id ?? '').slice(-8).toUpperCase(),
-            portfolio: r.portfolioName || r.portfolioId,
-            auditor: r.auditorId ?? '—',
-            status: r.auditStatus,
-            score: r.aiRiskScore ?? null,
-            date: r.createdAt ? r.createdAt.slice(0, 10) : '—'
-          }));
-        }
+        const items = await apiRequest<any[]>('/api/service/auditreport/auditor-queue');
+        reports = items.map((report) => ({
+          id: report.id,
+          reportId: (report.id ?? '').slice(-8).toUpperCase(),
+          portfolio: report.portfolioName || report.portfolioId,
+          auditor: report.auditorId ?? '—',
+          status: report.auditStatus,
+          score: report.aiRiskScore ?? null,
+          date: report.createdAt ? report.createdAt.slice(0, 10) : '—'
+        }));
       } else {
-        const portfolioRes = await fetch('/api/portfolio');
-        const portfolios: any[] = portfolioRes.ok ? await portfolioRes.json() : [];
+        const portfolios = await apiRequest<any[]>('/api/portfolio');
         const rows: any[] = [];
         for (const p of portfolios) {
-          const dashRes = await fetch(`/api/service/auditreport/dashboard?portfolioId=${p.id}`);
-          if (!dashRes.ok) continue;
-          const agg: any[] = await dashRes.json();
+          const agg = await apiRequest<any[]>(
+            `/api/service/auditreport/dashboard?portfolioId=${encodeURIComponent(p.id)}`
+          );
           const allIds: string[] = agg.flatMap((a: any) => a.itemIds || []);
           const reportDetails = await Promise.all(
             allIds.map((itemId: string) =>
-              fetch(`/api/service/auditreport/${itemId}`)
-                .then(r => r.ok ? r.json() : null)
+              apiRequest<any>(
+                `/api/service/auditreport/${encodeURIComponent(itemId)}`
+              )
                 .catch(() => null)
             )
           );
@@ -59,10 +62,20 @@
         }
         reports = rows;
       }
+    } catch (caught) {
+      if (caught instanceof ApiError) {
+        error = caught.message;
+        errorCode = caught.code;
+      } else {
+        error = 'The audit queue could not be loaded. Please retry in a moment.';
+        errorCode = 'REQUEST_FAILED';
+      }
     } finally {
       loading = false;
     }
-  });
+  }
+
+  onMount(loadReports);
 
   let filtered = $derived(reports.filter(r => {
     const matchFilter =
@@ -137,7 +150,7 @@
       </div>
       <div class="m-val green">{count('APPROVED')}</div>
       <div class="m-lbl">Approved</div>
-      <div class="m-trend tr-green">Compliance confirmed</div>
+      <div class="m-trend tr-green">Human decision recorded</div>
     </div>
   </div>
 
@@ -163,6 +176,17 @@
         <div class="skeleton" style="height:20px;"></div>
         <div class="skeleton" style="height:20px;"></div>
         <div class="skeleton" style="height:20px;"></div>
+      </div>
+    {:else if error}
+      <div class="empty">
+        <div class="e-icon" aria-hidden="true">!</div>
+        <div class="e-ttl">{errorCode === 'SESSION_EXPIRED' ? 'Session expired' : 'Data temporarily unavailable'}</div>
+        <div class="e-sub">{error}</div>
+        {#if errorCode === 'SESSION_EXPIRED'}
+          <a href="/login" class="btn btn-primary">Sign in again</a>
+        {:else}
+          <button class="btn btn-primary" onclick={loadReports}>Retry</button>
+        {/if}
       </div>
     {:else if filtered.length === 0}
       <div class="empty">

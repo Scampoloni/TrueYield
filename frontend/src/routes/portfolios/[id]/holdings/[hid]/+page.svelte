@@ -6,7 +6,7 @@
   const portfolioId = page.params.id;
   const holdingId = page.params.hid;
   const isFundManager = $derived((page.data.user?.user_roles ?? []).includes('fund-manager'));
-  const canAddEvidence = $derived((page.data.user?.user_roles ?? [])
+  const canManageEvidence = $derived((page.data.user?.user_roles ?? [])
     .some((r: string) => r === 'auditor' || r === 'compliance-officer'));
   const returnTo = $derived(page.url.searchParams.get('returnTo') ?? `/portfolios/${portfolioId}`);
 
@@ -120,7 +120,7 @@
         {fetchingNews ? (fetchNewsStatus || 'Fetching…') : 'Fetch AI News'}
       </button>
     {/if}
-    {#if canAddEvidence}
+    {#if canManageEvidence}
       <a href={`/portfolios/${portfolioId}/holdings/${holdingId}/create`} class="btn btn-primary">+ Add Evidence</a>
     {/if}
     <a href={returnTo} class="btn btn-ghost">← Back</a>
@@ -142,7 +142,15 @@
           <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
         </div>
         <div class="empty-title">No evidence yet</div>
-        <div class="empty-desc">Add ESG news snippets via "+ Add Evidence". The AI will automatically analyse the sentiment and assign a risk score.</div>
+        <div class="empty-desc">
+          {#if canManageEvidence}
+            Add a sourced ESG finding for review, or ask the fund manager to ingest current news.
+          {:else if isFundManager}
+            Run "Fetch AI News" to collect current ESG sources for the auditor's review.
+          {:else}
+            No sourced ESG findings have been recorded for this holding.
+          {/if}
+        </div>
       </div>
     </div>
   {:else}
@@ -177,7 +185,7 @@
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
             <span class="badge {e.sentiment === 'POSITIVE' ? 'badge-approved' : e.sentiment === 'NEUTRAL' ? 'badge-pending' : 'badge-rejected'}">{e.sentiment}</span>
-            {#if isFundManager}
+            {#if canManageEvidence}
               <button
                 class="btn-delete"
                 disabled={deleting === e.id}

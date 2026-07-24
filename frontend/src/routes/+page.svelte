@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
+  import { ApiError, apiRequest } from '$lib/api';
 
   const roles = $derived(page.data.user?.user_roles ?? []);
   const isFundManager = $derived(roles.includes('fund-manager'));
@@ -13,46 +14,54 @@
   let pendingAudits = $state(0);
   let loading = $state(true);
   let error = $state('');
+  let errorCode = $state('');
 
-  onMount(async () => {
+  async function loadDashboard() {
     if (isAuditor) {
-      goto('/audit');
+      await goto('/audit');
       return;
     }
     if (isComplianceOfficer) {
-      goto('/compliance');
+      await goto('/compliance');
       return;
     }
+    loading = true;
+    error = '';
+    errorCode = '';
     try {
-      const res = await fetch('/api/portfolio', { cache: 'no-store' });
-      if (!res.ok) throw new Error('Failed');
-      portfolios = await res.json();
+      portfolios = await apiRequest<any[]>('/api/portfolio');
 
-      let holdingsCount = 0;
-      let pendingCount = 0;
-      for (const p of portfolios) {
-        const [hRes, aRes] = await Promise.all([
-          fetch(`/api/holding?portfolioId=${p.id}`),
-          fetch(`/api/service/auditreport/dashboard?portfolioId=${p.id}`)
-        ]);
-        if (hRes.ok) {
-          const hs = await hRes.json();
-          holdingsCount += hs.length;
-        }
-        if (aRes.ok) {
-          const agg: any[] = await aRes.json();
-          const pending = agg.find((a: any) => a.id === 'PENDING_REVIEW');
-          if (pending) pendingCount += Number(pending.count || 0);
-        }
+      const metrics = await Promise.all(
+        portfolios.map(async (portfolio) => {
+          const [holdings, auditSummary] = await Promise.all([
+            apiRequest<any[]>(`/api/holding?portfolioId=${encodeURIComponent(portfolio.id)}`),
+            apiRequest<any[]>(
+              `/api/service/auditreport/dashboard?portfolioId=${encodeURIComponent(portfolio.id)}`
+            )
+          ]);
+          const pending = auditSummary.find((entry) => entry.id === 'PENDING_REVIEW');
+          return {
+            holdings: holdings.length,
+            pending: Number(pending?.count ?? 0)
+          };
+        })
+      );
+      totalHoldings = metrics.reduce((total, metric) => total + metric.holdings, 0);
+      pendingAudits = metrics.reduce((total, metric) => total + metric.pending, 0);
+    } catch (caught) {
+      if (caught instanceof ApiError) {
+        error = caught.message;
+        errorCode = caught.code;
+      } else {
+        error = 'The dashboard could not be loaded. Please retry in a moment.';
+        errorCode = 'REQUEST_FAILED';
       }
-      totalHoldings = holdingsCount;
-      pendingAudits = pendingCount;
-    } catch {
-      error = 'Could not load portfolios.';
     } finally {
       loading = false;
     }
-  });
+  }
+
+  onMount(loadDashboard);
 
   function statusClass(s: string) {
     if (!s) return 'badge-active';
@@ -149,9 +158,16 @@
       </div>
     {:else if error}
       <div class="empty">
-        <div class="e-icon">⚠</div>
-        <div class="e-ttl">Connection Error</div>
-        <div class="e-sub">{error} Make sure the backend is running on port 8080.</div>
+        <div class="e-icon" aria-hidden="true">!</div>
+        <div class="e-ttl">
+          {errorCode === 'SESSION_EXPIRED' ? 'Session expired' : 'Data temporarily unavailable'}
+        </div>
+        <div class="e-sub">{error}</div>
+        {#if errorCode === 'SESSION_EXPIRED'}
+          <a href="/login" class="btn btn-primary">Sign in again</a>
+        {:else}
+          <button class="btn btn-primary" onclick={loadDashboard}>Retry</button>
+        {/if}
       </div>
     {:else if portfolios.length === 0}
       <div class="empty">

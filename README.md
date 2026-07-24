@@ -1,6 +1,8 @@
 # TrueYield
 
 [![CI](https://github.com/Scampoloni/trueyield/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Scampoloni/trueyield/actions/workflows/ci.yml)
+[![Live application](https://img.shields.io/badge/live-Azure_App_Service-0078D4)](https://trueyield-frontend.azurewebsites.net/login)
+[![License: MIT](https://img.shields.io/badge/license-MIT-22c55e.svg)](LICENSE)
 
 TrueYield is an academic prototype exploring how AI-supported evidence collection and human review workflows could support ESG risk analysis.
 
@@ -66,7 +68,7 @@ The frontend keeps the Auth0 access token in an HTTP-only cookie and forwards it
 | Area | Technologies used |
 | --- | --- |
 | Backend | Java 25, Spring Boot, Spring Security, Spring AI, Spring Data MongoDB |
-| Frontend | SvelteKit, Svelte, Vite, Axios |
+| Frontend | SvelteKit, Svelte, Vite, native Fetch API |
 | Identity | Auth0 with JWT-based role claims |
 | Data and integrations | MongoDB, Anthropic, Guardian, Newsdata.io, NewsAPI.org, Alpha Vantage |
 | Delivery and quality | Maven, npm, JUnit, Mockito, Testcontainers, Cypress, JaCoCo, Docker, GitHub Actions, Azure App Service |
@@ -77,19 +79,19 @@ The screenshots use sample portfolios and role labels. They illustrate the proto
 
 ### Portfolio workspace
 
-![Portfolio workspace showing portfolio status and holdings](doc/screenshots/portfolios-list.png)
+![Portfolio workspace showing portfolio status and holdings](docs/assets/screenshots/portfolios-list.png)
 
 ### Evidence and risk analysis
 
-![Evidence cards with source, sentiment, and risk indicators](doc/screenshots/evidence-page.png)
+![Evidence cards with source, sentiment and risk indicators](docs/assets/screenshots/evidence-page.png)
 
 ### Auditor review and AI-assisted summary
 
-![Audit report with review lifecycle and AI analysis summary](doc/screenshots/audit-detail-ai-summary.png)
+![Audit report with review lifecycle and AI analysis summary](docs/assets/screenshots/audit-detail-ai-summary.png)
 
 ### Compliance overview
 
-![Read-only compliance overview based on prototype data](doc/screenshots/compliance-dashboard-overview.png)
+![Read-only compliance overview based on prototype data](docs/assets/screenshots/compliance-dashboard-overview.png)
 
 The labels shown in the compliance screen are evidence-derived prototype indicators, not SFDR classifications or compliance determinations.
 
@@ -105,6 +107,11 @@ For local use, configure an Auth0 tenant with:
 - a `user_roles` claim containing one of `fund-manager`, `auditor`, or `compliance-officer`.
 
 There are no public demo credentials in this repository. Do not add real credentials or user data to issues, examples, or screenshots.
+
+The hosted application is available at the [TrueYield login](https://trueyield-frontend.azurewebsites.net/login).
+Its three demo identities are deliberately access-controlled; reviewers can request credentials directly
+from the repository owner. This keeps the role-based experience demonstrable without publishing a shared
+password or allowing anonymous writes to the sample environment.
 
 ## AI and automation approach
 
@@ -143,7 +150,7 @@ Some integration and E2E paths require MongoDB, Auth0 configuration, and/or runn
 
 Copy `backend/.env.example` to a local environment file for your tooling, or export the variables in your shell. Spring Boot itself does not automatically load `.env` files. You may instead copy `backend/src/main/resources/application-local.properties.example` to `application-local.properties` and activate the `local` Spring profile.
 
-At minimum, provide `MONGODB_URI` and `AUTH0_DOMAIN`. Configure a local MongoDB database before starting the backend.
+At minimum, provide `MONGODB_URI`, `AUTH0_DOMAIN`, and `AUTH0_AUDIENCE`. Configure a local MongoDB database before starting the backend.
 
 ```powershell
 cd backend
@@ -181,17 +188,23 @@ docker build -t trueyield-frontend -f frontend/Dockerfile frontend
 | Location | Variable | Required | Purpose |
 | --- | --- | --- | --- |
 | Backend | `MONGODB_URI` | Yes | MongoDB connection URI |
-| Backend | `AUTH0_DOMAIN` | Yes | Auth0 tenant domain used to validate JWTs |
+| Backend | `AUTH0_DOMAIN`, `AUTH0_AUDIENCE` | Yes | Auth0 issuer and API audience used to validate JWTs |
 | Backend | `ANTHROPIC_API_KEY` | Optional | Enables AI-assisted summaries and chat |
 | Backend | `GUARDIAN_API_KEY`, `NEWSDATA_API_KEY`, `NEWSAPIORG_API_KEY`, `ALPHAVANTAGE_API_KEY` | Optional | Enable individual news providers |
 | Frontend | `API_BASE_URL` | Yes | Backend API base URL |
 | Frontend | `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_AUDIENCE` | Yes | Auth0 application and API configuration |
+| Frontend | `ALLOW_SIGNUP` | No | Enables self-registration only when set to `true`; controlled demos keep it disabled |
 
 All examples use fake placeholders. Never commit `.env` files, private connection strings, provider keys, publish profiles, or tokens.
 
 ## Deployment status
 
-GitHub Actions defines CI and Azure deployment workflows. A public live-demo link is intentionally not included here: before a deployment is shared, its owners should verify access controls, exposed endpoints, test data, provider costs, and credentials. The deployment workflow is documented in [deployment notes](docs/deployment.md).
+The application is deployed to Azure App Service and linked above. Before deployment, GitHub Actions
+verifies the frontend, backend, database readiness, anonymous access protection, and the authenticated
+fund-manager → auditor → compliance lifecycle. After deployment, CD runs production readiness and
+access-control smoke checks. Azure keeps both services warm and monitors dedicated health endpoints.
+Deployment controls and operational boundaries are documented in the
+[deployment notes](docs/deployment.md).
 
 ## Project context and limitations
 
@@ -202,11 +215,15 @@ Known limitations include:
 - AI and news-provider results depend on configured third-party services and should be reviewed.
 - The prototype does not establish source truth, legal compliance, or investment suitability.
 - Auth0 configuration and role-managed test users are required; it is not an open anonymous application.
-- A Docker Compose developer environment and public demo safety review are not provided.
+- A Docker Compose developer environment is not provided; CI supplies an isolated MongoDB service instead.
 
 ## AI-assisted development disclosure
 
-TrueYield was developed as a Business Information Systems project with substantial support from modern AI development tools. The author defined the use case, requirements, workflows, and system structure; integrated and tested the components; and validated the resulting functionality. This repository should be understood as an AI-assisted full-stack prototype rather than evidence of expert-level proficiency in every technology used.
+Modern AI development tools supported implementation, test generation, and documentation. The author
+retained ownership of the use case, architecture, security model, integration decisions, verification,
+and final code review. AI-generated suggestions were treated as untrusted inputs and accepted only after
+testing and validation. This disclosure reflects the same review-first, human-accountable principle that
+the product applies to AI-assisted ESG evidence.
 
 ## Repository structure
 
@@ -214,8 +231,7 @@ TrueYield was developed as a Business Information Systems project with substanti
 backend/     Spring Boot API, security, services, tests, and backend Dockerfile
 frontend/    SvelteKit application, Cypress tests, and frontend Dockerfile
 mockdata/    Sample JSON data for development and demonstrations
-doc/         Screenshots, diagrams, and deployment evidence
-docs/        Portfolio-facing technical notes and preserved academic documentation
+docs/        Technical notes, screenshots, diagrams, and archived academic material
 .github/     CI/CD workflows and generated coverage badge
 ```
 
@@ -228,6 +244,6 @@ docs/        Portfolio-facing technical notes and preserved academic documentati
 - [Preserved academic documentation](docs/academic-documentation.md)
 - [Archived academic artifacts](docs/archive/README.md)
 
-No licence has been added. The repository owner should choose one before making the project public.
+TrueYield is available under the [MIT License](LICENSE).
 
 For a concise technical tour, start with the workflow above, then review the architecture and test notes.

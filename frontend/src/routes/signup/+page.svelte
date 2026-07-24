@@ -20,6 +20,10 @@
   let error = $state('');
 </script>
 
+<svelte:head>
+  <title>Create account | TrueYield</title>
+</svelte:head>
+
 <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);">
   <div class="form-card" style="width:100%;max-width:400px;">
     <div style="text-align:center;margin-bottom:32px;">

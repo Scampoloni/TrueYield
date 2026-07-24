@@ -1,7 +1,6 @@
-import { dev } from '$app/environment';
-import { signUp } from '$lib/server/auth.service.js';
+import { AuthServiceError, signUp } from '$lib/server/auth.service.js';
+import { isSignupEnabled } from '$lib/server/env.js';
 import { json } from '@sveltejs/kit';
-import axios from 'axios';
 
 /** @typedef {import('@sveltejs/kit').Cookies} Cookies */
 
@@ -55,26 +54,21 @@ function auth0SignupMessage(data) {
 }
 
 export async function POST({ request, cookies }) {
+    if (!isSignupEnabled()) {
+        return json(
+            { error: 'Registration is invitation-only for this demo environment.' },
+            { status: 403 }
+        );
+    }
+
     try {
         const { email, password } = await request.json();
-        // signUp calls signIn internally and sets cookies
-        const result = await signUp(email, password);
-        // Set cookies from the sign-in result
-        /** @type {Parameters<Cookies['set']>[2]} */
-        const cookieOpts = {
-            path: '/',
-            httpOnly: true,
-            secure: !dev,
-            sameSite: 'lax',
-            maxAge: 60 * 60 * 24
-        };
-        cookies.set('jwt_token', result.access_token, cookieOpts);
-        cookies.set('user_info', JSON.stringify(result.userInfo), cookieOpts);
+        await signUp(email, password, cookies);
         return json({ success: true });
     } catch (e) {
         let message = 'Signup failed';
-        if (axios.isAxiosError(e)) {
-            const data = e.response?.data;
+        if (e instanceof AuthServiceError) {
+            const data = e.data;
             const mapped = auth0SignupMessage(data);
             if (mapped) {
                 message = mapped;
@@ -84,12 +78,17 @@ export async function POST({ request, cookies }) {
                 message
             );
             }
-            if (e.response?.status === 400 && (!data || message === 'Signup failed')) {
+            if (e.status === 400 && (!data || message === 'Signup failed')) {
                 message = 'Signup failed. The email may already exist or the password policy is not met.';
             }
         } else if (e instanceof Error) {
             message = e.message;
         }
-        return json({ error: message }, { status: 400 });
+        const status = e instanceof AuthServiceError && e.status === 429
+            ? 429
+            : e instanceof AuthServiceError && e.status >= 500
+                ? 503
+                : 400;
+        return json({ error: message }, { status });
     }
 }

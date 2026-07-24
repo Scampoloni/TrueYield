@@ -24,3 +24,7 @@ export function getAuthConfig() {
         audience: requireEnv('AUTH0_AUDIENCE')
     };
 }
+
+export function isSignupEnabled() {
+    return env.ALLOW_SIGNUP?.trim().toLowerCase() === 'true';
+}

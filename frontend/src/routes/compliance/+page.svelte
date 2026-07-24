@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { page } from '$app/state';
+  import { ApiError, apiRequest } from '$lib/api';
 
   const isComplianceOfficer = $derived(
     (page.data.user?.user_roles ?? []).includes('compliance-officer')
@@ -44,6 +45,7 @@
   let reports: AuditReport[] = $state([]);
   let loading = $state(true);
   let error = $state('');
+  let errorCode = $state('');
 
   const STATUS_LABELS: Record<string, string> = {
     AI_ANALYZING: 'AI Analyzing',
@@ -62,9 +64,9 @@
   };
 
   const SFDR_LABELS: Record<string, string> = {
-    ARTICLE_9: 'Art. 9',
-    ARTICLE_8: 'Art. 8',
-    NON_SFDR: 'Non-SFDR',
+    ARTICLE_9: 'Art. 9 signal',
+    ARTICLE_8: 'Art. 8 signal',
+    NON_SFDR: 'Risk signal',
     INSUFFICIENT_DATA: 'No Data'
   };
 
@@ -80,30 +82,37 @@
     return new Date(dt).toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' });
   }
 
-  onMount(async () => {
+  async function loadComplianceData() {
+    loading = true;
+    error = '';
+    errorCode = '';
     if (!isComplianceOfficer) {
       error = 'Access denied. This page requires the compliance-officer role.';
+      errorCode = 'ACCESS_DENIED';
       loading = false;
       return;
     }
     try {
-      const [overviewRes, sfdrRes, portfoliosRes, reportsRes] = await Promise.all([
-        fetch('/api/compliance/overview', { cache: 'no-store' }),
-        fetch('/api/compliance/sfdr', { cache: 'no-store' }),
-        fetch('/api/compliance/portfolios', { cache: 'no-store' }),
-        fetch('/api/compliance/reports', { cache: 'no-store' })
+      [overview, sfdrScores, portfolios, reports] = await Promise.all([
+        apiRequest<ComplianceOverview>('/api/compliance/overview'),
+        apiRequest<SfdrScore[]>('/api/compliance/sfdr'),
+        apiRequest<Portfolio[]>('/api/compliance/portfolios'),
+        apiRequest<AuditReport[]>('/api/compliance/reports')
       ]);
-      if (!overviewRes.ok) throw new Error(`HTTP ${overviewRes.status}`);
-      overview = await overviewRes.json();
-      if (sfdrRes.ok) sfdrScores = await sfdrRes.json();
-      if (portfoliosRes.ok) portfolios = await portfoliosRes.json();
-      if (reportsRes.ok) reports = await reportsRes.json();
-    } catch (e) {
-      error = 'Could not load compliance data. Make sure the backend is running.';
+    } catch (caught) {
+      if (caught instanceof ApiError) {
+        error = caught.message;
+        errorCode = caught.code;
+      } else {
+        error = 'The compliance overview could not be loaded. Please retry in a moment.';
+        errorCode = 'REQUEST_FAILED';
+      }
     } finally {
       loading = false;
     }
-  });
+  }
+
+  onMount(loadComplianceData);
 </script>
 
 <div class="topbar">
@@ -127,8 +136,19 @@
     <div class="glass-table">
       <div class="empty">
         <div class="e-icon">⚠</div>
-        <div class="e-ttl">Access Error</div>
+        <div class="e-ttl">
+          {errorCode === 'ACCESS_DENIED'
+            ? 'Access denied'
+            : errorCode === 'SESSION_EXPIRED'
+              ? 'Session expired'
+              : 'Data temporarily unavailable'}
+        </div>
         <div class="e-sub">{error}</div>
+        {#if errorCode === 'SESSION_EXPIRED'}
+          <a href="/login" class="btn btn-primary">Sign in again</a>
+        {:else if errorCode !== 'ACCESS_DENIED'}
+          <button class="btn btn-primary" onclick={loadComplianceData}>Retry</button>
+        {/if}
       </div>
     </div>
   {:else if overview}
@@ -220,15 +240,15 @@
 
       {#if sfdrScores.length > 0}
         <div class="sec-head" style="margin-top:2rem;">
-          <span class="sec-name">SFDR Classification by Portfolio</span>
-          <span class="sec-meta" style="font-size:11px;color:var(--text-muted);">Based on AI sentiment scores across Evidence entries</span>
+          <span class="sec-name">Prototype SFDR evidence signals</span>
+          <span class="sec-meta" style="font-size:11px;color:var(--text-muted);">Exploratory indicators based on evidence sentiment — not regulatory classifications</span>
         </div>
         <div class="glass-table">
           <table>
             <thead>
               <tr>
                 <th>Portfolio</th>
-                <th>SFDR Class</th>
+                <th>Evidence signal</th>
                 <th class="text-right">Avg Sentiment</th>
                 <th class="text-right">Evidence</th>
               </tr>
@@ -252,9 +272,10 @@
           </table>
         </div>
         <div class="sfdr-legend">
-          <span><span class="badge badge-approved">Art. 9</span> avg &gt; 0.3 — sustainable investment objective</span>
-          <span><span class="badge badge-under-review">Art. 8</span> avg &gt; −0.1 — promotes ESG characteristics</span>
-          <span><span class="badge badge-rejected">Non-SFDR</span> avg ≤ −0.1 — predominant ESG risk signal</span>
+          <span><span class="badge badge-approved">Art. 9 signal</span> avg &gt; 0.3</span>
+          <span><span class="badge badge-under-review">Art. 8 signal</span> avg &gt; −0.1</span>
+          <span><span class="badge badge-rejected">Risk signal</span> avg ≤ −0.1</span>
+          <span>Exploratory only; a qualified reviewer must determine any formal classification.</span>
         </div>
       {/if}
     {/if}
@@ -273,7 +294,7 @@
                 <th>Portfolio</th>
                 <th>Description</th>
                 <th>Fund Manager</th>
-                <th class="text-right">SFDR</th>
+                <th class="text-right">Evidence signal</th>
               </tr>
             </thead>
             <tbody>

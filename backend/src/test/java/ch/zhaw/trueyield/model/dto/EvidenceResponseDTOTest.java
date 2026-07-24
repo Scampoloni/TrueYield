@@ -26,6 +26,7 @@ class EvidenceResponseDTOTest {
         Evidence e = evidence("Good ESG news", 0.8);
         EvidenceResponseDTO dto = EvidenceResponseDTO.fromEntity(e);
 
+        assertEquals("holding-1", dto.getHoldingId());
         assertEquals("Good ESG news", dto.getHeadline());
         assertEquals("Good ESG news", dto.getSummary());
         assertEquals("POSITIVE", dto.getSentiment());

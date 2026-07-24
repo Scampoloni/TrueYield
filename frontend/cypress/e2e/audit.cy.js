@@ -1,16 +1,8 @@
-const email = Cypress.env('E2E_TEST_EMAIL');
-const password = Cypress.env('E2E_TEST_PASSWORD');
-const hasCredentials = Boolean(email && password);
+import { loginWithSecrets } from '../support/credentials.js';
+
+const hasCredentials = Cypress.expose('hasLegacyCredentials');
 
 const FAKE_AUDIT_ID = 'test-audit-id';
-
-function loginAs(userEmail, userPassword) {
-  cy.visit('/login');
-  cy.get('#email').type(userEmail);
-  cy.get('#password').type(userPassword);
-  cy.contains('button', 'Sign In').click();
-  cy.location('pathname').should('not.include', '/login');
-}
 
 // ── Unauthenticated redirects ────────────────────────────────────────────────
 
@@ -40,7 +32,7 @@ describe('audit dashboard', () => {
   }
 
   beforeEach(() => {
-    loginAs(email, password);
+    loginWithSecrets('E2E_TEST_EMAIL', 'E2E_TEST_PASSWORD');
     cy.visit('/audit');
   });
 
@@ -106,7 +98,7 @@ describe('account page', () => {
   }
 
   it('account page renders after login', () => {
-    loginAs(email, password);
+    loginWithSecrets('E2E_TEST_EMAIL', 'E2E_TEST_PASSWORD');
     cy.visit('/account');
     cy.location('pathname').should('eq', '/account');
     cy.get('body').should('be.visible');
