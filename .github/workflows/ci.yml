@@ -153,7 +153,7 @@ jobs:
 
       - name: Upload E2E diagnostics
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-diagnostics
           path: |
@@ -211,7 +211,7 @@ jobs:
           fi
 
       - name: Upload JaCoCo HTML report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: jacoco-report
           path: backend/target/site/jacoco
